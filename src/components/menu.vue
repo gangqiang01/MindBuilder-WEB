@@ -3,7 +3,7 @@
         <!-- 展开时：Logo + 搜索/折叠按钮同行 -->
         <div class="logo_row" v-if="!uiStore.sidebarCollapsed">
             <div class="logo_box" @click="router.push('/platform/knowledge-bases')" style="cursor: pointer;">
-                <img class="logo" src="@/assets/img/weknora.png" alt="">
+                MindBuilder
                 <sup v-if="isLiteEdition" class="lite-badge">Lite</sup>
             </div>
             <div class="logo_actions">
@@ -1386,6 +1386,8 @@ const resizeSidebar = (delta: number, keyboard: boolean) => {
     }
 
     .logo_box {
+        font-weight: 500;
+        font-size: 21px;
         display: flex;
         align-items: center;
         flex: 1;
