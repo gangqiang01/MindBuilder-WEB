@@ -138,7 +138,7 @@
 
           <!-- 长期记忆。留在基础信息这一组而不是「多轮对话」，是因为它与
                多轮历史窗口无关，且智能推理恰恰是最需要这个开关的模式。
-               这个开关只能"关"：空间或个人设置关闭时，这里打开也不生效。 -->
+               这个开关只能"关"：组织或个人设置关闭时，这里打开也不生效。 -->
           <div class="setting-row">
             <div class="setting-info">
               <label>{{ $t('agent.editor.memoryEnabled') }}</label>
@@ -2411,7 +2411,7 @@ async function installCatalogToCurrent(skill: CatalogSkillRow) {
     installingCatalogId.value = ''
   }
 }
-// 空间内的具名沙箱后端配置。始终包含当前已选中的那份，即使它已被删除——
+// 组织内的具名沙箱后端配置。始终包含当前已选中的那份，即使它已被删除——
 // 否则下拉会静默显示为“不启用沙箱”，看不出该智能体其实指着一份不存在的配置。
 const sandboxConfigOptions = computed(() => {
   const configs = chatResources.sandboxConfigs.filter((cfg) => isNamedSandboxBackend(cfg.sandbox_type));
@@ -2912,7 +2912,7 @@ const defaultFormData = {
     // Skills 设置
     skills_selection_mode: 'none' as 'all' | 'selected' | 'none',
     selected_skills: [] as string[],
-    // 技能脚本运行在哪份空间沙箱配置上。留空表示禁用脚本执行。
+    // 技能脚本运行在哪份组织沙箱配置上。留空表示禁用脚本执行。
     sandbox_config_id: '' as string,
     // 知识库设置：新建智能体默认选择 "全部知识库"，
     // 让用户无需先去勾选 KB 即可上手；如有需要可改为 "selected" / "none"。
@@ -2950,7 +2950,7 @@ const defaultFormData = {
     multi_turn_enabled: false,
     history_turns: 5,
     retain_retrieval_history: false,
-    // 长期记忆：默认跟随空间设置。写 true 与不写等价，只有 false 才会
+    // 长期记忆：默认跟随组织设置。写 true 与不写等价，只有 false 才会
     // 让这个智能体单独不读记忆。
     memory_enabled: true,
     // 检索策略设置
@@ -3659,7 +3659,7 @@ watch(() => props.visible, async (val) => {
       if (agentData.config.attachment_ocr_max_pages == null) agentData.config.attachment_ocr_max_pages = 0;
       if (agentData.config.attachment_parse_wait_timeout_sec == null) agentData.config.attachment_parse_wait_timeout_sec = 0;
       if (agentData.config.max_completion_tokens == null) agentData.config.max_completion_tokens = 0;
-      // 长期记忆：后端用 omitempty，跟随空间设置的智能体不带这个字段。
+      // 长期记忆：后端用 omitempty，跟随组织设置的智能体不带这个字段。
       // 不补成 true 的话开关会显示为"关"，用户随手一存就真的把记忆关了。
       if (agentData.config.memory_enabled == null) agentData.config.memory_enabled = true;
 
@@ -4128,7 +4128,7 @@ const notifyAllowedToolsWarnings = (warnings?: AllowedToolsWarnings) => {
   }
 };
 
-// 加载依赖数据（复用空间级缓存，避免重复请求）
+// 加载依赖数据（复用组织级缓存，避免重复请求）
 const loadDependencies = async () => {
   try {
     await Promise.all([

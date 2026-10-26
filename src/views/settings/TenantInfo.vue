@@ -269,7 +269,7 @@ const tenantInfo = ref<TenantInfo | null>(null)
 const loading = ref(true)
 const error = ref('')
 
-// 仅 owner 可改空间名（与后端 router.go 中 g.Owner() 守卫一致；
+// 仅 owner 可改组织名（与后端 router.go 中 g.Owner() 守卫一致；
 // 服务端始终是权限的最终裁判，这里只决定 UI 是否露出入口）。
 const canEditTenant = computed(() => authStore.hasRole('owner'))
 
@@ -436,7 +436,7 @@ watch(
   },
 )
 
-// 原地编辑空间名称：editing 控制行内只读 / 编辑两种形态切换。
+// 原地编辑组织名称：editing 控制行内只读 / 编辑两种形态切换。
 // 不沿用 dialog 是因为这里只有一个字段，弹窗反而打断了配置浏览节奏。
 const editing = ref(false)
 const editName = ref('')
@@ -470,7 +470,7 @@ const onEditKeydown = (_value: any, ctx: { e: KeyboardEvent }) => {
   }
 }
 
-// 原地编辑空间描述：与名称对称的 editing / editValue / saving 三态。
+// 原地编辑组织描述：与名称对称的 editing / editValue / saving 三态。
 // 描述允许为空（业务上是可选字段），所以可提交条件不要求非空，只要内容变了即可。
 const editingDescription = ref(false)
 const editDescription = ref('')
@@ -517,7 +517,7 @@ const saveTenantDescription = async () => {
     savingDescription.value = true
     const resp = await updateTenantApi(Number(tenantInfo.value.id), { description: newDesc })
     if (resp.success) {
-      // 本地立即回显，避免等 /auth/me 往返。描述不像名称那样会出现在空间切换器等
+      // 本地立即回显，避免等 /auth/me 往返。描述不像名称那样会出现在组织切换器等
       // 顶部组件里，所以无需同步 authStore.tenant / memberships。
       if (tenantInfo.value) {
         tenantInfo.value = { ...tenantInfo.value, description: newDesc }
@@ -551,14 +551,14 @@ const saveTenantName = async () => {
     const resp = await updateTenantApi(Number(tenantInfo.value.id), { name: newName })
     if (resp.success) {
       // 本地立即回显，避免等 /auth/me 往返；同步刷新登录态里的 tenant
-      // 缓存（若当前激活空间就是 home tenant，顶部空间切换器等地方也跟着更新）。
+      // 缓存（若当前激活组织就是 home tenant，顶部组织切换器等地方也跟着更新）。
       if (tenantInfo.value) {
         tenantInfo.value = { ...tenantInfo.value, name: newName }
       }
       if (authStore.tenant && String(authStore.tenant.id) === String(tenantInfo.value?.id)) {
         authStore.setTenant({ ...authStore.tenant, name: newName })
       }
-      // memberships 里的 tenant_name 是空间切换器读的字段，一并同步避免显示旧名字。
+      // memberships 里的 tenant_name 是组织切换器读的字段，一并同步避免显示旧名字。
       if (authStore.memberships?.length) {
         const next = authStore.memberships.map((m) =>
           String(m.tenant_id) === String(tenantInfo.value?.id)

@@ -1132,7 +1132,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    // 当前生效空间就是每个请求 X-Tenant-ID 指向的空间，auth store 里已有，
+    // 当前生效组织就是每个请求 X-Tenant-ID 指向的组织，auth store 里已有，
     // 不必再为拿一个 id 打一次 /auth/me。
     await loadAgents()
     const activeTenantId = authStore.effectiveTenantId

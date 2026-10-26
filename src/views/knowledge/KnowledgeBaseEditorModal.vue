@@ -1933,7 +1933,7 @@ watch(() => props.visible, async (newVal) => {
       currentSection.value = uiStore.kbEditorInitialSection
     }
     
-    // 加载模型列表与空间默认存储引擎（创建 KB 时即使用，不依赖是否打开「存储引擎」Tab）
+    // 加载模型列表与组织默认存储引擎（创建 KB 时即使用，不依赖是否打开「存储引擎」Tab）
     await Promise.all([loadAllModels(), loadTenantDefaultStorageProvider()])
 
     if (generation !== kbEditorLoadGeneration || !props.visible) return
@@ -1942,7 +1942,7 @@ watch(() => props.visible, async (newVal) => {
     if (props.mode === 'edit' && targetKbId) {
       await loadKBData(targetKbId, generation)
     } else {
-      // 创建模式：初始化空表单，并预填空间默认存储引擎
+      // 创建模式：初始化空表单，并预填组织默认存储引擎
       formData.value = initFormData(props.initialType || 'document')
       formData.value.storageProvider = tenantDefaultStorageProvider.value
       hasFiles.value = false

@@ -115,7 +115,7 @@ const props = withDefaults(
     sessionId: string
     /** 当前会话选中的 agent（首次连接时按其配置自动创建沙箱）。 */
     agentId?: string
-    /** 共享智能体来源空间，缺省表示本空间自有 agent。 */
+    /** 共享智能体来源组织，缺省表示本组织自有 agent。 */
     agentSourceTenantId?: string | number | null
     /** 参考来源面板同开时整体左移，避免两块 fixed 面板重叠。 */
     shifted?: boolean

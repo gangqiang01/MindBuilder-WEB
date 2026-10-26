@@ -96,7 +96,7 @@ export interface RegisterResponse {
 // 处理；前端调用方按需读 / 默认值降级。
 export interface UserPreferences {
   browser_search_instructions?: string | null
-  // last_active_tenant_id 持久化「刷新 / 换设备 / 重新登录后回到上次的空间」
+  // last_active_tenant_id 持久化「刷新 / 换设备 / 重新登录后回到上次的组织」
   // 偏好；后端在 Login / RefreshToken 时校验 membership 有效后才会沿用，
   // 否则回退到 home 并清掉这个字段。传 0 给 PATCH 表示「清除偏好」。
   last_active_tenant_id?: number | null
@@ -165,7 +165,7 @@ export function userInfoFromApi(
   }
 }
 
-// 空间信息接口
+// 组织信息接口
 export interface TenantInfo {
   id: string
   name: string
@@ -298,7 +298,7 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
 }
 
 /**
- * Lite 版自动初始化（创建默认用户/空间 + 签发令牌）
+ * Lite 版自动初始化（创建默认用户/组织 + 签发令牌）
  */
 let autoSetupPromise: Promise<LoginResponse> | null = null
 
@@ -382,7 +382,7 @@ export async function updateMyPreferences(
 }
 
 /**
- * 获取当前空间信息
+ * 获取当前组织信息
  */
 export async function getCurrentTenant(): Promise<{ success: boolean; data?: TenantInfo; message?: string }> {
   try {

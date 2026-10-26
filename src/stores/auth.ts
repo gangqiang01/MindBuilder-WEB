@@ -13,7 +13,7 @@ import { useEditorResourcesStore } from '@/stores/editorResources'
 import { useOrganizationStore } from '@/stores/organization'
 import { createSequencedRefresh } from '@/stores/sequencedRefresh'
 
-/** 登出时丢弃 Pinia 内的空间级资源缓存，避免 SPA 重登复用上一账号数据。 */
+/** 登出时丢弃 Pinia 内的组织级资源缓存，避免 SPA 重登复用上一账号数据。 */
 function clearSessionResourceCaches() {
   useChatResourcesStore().invalidate()
   useEditorResourcesStore().invalidate()
@@ -182,7 +182,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const effectiveTenantId = computed(() => {
-    // 如果选择了其他空间，使用选择的空间ID，否则使用用户默认空间ID
+    // 如果选择了其他组织，使用选择的组织ID，否则使用用户默认组织ID
     return selectedTenantId.value || (tenant.value?.id ? Number(tenant.value.id) : null)
   })
 
@@ -340,7 +340,7 @@ export const useAuthStore = defineStore('auth', () => {
   // flows or revokes would leave the sidebar switcher stale until reload.
   //
   // 请求排序：refreshFromAuthMe 是「刷新」，结果必须来自本次调用之后发出的请求
-  // （接受邀请 / 建空间 / 改空间信息之后调用，不能吃到侧栏悬停早先发出的那次响应）；
+  // （接受邀请 / 建组织 / 改组织信息之后调用，不能吃到侧栏悬停早先发出的那次响应）；
   // ensureAuthMe 是「首屏共用」，有请求在飞行就直接复用。登出会作废飞行中的请求，
   // 迟到的响应不再把会话写回来。
   // 本次会话是否已经用 /auth/me 校准过。登录响应 / 自动初始化只写入登录时的快照，
@@ -407,7 +407,7 @@ export const useAuthStore = defineStore('auth', () => {
     return true
   }
 
-  // 用 token 加入空间并刷新成员关系、切到新空间。token 无效时返回 ok:false（不抛异常），
+  // 用 token 加入组织并刷新成员关系、切到新组织。token 无效时返回 ok:false（不抛异常），
   // 提示与跳转交给调用方（store 不碰 router）。
   const acceptInvitationByTokenAndRefresh = async (
     token: string,
@@ -420,7 +420,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       const tenantId = resp.data.membership.tenant_id
       const tenantName = resp.data.tenant_name
-      // 刷新成员关系，并切到刚加入的空间。
+      // 刷新成员关系，并切到刚加入的组织。
       await refreshFromAuthMe()
       setSelectedTenant(tenantId, tenantName ?? null)
       return { ok: true, tenantId, tenantName }

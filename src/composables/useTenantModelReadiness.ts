@@ -3,7 +3,7 @@ import { useChatResourcesStore } from '@/stores/chatResources'
 import { evaluateTenantModelReadiness } from '@/utils/tenantModelReadiness'
 
 /**
- * 当前空间是否已配置好创建知识库 / 智能体所需的模型。
+ * 当前组织是否已配置好创建知识库 / 智能体所需的模型。
  *
  * 直接从 chatResources 的模型快照推导：设置页增删模型后会 `replaceModels`，
  * 这里的 computed 随之更新，不需要再监听「设置弹窗关闭」之类的间接信号去重拉。

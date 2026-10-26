@@ -114,7 +114,7 @@ export type SandboxTerminalSession = {
 
 /**
  * 三个参数都必须是活的 ref（`toRef(props, …)`），不能是 `ref(props.x)` 那样的
- * 快照：每次 openSocket 都会重读它们，用户切换 agent（含共享来源空间）后的
+ * 快照：每次 openSocket 都会重读它们，用户切换 agent（含共享来源组织）后的
  * 下一次连接才能按新 agent 的沙箱配置去创建沙箱。
  */
 export function useSandboxTerminal(

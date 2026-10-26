@@ -94,8 +94,8 @@
               <t-icon class="agent-section-toggle"
                 :name="isAgentSectionCollapsed('builtin') ? 'chevron-right' : 'chevron-down'" size="14px" />
             </div>
-            <!-- 我创建的：当前 agent 是本空间 + 非内置 + 我亲手创建，且前一张
-                 要么不存在、要么不是本空间、要么是内置（builtin → mine 过渡）、
+            <!-- 我创建的：当前 agent 是本组织 + 非内置 + 我亲手创建，且前一张
+                 要么不存在、要么不是本组织、要么是内置（builtin → mine 过渡）、
                  要么是同事创建。与 KB 列表对齐，Lite 隐藏该分组标题。 -->
             <div v-if="!authStore.isLiteMode && agent.isMine
               && !agent.is_builtin
@@ -113,7 +113,7 @@
               <t-icon class="agent-section-toggle"
                 :name="isAgentSectionCollapsed('mine') ? 'chevron-right' : 'chevron-down'" size="14px" />
             </div>
-            <!-- 本空间 · 仅查看 / 其他成员：本空间里非内置且非我创建的同事 agent。 -->
+            <!-- 本组织 · 仅查看 / 其他成员：本组织里非内置且非我创建的同事 agent。 -->
             <div v-if="agent.isMine
               && !agent.is_builtin
               && !isMyAgent(agent)
@@ -275,7 +275,7 @@
                     </t-tooltip>
                   </div>
                 </div>
-                <!-- 右下角：内置 / 来源徽章 / 空间图标+名称 -->
+                <!-- 右下角：内置 / 来源徽章 / 组织图标+名称 -->
                 <div v-if="!agent.isMine" class="card-bottom-source">
                   <t-icon name="usergroup" class="org-icon" size="14px" aria-hidden="true" />
                   <span class="org-source-text">{{ agent.org_name }}</span>
@@ -321,7 +321,7 @@
               <t-icon class="agent-section-toggle"
                 :name="isAgentSectionCollapsed('mine') ? 'chevron-right' : 'chevron-down'" size="14px" />
             </div>
-            <!-- 本空间 · 仅查看 / 其他成员：非内置且非我创建的同事 agent -->
+            <!-- 本组织 · 仅查看 / 其他成员：非内置且非我创建的同事 agent -->
             <div v-if="!agent.is_builtin
               && !isMyAgent(agent)
               && (index === 0
@@ -440,7 +440,7 @@
                     </t-tooltip>
                   </div>
                 </div>
-                <!-- 右下角：内置 / 来源徽章（我创建 / 同空间其他成员） -->
+                <!-- 右下角：内置 / 来源徽章（我创建 / 同组织其他成员） -->
                 <div v-if="showAgentBuiltinBadge(agent)" class="builtin-badge">
                   <t-icon name="lock-on" size="12px" />
                   <span>{{ $t('agent.builtin') }}</span>
@@ -452,13 +452,13 @@
           </template>
         </div>
 
-        <!-- 按空间筛选：该空间内全部智能体（含我共享的） -->
+        <!-- 按组织筛选：该组织内全部智能体（含我共享的） -->
         <div v-if="spaceSelectionOrgId && spaceAgentsLoading" class="agent-list-main-loading">
           <t-loading size="medium" text="" />
         </div>
         <div v-else-if="spaceSelectionOrgId && sortedSpaceAgentsList.length > 0" class="agent-card-wrap">
           <template v-for="(shared, index) in sortedSpaceAgentsList" :key="'shared-' + shared.share_id">
-            <!-- 我共享的：当前用户共享进本空间的智能体，只在首条 is_mine 上挂标题 -->
+            <!-- 我共享的：当前用户共享进本组织的智能体，只在首条 is_mine 上挂标题 -->
             <div v-if="shared.is_mine && index === 0" class="agent-section-header"
               role="button" tabindex="0" :aria-expanded="!isAgentSectionCollapsed('sharedByMe')" @click="toggleAgentSection('sharedByMe')"
               @keydown.enter.prevent="toggleAgentSection('sharedByMe')"
@@ -638,7 +638,7 @@
             <span>{{ $t('agent.createAgent') }}</span>
           </t-button>
         </EmptyState>
-        <!-- 空状态：空间下 -->
+        <!-- 空状态：组织下 -->
         <EmptyState v-if="!keyword.trim() && spaceSelectionOrgId && !spaceAgentsLoading && spaceAgentsList.length === 0" :title="$t('agent.empty.sharedTitle')"
           :description="$t('agent.empty.sharedDescription')">
           <template #icon><ResourceIcon type="agent" :size="32" /></template>
@@ -777,7 +777,7 @@ const selectedResourceSort = ref<ResourceSortValue>(DEFAULT_RESOURCE_SORT)
 
 interface AgentWithUI extends CustomAgent {
   showMore?: boolean
-  /** 当前空间在对话下拉中停用（仅影响本空间） */
+  /** 当前组织在对话下拉中停用（仅影响本组织） */
   disabled_by_me?: boolean
 }
 
@@ -812,8 +812,8 @@ const sortDisplayAgents = (items: readonly DisplayAgent[]) => sortResourcesWithi
   flatAgentSortAccessors,
 )
 
-// 左侧空间选择：默认根据当前角色决定。
-// 与 KnowledgeBaseList 同款逻辑：Viewer 在当前空间里通常没有自建智能体，
+// 左侧组织选择：默认根据当前角色决定。
+// 与 KnowledgeBaseList 同款逻辑：Viewer 在当前组织里通常没有自建智能体，
 // 默认落到 "all" 才能看到内置 + 共享给我的；Contributor 以上仍默认 "mine"。
 // State synced to `?scope=` so links are shareable. The "mine" value is
 // retained for back-compat with existing links; its display label is
@@ -846,12 +846,12 @@ const spaceSelectionOrgId = computed(() => {
   return !!s && !RESERVED_SCOPES.has(s)
 })
 
-// 空间视角：该空间内全部智能体（含我共享的），选中空间时请求新接口
+// 组织视角：该组织内全部智能体（含我共享的），选中组织时请求新接口
 const spaceAgentsList = ref<OrganizationSharedAgentItem[]>([])
 const spaceAgentsLoading = ref(false)
 const spaceAgentCountByOrg = ref<Record<string, number>>({})
 
-// 各空间下的共享智能体数量（用于侧栏展示）：优先用接口返回的该空间总数
+// 各组织下的共享智能体数量（用于侧栏展示）：优先用接口返回的该组织总数
 const sharedCountByOrg = computed<Record<string, number>>(() => {
   const map: Record<string, number> = {}
   sharedAgents.value.forEach(s => {
@@ -933,7 +933,7 @@ const unsearchedFilteredAgents = computed<DisplayAgent[]>(() => {
   }
   if (spaceSelection.value !== 'all') return []
   const list: DisplayAgent[] = []
-  // 本空间内的 agent 拆成 内置 → 我创建 → 同事创建 三段。
+  // 本组织内的 agent 拆成 内置 → 我创建 → 同事创建 三段。
   // 内置（is_builtin=true）和"个人所有权"是两个维度的概念，置顶为单独
   // 一段；它们的 created_by 始终为空，跟在「同事/无创建者」桶里反而让
   // tenantOthers 段同时混入"系统内置 + 历史无 owner 的自定义"两类，
@@ -974,7 +974,7 @@ const unsearchedFilteredAgents = computed<DisplayAgent[]>(() => {
 })
 const filteredAgents = computed(() => unsearchedFilteredAgents.value.filter(item => matchesResourceQuery(item, keyword.value)))
 
-// 「工作空间」固定保持“内置 → 我创建 → 同事创建”，用户选择只影响组内顺序。
+// 「组织」固定保持“内置 → 我创建 → 同事创建”，用户选择只影响组内顺序。
 const unsearchedSortedMineAgents = computed(() => {
   return sortResourcesWithinGroups(
     agents.value,
@@ -986,7 +986,7 @@ const unsearchedSortedMineAgents = computed(() => {
 })
 const sortedMineAgents = computed(() => unsearchedSortedMineAgents.value.filter(item => matchesResourceQuery(item, keyword.value)))
 
-// 空间视角固定保持“我共享的 → 可编辑 → 仅查看”，用户选择只影响组内顺序。
+// 组织视角固定保持“我共享的 → 可编辑 → 仅查看”，用户选择只影响组内顺序。
 const unsearchedSortedSpaceAgentsList = computed(() => {
   return sortResourcesWithinGroups(
     spaceAgentsList.value,
@@ -1070,7 +1070,7 @@ const fetchList = (force = false) => {
     orgStore.fetchSharedAgents({ force }),
   ]).finally(() => { loading.value = false }).then(() => {
     void checkAndOpenEditModal()
-    // 各空间智能体数量已由 GET /organizations 的 resource_counts 带回，存于 orgStore.resourceCounts
+    // 各组织智能体数量已由 GET /organizations 的 resource_counts 带回，存于 orgStore.resourceCounts
     const counts = orgStore.resourceCounts?.agents?.by_organization
     if (counts) spaceAgentCountByOrg.value = { ...counts }
   })
@@ -1163,7 +1163,7 @@ const handleOpenAgentEditor = (event: CustomEvent) => {
   }
 }
 
-// 选中空间时请求该空间内全部智能体（含我共享的）
+// 选中组织时请求该组织内全部智能体（含我共享的）
 watch(spaceSelection, (val) => {
   if (val === 'all' || val === 'mine' || !val) {
     spaceAgentsList.value = []
@@ -1224,7 +1224,7 @@ function openSharedAgentDetail(shared: SharedAgentInfo) {
   sharedDetailVisible.value = true
 }
 
-/** 空间视角下点击卡片：我共享的进编辑，他人共享的打开详情抽屉 */
+/** 组织视角下点击卡片：我共享的进编辑，他人共享的打开详情抽屉 */
 function handleSpaceAgentCardClick(shared: OrganizationSharedAgentItem) {
   if (shared.is_mine && shared.agent) {
     handleEdit({ ...shared.agent, showMore: false, disabled_by_me: shared.disabled_by_me } as AgentWithUI)
@@ -1297,7 +1297,7 @@ function canManageAgent(agent: AgentWithUI): boolean {
   return authStore.hasRole('admin')
 }
 
-// isMyAgent 仅用于卡片来源徽章在「我创建」与「同空间其他成员创建」之间切换。
+// isMyAgent 仅用于卡片来源徽章在「我创建」与「同组织其他成员创建」之间切换。
 // 跟 canManageAgent 区别：管理权限有 admin 兜底；徽章纯粹按 created_by 匹配。
 // 内建 agent（created_by=""）也归到非 mine 一档，由模板上的 builtin 分支
 // 提前拦截，不会落到 ResourceOriginBadge。
@@ -1306,8 +1306,8 @@ function isMyAgent(agent: { created_by?: string }): boolean {
   return !!(agent.created_by && userId && agent.created_by === userId)
 }
 
-// agentOriginVariant 跟 kbOriginVariant 对齐：右下角徽章不再重复空间名
-// （顶部 TenantSelector 已经标了空间身份），所有角色都用 creator 变体。
+// agentOriginVariant 跟 kbOriginVariant 对齐：右下角徽章不再重复组织名
+// （顶部 TenantSelector 已经标了组织身份），所有角色都用 creator 变体。
 // 内建 agent 走 v-else 前的 builtin 分支，到不了这里。
 function agentOriginVariant(agent: { created_by?: string }): 'mine' | 'creator' {
   return isMyAgent(agent) ? 'mine' : 'creator'
@@ -1336,10 +1336,10 @@ const AGENT_EDITABLE_PERMS = new Set(['admin', 'editor'])
 function isSharedAgentEditable(perm: string | undefined): boolean {
   return !!perm && AGENT_EDITABLE_PERMS.has(perm)
 }
-// 同空间、非当前用户创建的 Agent 分组标题。
-// contributor / viewer 在本空间里对这些 Agent 没有写权限，所以打"仅查看"；
-// admin / owner 对整个空间都有编辑权限，"仅查看"反而误导，统一改成
-// "本空间 · 其他成员"——按所有权而非权限来标注。
+// 同组织、非当前用户创建的 Agent 分组标题。
+// contributor / viewer 在本组织里对这些 Agent 没有写权限，所以打"仅查看"；
+// admin / owner 对整个组织都有编辑权限，"仅查看"反而误导，统一改成
+// "本组织 · 其他成员"——按所有权而非权限来标注。
 const tenantSectionLabelKey = computed(() =>
   authStore.hasRole('admin')
     ? 'agent.sections.tenantOthers'
@@ -1368,23 +1368,23 @@ const toggleAgentSection = (key: AgentSectionKey) => {
   collapsedAgentSections.value = next
 }
 // 根据 agent 数据形态判分组：filteredAgents 元素带 isMine；sortedMineAgents
-// 是原始 agent（永远当作本空间）；sortedSpaceAgentsList 用 is_mine。
+// 是原始 agent（永远当作本组织）；sortedSpaceAgentsList 用 is_mine。
 //
 // 当前用户自己创建的 agent 在模板里**没有**独立分组标题（不像 KB 那边有
 // "我创建的"段），所以这里返回 null——折叠任何分组都不会影响到它们。
 const agentSectionOf = (item: any): AgentSectionKey | null => {
-  // 内置 agent（is_builtin=true）单独成段，置顶展示——它们是空间共有的
+  // 内置 agent（is_builtin=true）单独成段，置顶展示——它们是组织共有的
   // 系统资源，跟"我 / 同事 / 共享"几个所有权分类不在同一维度。判定要早于
   // shared 那一档，因为 filteredAgents 里的 shared 条目也可能携带 is_builtin
   // （理论上不会，但保守一些）。
   if (item?.is_builtin === true) return 'builtin'
-  // 跨空间 shared 条目（filteredAgents 拆出来的 isMine=false / 空间视图的
+  // 跨组织 shared 条目（filteredAgents 拆出来的 isMine=false / 组织视图的
   // sortedSpaceAgentsList 用 is_mine=false）一律按 permission 分到
   // sharedEditable / sharedReadonly。
   if (item?.isMine === false || item?.is_mine === false) {
     return isSharedAgentEditable(item?.permission) ? 'sharedEditable' : 'sharedReadonly'
   }
-  // 本空间内：我亲手创建 → 'mine'；同事 / 非内置但无 created_by → 'tenantOthers'。
+  // 本组织内：我亲手创建 → 'mine'；同事 / 非内置但无 created_by → 'tenantOthers'。
   return isMyAgent(item as AgentWithUI) ? 'mine' : 'tenantOthers'
 }
 const isAgentRowHidden = (item: any): boolean => {
@@ -1392,8 +1392,8 @@ const isAgentRowHidden = (item: any): boolean => {
   return key !== null && isAgentSectionCollapsed(key)
 }
 
-// 空间筛选视图（sortedSpaceAgentsList）的条目结构和 filteredAgents 不同：
-// is_mine=true 表示「我共享给这个空间」，需要独立成段（避免和首页的"我创建的"
+// 组织筛选视图（sortedSpaceAgentsList）的条目结构和 filteredAgents 不同：
+// is_mine=true 表示「我共享给这个组织」，需要独立成段（避免和首页的"我创建的"
 // 共用一个折叠状态）。is_mine=false 仍按 permission 走 sharedEditable / Readonly。
 const spaceAgentSectionOf = (shared: any): AgentSectionKey => {
   if (shared?.is_mine) return 'sharedByMe'
@@ -1462,7 +1462,7 @@ const handleCopy = (agent: AgentWithUI) => {
   })
 }
 
-/** 切换「我的」智能体停用状态（仅影响当前空间对话下拉显示） */
+/** 切换「我的」智能体停用状态（仅影响当前组织对话下拉显示） */
 const handleToggleDisabled = (agent: AgentWithUI) => {
   openMoreAgentId.value = null
   const nextDisabled = !agent.disabled_by_me

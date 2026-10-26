@@ -206,7 +206,7 @@ const isCustomAgent = computed(() => {
 // 判断是否有智能体配置（包括内置智能体）
 const hasAgentConfig = computed(() => {
   const agent = selectedAgent.value;
-  // 共享智能体的 config 来自源空间，直接使用 agent.config，避免被本空间同 ID 的 builtin 覆盖
+  // 共享智能体的 config 来自源组织，直接使用 agent.config，避免被本组织同 ID 的 builtin 覆盖
   const sourceTenantId = settingsStore.selectedAgentSourceTenantId;
   if (agent?.is_builtin && !sourceTenantId) {
     const builtinAgent = agents.value.find(a => a.id === agent.id);
@@ -266,7 +266,7 @@ watch([selectedAgentId, agentKnowledgeBases, agentKBSelectionMode], ([newAgentId
   }
 }, { immediate: true });
 
-// 共享智能体时预取该智能体知识库列表，使已选标签在未打开 @ 时也能显示共享空间角标
+// 共享智能体时预取该智能体知识库列表，使已选标签在未打开 @ 时也能显示共享组织角标
 watch([selectedAgentId, () => settingsStore.selectedAgentSourceTenantId], async ([agentId, sourceTenantId]) => {
   if (sourceTenantId && agentId) {
     try {
@@ -502,7 +502,7 @@ const mentionLoading = ref(false);
 const mentionOffset = ref(0);
 const MENTION_PAGE_SIZE = 20;
 
-// 共享智能体时用于标识「共享空间」的展示名（组织名或共享者），供 @ 列表与已选标签显示角标
+// 共享智能体时用于标识「共享组织」的展示名（组织名或共享者），供 @ 列表与已选标签显示角标
 const sharedAgentOrgName = computed(() => {
   const sourceTenantId = settingsStore.selectedAgentSourceTenantId;
   const agentId = selectedAgentId.value;
@@ -576,7 +576,7 @@ const selectedTags = computed(() => settingsStore.settings.selectedTags || []);
 const selectedMCPServiceIds = computed(() => settingsStore.settings.selectedMCPServices || []);
 const selectedSkillNames = computed(() => settingsStore.settings.selectedSkills || []);
 
-// 已就绪的知识库（来自空间级缓存）
+// 已就绪的知识库（来自组织级缓存）
 const knowledgeBases = computed(() => chatResources.validKnowledgeBases);
 const fileList = ref<Array<{ id: string; name: string }>>([]);
 
@@ -597,7 +597,7 @@ const selectedKbs = computed(() => {
   const ownIds = new Set(own.map(kb => kb.id));
   const sharedOnly = sharedMapped.filter((kb: any) => !ownIds.has(kb.id));
   const sharedOnlyIds = new Set(sharedOnly.map((kb: any) => kb.id));
-  // 共享智能体下的知识库：从 sharedAgentKbList 中取在选中列表里的，并打上共享空间标识
+  // 共享智能体下的知识库：从 sharedAgentKbList 中取在选中列表里的，并打上共享组织标识
   const agentOrg = sharedAgentOrgName.value;
   const sharedFromAgent = (sharedAgentKbList.value || []).filter(kb => selectedKbIds.value.includes(kb.id) && !ownIds.has(kb.id) && !sharedOnlyIds.has(kb.id)).map(kb => ({
     id: kb.id,
@@ -929,9 +929,9 @@ const loadAgents = async (force = false) => {
   }
 };
 
-// 默认选中的 builtin（builtin-quick-answer）也可能被当前空间管理员停用。
-// 列表加载完后做一次纠偏：若当前选中的是本空间停用的 agent（仅限「我的/builtin」，
-// 共享智能体由源空间决定，本地停用列表不适用），按 智能推理 → 快速问答 →
+// 默认选中的 builtin（builtin-quick-answer）也可能被当前组织管理员停用。
+// 列表加载完后做一次纠偏：若当前选中的是本组织停用的 agent（仅限「我的/builtin」，
+// 共享智能体由源组织决定，本地停用列表不适用），按 智能推理 → 快速问答 →
 // 第一个可用 的顺序兜底切换。全部都被停用时保持原选择不动（极端场景，UI 仍会
 // 在 enabledAgents 过滤后显示空，由用户在智能体页恢复任意一个）。
 const ensureSelectedAgentNotDisabled = () => {
@@ -960,7 +960,7 @@ const ensureSelectedAgentNotDisabled = () => {
   }
 }
 
-// 对话下拉中展示的「我的」智能体（排除当前空间已停用的）
+// 对话下拉中展示的「我的」智能体（排除当前组织已停用的）
 const enabledAgents = computed(() =>
   agents.value.filter(a => !disabledOwnAgentIds.value.includes(a.id))
 );
@@ -1045,7 +1045,7 @@ const ensureModelSelection = () => {
 
 // 智能体身份或其数据到位时，把对话模型同步到智能体配置的 model_id。
 // 修复场景：导航离开再返回时，initChatModelSelection 会用 localStorage 的 lastPick
-// 覆盖共享智能体绑定的源空间 model_id，UI 显示「未配置」——此时需要拉回 agent 模型。
+// 覆盖共享智能体绑定的源组织 model_id，UI 显示「未配置」——此时需要拉回 agent 模型。
 // 但若用户在本页手动改过模型（lastPick 与 agent 默认不同且当前选中即为 lastPick），
 // 则保留用户选择，避免 creatChat → chat 跳转后把模型 B 冲回智能体默认 A。
 watch(
@@ -1163,7 +1163,7 @@ watch([selectedModel, reasoningLevels, () => settingsStore.reasoningEffortOverri
   }
 }, { immediate: true, flush: 'sync' });
 
-// 模型展示名：本空间列表中有则用名称；若为共享智能体且其 model_id 不在本空间列表中则显示“共享智能体配置的模型”
+// 模型展示名：本组织列表中有则用名称；若为共享智能体且其 model_id 不在本组织列表中则显示“共享智能体配置的模型”
 const selectedModelDisplayName = computed(() => {
   if (composerModel.value) return modelDisplayName(composerModel.value);
   if (!selectedModelId.value || props.embeddedMode) return t('input.notConfigured');
@@ -1273,7 +1273,7 @@ const updateModelDropdownPosition = () => {
       // 有足够空间显示优选高度
       actualHeight = preferredDropdownHeight;
     } else {
-      // 空间不够，使用可用空间（但不小于最小高度）
+      // 组织不够，使用可用空间（但不小于最小高度）
       actualHeight = Math.max(minDropdownHeight, availableHeight);
     }
     shouldOpenBelow = false;
@@ -1328,7 +1328,7 @@ const loadMentionItems = async (q: string, resetIndex = true, append = false) =>
     mentionOffset.value = 0;
   }
 
-  // 根据智能体的 kb_selection_mode 过滤知识库；选中共享智能体时使用该空间下的知识库，否则使用本空间 + 共享给自己的
+  // 根据智能体的 kb_selection_mode 过滤知识库；选中共享智能体时使用该组织下的知识库，否则使用本组织 + 共享给自己的
   let kbItems: any[] = [];
   let tagItems: MentionItem[] = [];
   let mcpItems: MentionItem[] = [];
@@ -1338,7 +1338,7 @@ const loadMentionItems = async (q: string, resetIndex = true, append = false) =>
     const sourceTenantId = settingsStore.selectedAgentSourceTenantId;
     const agentId = selectedAgentId.value;
     if (sourceTenantId && agentId) {
-      // 共享智能体：按 agent_id 拉取该智能体配置的知识库范围（后端从共享关系解析空间）
+      // 共享智能体：按 agent_id 拉取该智能体配置的知识库范围（后端从共享关系解析组织）
       try {
         const list = await chatResources.ensureAgentKnowledgeBases(agentId, sourceTenantId);
         const orgLabel = sharedAgentOrgName.value || '';

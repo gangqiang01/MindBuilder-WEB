@@ -41,7 +41,7 @@ const props = defineProps<{
     sessionId: string;
     /** 当前会话选中的 agent：首次连接时后端按其配置自动创建沙箱。 */
     agentId?: string;
-    /** 共享智能体的来源空间，与聊天请求的 agent_source_tenant_id 一致。 */
+    /** 共享智能体的来源组织，与聊天请求的 agent_source_tenant_id 一致。 */
     agentSourceTenantId?: string | number | null;
 }>();
 

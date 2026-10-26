@@ -33,7 +33,7 @@ export function isAgentWebSearchReady(
   return resolveAgentWebSearchProviderId(config, providers) !== null;
 }
 
-/** 空间级默认搜索引擎是否可用（无智能体约束时） */
+/** 组织级默认搜索引擎是否可用（无智能体约束时） */
 export function isTenantWebSearchReady(providers: WebSearchProviderEntity[]): boolean {
   return providers.some((p) => p.is_default);
 }

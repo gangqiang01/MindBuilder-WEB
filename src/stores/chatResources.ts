@@ -24,7 +24,7 @@ function isKbModelReady(kb: any): boolean {
 }
 
 /**
- * 空间级资源（知识库 / 智能体 / 模型 / 联网搜索 / 沙箱后端）的共享快照。
+ * 组织级资源（知识库 / 智能体 / 模型 / 联网搜索 / 沙箱后端）的共享快照。
  *
  * 没有 TTL：每次 `ensureX()` 都会发请求（同一时刻只有一个在飞行，挂载突发共用它），
  * 写操作之后由调用方 `ensureX(true)`、`replaceModels()` 或 `invalidate()` 显式刷新。
@@ -251,7 +251,7 @@ export const useChatResourcesStore = defineStore('chatResources', () => {
     return sandboxConfigsResource.ensure(force)
   }
 
-  /** 并行预取对话输入栏及列表页常用的空间级资源 */
+  /** 并行预取对话输入栏及列表页常用的组织级资源 */
   async function prefetchChatInput(force = false): Promise<void> {
     const orgStore = useOrganizationStore()
     await Promise.all([

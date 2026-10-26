@@ -218,7 +218,7 @@
             <!-- 步骤1/2/Loading 共用高度过渡容器 -->
             <div class="invite-preview-body-wrap" :style="inviteBodyWrapStyle">
               <div ref="inviteBodyInnerRef" class="invite-body-inner">
-                <!-- 步骤1：输入邀请码 或 搜索空间 -->
+                <!-- 步骤1：输入邀请码 或 搜索组织 -->
                 <div v-if="!invitePreviewLoading && !invitePreviewData"
                   class="invite-preview-body invite-preview-input">
                   <div class="join-mode-pills">
@@ -267,7 +267,7 @@
                       </div>
                     </div>
 
-                    <!-- 搜索可加入空间 -->
+                    <!-- 搜索可加入组织 -->
                     <div v-else-if="joinStep === 'search'" class="join-tab-content join-tab-search">
                       <div class="join-form-item join-form-item--compact">
                         <label class="join-form-label">{{ $t('organization.join.searchSpaces') }}</label>
@@ -332,7 +332,7 @@
                   <span class="invite-preview-loading-text">{{ $t('organization.invite.loading') }}</span>
                 </div>
 
-                <!-- 步骤2：空间详情预览 -->
+                <!-- 步骤2：组织详情预览 -->
                 <div v-else-if="invitePreviewData" class="invite-preview-body invite-preview-body-preview">
                   <div class="preview-space-hero">
                     <div class="preview-space-avatar-wrap">
@@ -470,7 +470,7 @@ const organizationSortAccessors: ResourceSortAccessors<OrgWithUI> = {
 }
 
 // 后端 /api/v1/organizations 下的写操作（创建、加入、申请加入、邀请、审批、改设置等）
-// 在路由层都要求当前空间角色 ≥ admin。前端只用于 UI 渲染，安全边界仍在服务端。
+// 在路由层都要求当前组织角色 ≥ admin。前端只用于 UI 渲染，安全边界仍在服务端。
 const canManageOrg = computed(
   () => authStore.hasRole('admin') || authStore.canAccessAllTenants
 )
@@ -500,7 +500,7 @@ const joinInputCode = ref('') // 从菜单打开时输入的邀请码
 const invitePreviewData = ref<OrganizationPreview | null>(null)
 const invitePreviewError = ref('')
 
-// 加入方式：邀请码 / 搜索空间
+// 加入方式：邀请码 / 搜索组织
 const joinStep = ref<'invite' | 'search'>('invite')
 const searchQuery = ref('')
 const searchableList = computed(() => orgStore.searchableOrganizations)
@@ -512,7 +512,7 @@ const organizationMenuVisibility = reactive<Record<string, boolean>>({})
 // Tab 内容容器 ref，用于高度过渡
 const tabContentWrapperRef = ref<HTMLElement | null>(null)
 
-// 加入弹框整体 body 高度过渡（输入邀请码 / 搜索空间 / 查看详情）
+// 加入弹框整体 body 高度过渡（输入邀请码 / 搜索组织 / 查看详情）
 const inviteBodyInnerRef = ref<HTMLElement | null>(null)
 const inviteBodyHeightPx = ref<number>(0)
 let inviteBodyResizeObserver: ResizeObserver | null = null
@@ -523,7 +523,7 @@ const inviteBodyWrapStyle = computed(() => {
   return { maxHeight: `${px}px`, minHeight: `${px}px` }
 })
 
-// 预览中空间 ID 的简短显示（前 8 位 + …）
+// 预览中组织 ID 的简短显示（前 8 位 + …）
 const shortPreviewSpaceId = computed(() => {
   const id = invitePreviewData.value?.id
   if (!id) return ''
@@ -947,7 +947,7 @@ function handleSearchTabClick() {
   void doSearchSearchable()
 }
 
-// 搜索可加入空间
+// 搜索可加入组织
 async function doSearchSearchable() {
   const currentQuery = searchQuery.value.trim()
 
@@ -966,12 +966,12 @@ function doSearchSearchableDebounced() {
   searchDebounceTimer = setTimeout(() => doSearchSearchable(), 300)
 }
 
-// 空间是否已满（超过成员上限无法加入）
+// 组织是否已满（超过成员上限无法加入）
 function isOrgFull(org: SearchableOrganizationItem): boolean {
   return org.member_limit > 0 && org.member_count >= org.member_limit
 }
 
-// 预览搜索到的空间（转换为预览格式）
+// 预览搜索到的组织（转换为预览格式）
 function previewSearchableOrg(org: SearchableOrganizationItem) {
   // 将 SearchableOrganizationItem 转换为 OrganizationPreview 格式
   invitePreviewData.value = {
@@ -990,7 +990,7 @@ function previewSearchableOrg(org: SearchableOrganizationItem) {
   inviteCode.value = ''
 }
 
-// 从预览弹框中查看空间（已是成员时；不关闭加入弹窗，关闭设置后仍回到搜索）
+// 从预览弹框中查看组织（已是成员时；不关闭加入弹窗，关闭设置后仍回到搜索）
 function viewOrganizationFromPreview() {
   if (!invitePreviewData.value) return
   settingsOrgId.value = invitePreviewData.value.id
@@ -998,12 +998,12 @@ function viewOrganizationFromPreview() {
   showSettingsModal.value = true
 }
 
-// 复制预览中的空间 ID
+// 复制预览中的组织 ID
 async function copyPreviewSpaceId() {
   await copyWithToast(invitePreviewData.value?.id, 'common.copied')
 }
 
-// 从搜索列表加入空间（通过空间 ID，无需邀请码）- 在预览确认后调用
+// 从搜索列表加入组织（通过组织 ID，无需邀请码）- 在预览确认后调用
 async function joinBySearchOrg() {
   if (!invitePreviewData.value || invitePreviewData.value.is_already_member) return
   if (!canManageOrg.value) {
@@ -1056,7 +1056,7 @@ onMounted(async () => {
     await handleInvitePreview(code)
   }
 
-  // 检查 URL 中是否有 orgId，如果有则打开空间设置
+  // 检查 URL 中是否有 orgId，如果有则打开组织设置
   const orgId = route.query.orgId as string
   if (orgId) {
     settingsOrgId.value = orgId
@@ -1205,7 +1205,7 @@ watch(keyword, () => { collapsedOrgSections.value = new Set() })
   .resource-card-grid();
 }
 
-// 共享空间分组标题——与 KB / Agent 列表口径完全一致（图标 + 名称 + 数量 + 折叠 chevron）。
+// 共享组织分组标题——与 KB / Agent 列表口径完全一致（图标 + 名称 + 数量 + 折叠 chevron）。
 .org-section-header {
   .resource-section-header();
 }
@@ -1224,7 +1224,7 @@ watch(keyword, () => { collapsedOrgSections.value = new Set() })
   }
 }
 
-// 空间头像容器（SpaceAvatar 自带样式）
+// 组织头像容器（SpaceAvatar 自带样式）
 .org-avatar {
   display: flex;
   align-items: center;
@@ -1444,7 +1444,7 @@ watch(keyword, () => { collapsedOrgSections.value = new Set() })
   }
 }
 
-// 加入弹框 body 外层：高度过渡动画（输入邀请码 ↔ 搜索空间 ↔ 查看详情）
+// 加入弹框 body 外层：高度过渡动画（输入邀请码 ↔ 搜索组织 ↔ 查看详情）
 .invite-preview-body-wrap {
   flex: 0 0 auto;
   overflow: hidden;
@@ -1567,7 +1567,7 @@ watch(keyword, () => { collapsedOrgSections.value = new Set() })
   width: 100%;
 }
 
-// 搜索空间列表容器（与主列表一致：无外框，卡片间距）
+// 搜索组织列表容器（与主列表一致：无外框，卡片间距）
 .searchable-list-wrap {
   max-height: 320px;
   min-height: 120px;

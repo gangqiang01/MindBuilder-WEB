@@ -24,9 +24,9 @@ import { useAuthStore } from '@/stores/auth'
  *  - tenant      : owned by the current tenant but created by someone else
  *                  — label shows tenant name; use when context doesn't say
  *  - creator     : same data shape as `tenant`, but the surrounding section
- *                  header already names the tenant ("本空间 · 仅查看"), so
+ *                  header already names the tenant ("本组织 · 仅查看"), so
  *                  the badge only carries the creator name to avoid the
- *                  duplicated "本空间 / wizardchen's Workspace" pill on
+ *                  duplicated "本组织 / wizardchen's Workspace" pill on
  *                  every card. Falls back to the i18n label when the
  *                  creator name is unknown.
  *  - space       : reached through a cross-tenant space (organization)
@@ -80,7 +80,7 @@ const displayText = computed(() => {
       // resource lives, not a vague "tenant" label. Falls back to i18n.
       return authStore.currentTenantName || t('resourceOrigin.tenant')
     case 'creator':
-      // Section header already provides the「本空间」context, so we just
+      // Section header already provides the「本组织」context, so we just
       // show who created it. Fall back to a generic label when the user
       // can't be resolved (creator_name 缺失，例如已删除账号 / 老数据)。
       return props.creatorName || t('resourceOrigin.tenant')

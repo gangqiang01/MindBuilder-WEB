@@ -405,7 +405,7 @@ const handleOIDCLogin = async () => {
   }
 }
 
-// 用 token 加入空间并进入应用。会话此时已有效，故即便 token 失效也照常进入（避免困在登录页）。
+// 用 token 加入组织并进入应用。会话此时已有效，故即便 token 失效也照常进入（避免困在登录页）。
 const acceptAndEnter = async (token: string) => {
   loading.value = true
   try {
@@ -439,7 +439,7 @@ const handleLogin = async () => {
 
     if (response.success) {
       if (inviteToken.value) {
-        // 从邀请链接登录：持久化会话后兑换 token 并进入对应空间。
+        // 从邀请链接登录：持久化会话后兑换 token 并进入对应组织。
         await persistLoginResponse(response, true)
         await acceptAndEnter(inviteToken.value)
         return
@@ -550,7 +550,7 @@ onMounted(async () => {
       inviteLookupLoading.value = false
     }
 
-    // 2. 已登录则直接兑换 token 进入空间（三种模式通用）。
+    // 2. 已登录则直接兑换 token 进入组织（三种模式通用）。
     if (authStore.isLoggedIn && (await authStore.refreshFromAuthMe())) {
       await acceptAndEnter(tokenFromQuery)
       return

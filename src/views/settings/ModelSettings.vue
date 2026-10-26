@@ -563,7 +563,7 @@ const loadModels = async () => {
   try {
     const models = await listModels()
     allModels.value = models
-    // 设置页自己 listModels 之后立刻写回空间级缓存。否则对话输入栏 /
+    // 设置页自己 listModels 之后立刻写回组织级缓存。否则对话输入栏 /
     // 智能体编辑器会继续拿 60s TTL 里的旧 context_window，刷新页面才对。
     chatResources.replaceModels(models)
   } catch (error: any) {
@@ -995,7 +995,7 @@ useAssistantDataChange(() => { void loadModels() }, { areas: ['model'] })
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    // 为设置弹窗右上角的关闭按钮留出空间。
+    // 为设置弹窗右上角的关闭按钮留出组织。
     padding-right: 32px;
   }
 

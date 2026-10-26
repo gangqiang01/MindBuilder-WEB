@@ -79,7 +79,7 @@
               size="14px" />
           </div>
           <!-- 全部：我的知识库 + 共享给我的知识库。
-               「已置顶」分组由顶部 header 接管。其余分段（我创建 / 本空间 ·
+               「已置顶」分组由顶部 header 接管。其余分段（我创建 / 本组织 ·
                仅查看 / 共享给我）各自打自己的标题；原本的「其他」过渡标题
                在 per-user 置顶模型下已无意义，删除以免和具体子段标题叠加。 -->
           <template v-for="(kb, index) in filteredKnowledgeBases" :key="kb.id">
@@ -98,7 +98,7 @@
               <t-icon class="kb-section-toggle" :name="isKbSectionCollapsed('mine') ? 'chevron-right' : 'chevron-down'"
                 size="14px" />
             </div>
-            <!-- 本空间 · 仅查看：本空间里同事创建、对当前 contributor 不可编辑。
+            <!-- 本组织 · 仅查看：本组织里同事创建、对当前 contributor 不可编辑。
                  当前卡片必须是非置顶（否则归在「已置顶」），且前一张要么
                  不存在、要么是「共享给我」、要么是我创建、要么是置顶卡片
                  （置顶→非置顶的过渡同样要打这个标题）。 -->
@@ -368,7 +368,7 @@
               <t-icon class="kb-section-toggle" :name="isKbSectionCollapsed('mine') ? 'chevron-right' : 'chevron-down'"
                 size="14px" />
             </div>
-            <!-- 本空间 · 仅查看：当前非置顶的同事 KB，且前一张要么不存在、
+            <!-- 本组织 · 仅查看：当前非置顶的同事 KB，且前一张要么不存在、
                  要么是我创建、要么是置顶卡片（置顶→非置顶过渡）。 -->
             <div v-if="!isMyKb(kb)
               && !kb.is_pinned
@@ -495,16 +495,16 @@
           </template>
         </div>
 
-        <!-- 协作 / 共享给我 聚合视图已移除：共享 KB 走「全部」或具体空间下展示 -->
+        <!-- 协作 / 共享给我 聚合视图已移除：共享 KB 走「全部」或具体组织下展示 -->
 
-        <!-- 按空间筛选：该空间内全部知识库（含我共享的） -->
+        <!-- 按组织筛选：该组织内全部知识库（含我共享的） -->
         <div v-if="spaceSelectionOrgId && spaceKbsLoading" class="kb-list-main-loading">
           <t-loading size="medium" text="" />
         </div>
         <div v-else-if="spaceSelectionOrgId && sortedSpaceKbsList.length > 0" class="kb-card-wrap">
           <template v-for="(shared, index) in sortedSpaceKbsList"
             :key="'shared-' + (shared.share_id || `agent-${shared.knowledge_base?.id}-${shared.source_from_agent?.agent_id || ''}`)">
-            <!-- 我共享的：本空间下我自己创建并共享进来的条目，只在第一条 is_mine 上挂标题 -->
+            <!-- 我共享的：本组织下我自己创建并共享进来的条目，只在第一条 is_mine 上挂标题 -->
             <div v-if="shared.is_mine && index === 0" class="kb-section-header"
               role="button" tabindex="0" :aria-expanded="!isKbSectionCollapsed('sharedByMe')" @click="toggleKbSection('sharedByMe')"
               @keydown.enter.prevent="toggleKbSection('sharedByMe')"
@@ -594,7 +594,7 @@
           </template>
         </div>
 
-        <!-- 全部空状态：保留「新建知识库」CTA，因为是空间没有任何 KB 的真空场景 -->
+        <!-- 全部空状态：保留「新建知识库」CTA，因为是组织没有任何 KB 的真空场景 -->
         <EmptyState v-if="!keyword.trim() && spaceSelection === 'all' && filteredKnowledgeBases.length === 0 && !loading" :title="$t('knowledgeList.empty.title')"
           :description="$t('knowledgeList.empty.description')">
           <template #icon><ResourceIcon type="knowledge" :size="32" /></template>
@@ -625,7 +625,7 @@
           </t-button>
         </EmptyState>
 
-        <!-- 空间下知识库空状态 -->
+        <!-- 组织下知识库空状态 -->
         <EmptyState v-if="!keyword.trim() && spaceSelectionOrgId && !spaceKbsLoading && spaceKbsList.length === 0" :title="$t('knowledgeList.empty.sharedTitle')"
           :description="$t('knowledgeList.empty.sharedDescription')">
           <template #icon><ResourceIcon type="knowledge" :size="32" /></template>
@@ -758,8 +758,8 @@ const chatResources = useChatResourcesStore()
 const { t } = useI18n()
 const selectedResourceSort = ref<ResourceSortValue>(DEFAULT_RESOURCE_SORT)
 
-// 左侧空间选择：默认根据当前角色决定。
-// Viewer 在该空间里通常 0 KB owned，"我的"会显示空状态、又把共享 KB 藏起来，
+// 左侧组织选择：默认根据当前角色决定。
+// Viewer 在该组织里通常 0 KB owned，"我的"会显示空状态、又把共享 KB 藏起来，
 // 体验非常误导；所以 Viewer 默认落到 "all"（我的 + 共享给我都显示）。
 // Contributor 及以上一进来主要管理自己创建的 KB，仍默认 "mine"。
 //
@@ -840,7 +840,7 @@ const sharedKbs = computed<SharedKnowledgeBase[]>(() => orgStore.sharedKnowledge
 
 const allKnowledgeBases = computed(() => kbs.value.length + sharedKbs.value.length)
 
-// 当前选中的是空间 ID（非全部、非我的、非收藏/最近这类伪 scope）
+// 当前选中的是组织 ID（非全部、非我的、非收藏/最近这类伪 scope）
 // NB: keep the reserved-scope list in sync with ResourceListToolbar's
 // non-org buckets — otherwise a new pseudo-scope (e.g. "favorites")
 // falls through here and triggers the per-space code paths, which
@@ -851,11 +851,11 @@ const spaceSelectionOrgId = computed(() => {
   return !!s && !RESERVED_SCOPES.has(s)
 })
 
-// 空间视角：该空间内全部知识库（含我共享的），选中空间时请求新接口
+// 组织视角：该组织内全部知识库（含我共享的），选中组织时请求新接口
 const spaceKbsList = ref<OrganizationSharedKnowledgeBaseItem[]>([])
 const spaceKbsLoading = ref(false)
 
-// 「工作空间」固定保持“置顶 → 我创建 → 同事创建”，用户选择只影响组内顺序。
+// 「组织」固定保持“置顶 → 我创建 → 同事创建”，用户选择只影响组内顺序。
 const unsearchedSortedMineKbs = computed<KB[]>(() => {
   return sortResourcesWithinGroups(
     kbs.value,
@@ -867,7 +867,7 @@ const unsearchedSortedMineKbs = computed<KB[]>(() => {
 })
 const sortedMineKbs = computed(() => unsearchedSortedMineKbs.value.filter(item => matchesResourceQuery(item, keyword.value)))
 
-// 空间视角固定保持“我共享的 → 可编辑 → 仅查看”，用户选择只影响组内顺序。
+// 组织视角固定保持“我共享的 → 可编辑 → 仅查看”，用户选择只影响组内顺序。
 const unsearchedSortedSpaceKbsList = computed(() => {
   return sortResourcesWithinGroups(
     spaceKbsList.value,
@@ -882,7 +882,7 @@ const unsearchedSortedSpaceKbsList = computed(() => {
 const sortedSpaceKbsList = computed(() => unsearchedSortedSpaceKbsList.value.filter(item => matchesResourceQuery(item.knowledge_base, keyword.value)))
 const spaceCountByOrg = ref<Record<string, number>>({})
 
-// 各空间下的共享知识库数量（用于侧栏展示）：优先用接口返回的该空间总数，否则用「共享给我」数量
+// 各组织下的共享知识库数量（用于侧栏展示）：优先用接口返回的该组织总数，否则用「共享给我」数量
 const sharedCountByOrg = computed<Record<string, number>>(() => {
   const map: Record<string, number> = {}
   sharedKbs.value.forEach(s => {
@@ -974,18 +974,18 @@ const recentsList = computed(() => {
 })
 
 // 可编辑权限：editor / admin。viewer 进入「仅查看」组。
-// 用 share-level permission（不是空间角色）做判断——跨空间拿到 viewer 的，
-// 即便我在本空间是 owner 也确实改不动那个 KB；反过来跨空间拿到 editor 的，
-// 哪怕我在本空间是 contributor 也确实能改。
+// 用 share-level permission（不是组织角色）做判断——跨组织拿到 viewer 的，
+// 即便我在本组织是 owner 也确实改不动那个 KB；反过来跨组织拿到 editor 的，
+// 哪怕我在本组织是 contributor 也确实能改。
 const EDITABLE_PERMS = new Set(['admin', 'editor'])
 function isSharedKbEditable(perm: string | undefined): boolean {
   return !!perm && EDITABLE_PERMS.has(perm)
 }
 
-// 同空间、非当前用户创建的 KB 分组标题。
-// contributor / viewer 在本空间里对这些 KB 没有写权限，所以打"仅查看"；
-// admin / owner 反而对整个空间都有编辑权限，"仅查看"会反复误导他们以为
-// 自己改不了——这一段实际上是"工作空间里其他成员创建的 KB"，按所有权
+// 同组织、非当前用户创建的 KB 分组标题。
+// contributor / viewer 在本组织里对这些 KB 没有写权限，所以打"仅查看"；
+// admin / owner 反而对整个组织都有编辑权限，"仅查看"会反复误导他们以为
+// 自己改不了——这一段实际上是"组织里其他成员创建的 KB"，按所有权
 // 而非权限来标注更准确。
 const tenantSectionLabelKey = computed(() =>
   authStore.hasRole('admin')
@@ -993,7 +993,7 @@ const tenantSectionLabelKey = computed(() =>
     : 'knowledgeList.sections.tenantReadonly'
 )
 
-// 图标和上面的文案对齐：admin/owner 看到的是"本空间 · 其他成员"，按所有权
+// 图标和上面的文案对齐：admin/owner 看到的是"本组织 · 其他成员"，按所有权
 // 划分，配 usergroup（多人）更贴；contributor/viewer 看到的是"仅查看"，
 // 维持 browse（眼睛）传达"只能看不能改"的语义。
 const tenantSectionIconName = computed(() =>
@@ -1024,10 +1024,10 @@ const toggleKbSection = (key: KbSectionKey) => {
 //
 // 输入有两种形态：
 //   1. filteredKnowledgeBases 的元素，会显式带 `isMine` 标志（见
-//      filteredKnowledgeBases 里的 spread；跨空间 shared 拆给 isMine=false）。
+//      filteredKnowledgeBases 里的 spread；跨组织 shared 拆给 isMine=false）。
 //   2. sortedMineKbs 的元素就是原始 KB，无 isMine、也无 permission 字段。
-// 跨空间共享条目一定带 `permission`，本空间条目永远没有，所以"无 permission"
-// 是本空间的安全标识。综合：先看 isMine，再回退到 permission 是否存在。
+// 跨组织共享条目一定带 `permission`，本组织条目永远没有，所以"无 permission"
+// 是本组织的安全标识。综合：先看 isMine，再回退到 permission 是否存在。
 const kbSectionOf = (kb: any): KbSectionKey => {
   if (kb?.is_pinned) return 'pinned'
   const isOwnTenant = kb?.isMine === true || (kb?.isMine !== false && kb?.permission == null)
@@ -1035,7 +1035,7 @@ const kbSectionOf = (kb: any): KbSectionKey => {
   return isSharedKbEditable(kb?.permission) ? 'sharedEditable' : 'sharedReadonly'
 }
 
-// 空间筛选视图（sortedSpaceKbsList）的条目结构与上面不同：is_mine 直接标识
+// 组织筛选视图（sortedSpaceKbsList）的条目结构与上面不同：is_mine 直接标识
 // 「我共享出来的」，其余按 permission 走 sharedEditable / sharedReadonly。
 const spaceKbSectionOf = (shared: any): KbSectionKey => {
   if (shared?.is_mine) return 'sharedByMe'
@@ -1064,7 +1064,7 @@ const spaceKbSectionCounts = computed<Record<KbSectionKey, number>>(() => {
   return c
 })
 
-// 收藏、最近、全部和工作空间都使用同一排序选项，同时保持原有分组顺序。
+// 收藏、最近、全部和组织都使用同一排序选项，同时保持原有分组顺序。
 const unsearchedFilteredKnowledgeBases = computed(() => {
   if (spaceSelection.value === 'favorites') {
     return sortResourcesWithinGroups(
@@ -1144,13 +1144,13 @@ const fetchList = (force = false) => {
     orgStore.fetchSharedKnowledgeBases({ force }),
     orgStore.fetchOrganizations({ force }),
   ]).finally(() => { loading.value = false }).then(() => {
-    // 各空间知识库数量已由 GET /organizations 的 resource_counts 带回，存于 orgStore.resourceCounts
+    // 各组织知识库数量已由 GET /organizations 的 resource_counts 带回，存于 orgStore.resourceCounts
     const counts = orgStore.resourceCounts?.knowledge_bases?.by_organization
     if (counts) spaceCountByOrg.value = { ...counts }
   })
 }
 
-// 选中空间时请求该空间内全部知识库（含我共享的）
+// 选中组织时请求该组织内全部知识库（含我共享的）
 watch(spaceSelection, (val) => {
   // Stale URL guard: an older "协作" view used scope=shared; that view
   // was removed, so normalize back to "all" instead of letting the
@@ -1284,10 +1284,10 @@ function canDuplicateKBCard(kb: any): boolean {
   return authStore.hasRole('contributor') && kb.isMine !== false
 }
 
-// isMyKb 仅用于卡片右下角徽章在「我创建」与「同空间其他成员创建」之间切换。
+// isMyKb 仅用于卡片右下角徽章在「我创建」与「同组织其他成员创建」之间切换。
 // 与 canManageKBCard 不同：管理权限有 admin 兜底，徽章纯粹按创建者匹配。
 // creator_id 为空（PR 5 RBAC 迁移之前的老 KB）一律按 tenant 处理——避免把
-// 全空间共有的旧 KB 错误地都标成「我创建」。
+// 全组织共有的旧 KB 错误地都标成「我创建」。
 function isMyKb(kb: { creator_id?: string }): boolean {
   const userId = authStore.user?.id || ''
   return !!(kb.creator_id && userId && kb.creator_id === userId)
@@ -1295,11 +1295,11 @@ function isMyKb(kb: { creator_id?: string }): boolean {
 
 // kbOriginVariant 决定卡片右下角徽章的展示形态：
 //   - 我自己创建的：mine（绿色 "我创建"）
-//   - 同空间他人创建的：creator 变体——只显示创建者名字。用户始终在
-//     某个工作空间内浏览（顶部 TenantSelector 已经标了空间身份），右下
-//     角再贴一遍空间名属于重复信息；contributor / admin / owner / viewer
+//   - 同组织他人创建的：creator 变体——只显示创建者名字。用户始终在
+//     某个组织内浏览（顶部 TenantSelector 已经标了组织身份），右下
+//     角再贴一遍组织名属于重复信息；contributor / admin / owner / viewer
 //     看到的徽章一致。创建者无法解析时，creator 变体自动回退到
-//     resourceOrigin.tenant 文案（"本空间"），不会出现空标签。
+//     resourceOrigin.tenant 文案（"本组织"），不会出现空标签。
 function kbOriginVariant(kb: { creator_id?: string }): 'mine' | 'creator' {
   return isMyKb(kb) ? 'mine' : 'creator'
 }
@@ -1415,7 +1415,7 @@ const openSharedDetailFromAll = (kb: any) => {
   }
 }
 
-// 打开右侧详情面板（空间 Tab：直接共享或来自智能体）
+// 打开右侧详情面板（组织 Tab：直接共享或来自智能体）
 const openSharedDetail = (sharedKb: SharedKbDetailItem) => {
   currentSharedKbForDetail.value = sharedKb
   sharedDetailPanelVisible.value = true
@@ -1675,7 +1675,7 @@ watch(keyword, () => { collapsedKbSections.value = new Set() })
   }
 }
 
-// 来源组织（空间图标 + 空间名）
+// 来源组织（组织图标 + 组织名）
 .org-source {
   display: inline-flex;
   align-items: center;

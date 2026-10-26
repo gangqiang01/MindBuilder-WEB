@@ -1,7 +1,7 @@
 import { createVersionedRequestCoordinator } from './versionedRequest'
 
 /**
- * 空间级资源的读取原语。不设 TTL：
+ * 组织级资源的读取原语。不设 TTL：
  *
  * - `ensure()`：同一资源同一时刻只有一个请求在飞行，并发调用共用它；没有在飞行的
  *   就发一个新请求。返回的 Promise 在最新数据写入 store 后才 resolve，所以

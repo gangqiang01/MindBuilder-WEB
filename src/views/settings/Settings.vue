@@ -64,7 +64,7 @@
       'content-wrapper--resource-list': ['models', 'mymemory', 'platform-api-keys', 'model-catalog', 'members', 'sandbox'].includes(currentSection),
       'content-wrapper--full': SYSTEM_ADMIN_SECTIONS.has(currentSection) || isIntegrationSection(currentSection),
     }">
-      <!-- 角色不允许访问当前 section（deep-link 进来 / 跨空间切换后角色降级）—— 优先于具体 section 渲染。
+      <!-- 角色不允许访问当前 section（deep-link 进来 / 跨组织切换后角色降级）—— 优先于具体 section 渲染。
            正常导航走 navItems filter 不会到这里，但 watch(navItems) 的 fallback 会在角色降级
            的瞬间触发；这一段做兜底兼容旧 URL。 -->
       <div v-if="!canSeeSection(currentSection)" class="section role-denied">
@@ -105,12 +105,12 @@
           <ChatHistorySettings />
         </div>
 
-        <!-- 长期记忆（空间级开关） -->
+        <!-- 长期记忆（组织级开关） -->
         <div v-if="currentSection === 'memory'" class="section">
           <MemoryWorkspaceSettings />
         </div>
 
-        <!-- 助手（个人偏好 + 空间名称与权限上限） -->
+        <!-- 助手（个人偏好 + 组织名称与权限上限） -->
         <div v-if="currentSection === 'assistant'" class="section">
           <AssistantSettings />
         </div>
@@ -178,7 +178,7 @@
           <UserProfile />
         </div>
 
-        <!-- 空间信息 -->
+        <!-- 组织信息 -->
         <div v-if="currentSection === 'tenant'" class="section">
           <TenantInfo />
         </div>
@@ -395,9 +395,9 @@ const navItems = computed(() => {
 const navGroups = computed<NavGroup[]>(() => {
   const itemMap = new Map(navItems.value.map((item) => [item.key, item]))
   const pickItems = (keys: string[]) => keys.map((key) => itemMap.get(key)).filter(Boolean) as NavItem[]
-  // 分组：账户 → 空间 → 模型 → 发布集成 → 数据与扩展 → 系统管理 → 平台
+  // 分组：账户 → 组织 → 模型 → 发布集成 → 数据与扩展 → 系统管理 → 平台
   // 关键调整：把个人偏好(general)和用户信息收进「账户」；
-  // 把空间内功能开关(chathistory)从「平台」挪到「空间」；
+  // 把组织内功能开关(chathistory)从「平台」挪到「组织」；
   // 把检索引擎和外部集成合并为「数据与扩展」，避免两个 2~3 项的窄分组。
   return [
     {
@@ -576,7 +576,7 @@ watch(
   { immediate: true },
 )
 
-// 切换空间后角色可能变化，原本可见的 admin-only 面板可能消失。
+// 切换组织后角色可能变化，原本可见的 admin-only 面板可能消失。
 // 如果 currentSection 落到了不再显示的 key 上，就回退到第一个可见项。
 watch(navItems, (items) => {
   if (!items.some((item) => item.key === currentSection.value)) {
@@ -718,7 +718,7 @@ onUnmounted(() => {
   box-sizing: border-box;
   padding: 40px 48px;
 
-  /* 表格页面缩小内边距，为多列内容留出空间。 */
+  /* 表格页面缩小内边距，为多列内容留出组织。 */
   &--wide {
     padding: 32px 36px 40px;
   }

@@ -119,7 +119,7 @@ export interface CustomAgentConfig {
 
   // ===== 长期记忆 =====
   // 该智能体是否可以读取用户的长期记忆。
-  // 缺省（旧数据）等同于 true：这是一个只能"关"的开关，空间设置关闭时
+  // 缺省（旧数据）等同于 true：这是一个只能"关"的开关，组织设置关闭时
   // 这里打开也不会生效。
   memory_enabled?: boolean;
 
@@ -193,7 +193,7 @@ export const BUILTIN_AGENT_NORMAL_ID = BUILTIN_QUICK_ANSWER_ID;
 export const BUILTIN_AGENT_AGENT_ID = BUILTIN_SMART_REASONING_ID;
 
 // 获取智能体列表（包括内置智能体）
-// disabled_own_agent_ids: 当前空间在对话下拉中停用的「我的」智能体 ID，仅影响本空间
+// disabled_own_agent_ids: 当前组织在对话下拉中停用的「我的」智能体 ID，仅影响本组织
 export function listAgents(params?: {
   /**
    * Optional creator filter; mirrors listKnowledgeBases. Built-in agents

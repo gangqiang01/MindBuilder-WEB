@@ -26,7 +26,7 @@ interface Settings {
   webSearchEnabled: boolean;  // 网络搜索是否启用
   conversationModels: ConversationModels;
   selectedAgentId: string;  // 当前选中的智能体ID
-  selectedAgentSourceTenantId: string | null;  // 当使用共享智能体时，来源空间 ID（用于后端 model/KB/MCP 解析）
+  selectedAgentSourceTenantId: string | null;  // 当使用共享智能体时，来源组织 ID（用于后端 model/KB/MCP 解析）
   autoCheckUpdate?: boolean; // 是否自动检查并下载更新
 }
 
@@ -107,7 +107,7 @@ const defaultSettings: Settings = {
     selectedChatModelId: "",  // 用户当前选择的对话模型ID
   },
   selectedAgentId: BUILTIN_QUICK_ANSWER_ID,  // 默认选中快速问答模式
-  selectedAgentSourceTenantId: null as string | null,  // 共享智能体来源空间 ID
+  selectedAgentSourceTenantId: null as string | null,  // 共享智能体来源组织 ID
   autoCheckUpdate: true,
 };
 
@@ -178,7 +178,7 @@ export const useSettingsStore = defineStore("settings", {
 
     // 当前选中的智能体ID
     selectedAgentId: (state) => state.settings.selectedAgentId || BUILTIN_QUICK_ANSWER_ID,
-    // 共享智能体来源空间 ID（可选）
+    // 共享智能体来源组织 ID（可选）
     selectedAgentSourceTenantId: (state) => state.settings.selectedAgentSourceTenantId ?? null,
   },
 

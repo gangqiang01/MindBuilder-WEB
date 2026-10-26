@@ -8,7 +8,7 @@
       <t-icon v-else :name="item.icon" class="nav-icon" />
     </template>
     <div ref="contentWrapperRef" class="content-wrapper" :class="{ 'is-create': isCreateMode }">
-      <!-- 组织管理员但空间角色不足，给出只读提示 -->
+      <!-- 组织管理员但组织角色不足，给出只读提示 -->
       <div v-if="showTenantRoleHint" class="tenant-role-hint">
         <t-icon name="info-circle" size="16px" />
         <span>{{ $t('organization.rbac.needTenantAdminTip') }}</span>
@@ -21,7 +21,7 @@
         </div>
 
         <div class="settings-group">
-          <!-- 空间名称与头像：一行展示，头像点击弹出 Emoji 选择 -->
+          <!-- 组织名称与头像：一行展示，头像点击弹出 Emoji 选择 -->
           <div class="setting-row">
             <div class="setting-info">
               <label>{{ $t('organization.name') }} <span class="required">*</span></label>
@@ -59,7 +59,7 @@
             </div>
           </div>
 
-          <!-- 空间描述 -->
+          <!-- 组织描述 -->
           <div class="setting-row">
             <div class="setting-info">
               <label>{{ $t('organization.description') }}</label>
@@ -194,7 +194,7 @@
         </div>
       </div>
 
-      <!-- 创建空间 - 权限说明 -->
+      <!-- 创建组织 - 权限说明 -->
       <div v-if="isCreateMode" v-show="currentSection === 'permissions'" class="section">
         <div class="section-header">
           <h2>{{ $t('organization.editor.permissionsTitle') }}</h2>
@@ -821,8 +821,8 @@ const upgradeForm = ref({
   message: ''
 })
 
-// 添加成员（按空间邀请）相关状态。Plan 3 之后，邀请实际上是把
-// 一整个空间拉进空间；这里的「搜索结果」是空间候选列表，每条带一个
+// 添加成员（按组织邀请）相关状态。Plan 3 之后，邀请实际上是把
+// 一整个组织拉进组织；这里的「搜索结果」是组织候选列表，每条带一个
 // 代表用户用于展示。`selectedTenantId` 是真正提交给后端的 tenant_id。
 const addMemberPopupVisible = ref(false)
 const addMemberSubmitting = ref(false)
@@ -841,7 +841,7 @@ const formData = ref({
   member_limit: 50 as number // 0 = unlimited
 })
 
-// 空间头像可选 Emoji（方案三：Emoji 作为头像）
+// 组织头像可选 Emoji（方案三：Emoji 作为头像）
 const avatarEmojiOptions = [
   '🚀', '📁', '👥', '🏢', '💡', '📚', '🌟', '🔧', '📌', '🎯',
   '📂', '🔒', '🌐', '⚡', '🎨', '📊', '🤝', '💼', '📧', '🏠',
@@ -861,9 +861,9 @@ function clearAvatarEmoji() {
 // Computed
 const isCreateMode = computed(() => props.mode === 'create')
 // 后端组织相关变更接口（保存设置、邀请、搜索用户、改/删成员、审核加入申请、
-// 升级申请、刷新邀请码、移除共享等）在路由层都要求当前空间角色 ≥ admin（见
-// internal/router/router.go 的 RegisterOrganizationRoutes）。跨空间超管可绕过。
-// 因此前端任何"管理类"入口必须同时满足：组织内是 admin/owner ∩ 当前空间 admin+。
+// 升级申请、刷新邀请码、移除共享等）在路由层都要求当前组织角色 ≥ admin（见
+// internal/router/router.go 的 RegisterOrganizationRoutes）。跨组织超管可绕过。
+// 因此前端任何"管理类"入口必须同时满足：组织内是 admin/owner ∩ 当前组织 admin+。
 const hasTenantAdmin = computed(
   () => authStore.hasRole('admin') || authStore.canAccessAllTenants
 )
@@ -873,14 +873,14 @@ const isAdmin = computed(() => {
   return !!orgAdmin && hasTenantAdmin.value
 })
 
-// 当用户在组织内是 admin/owner 但当前空间角色不足时，展示只读提示
+// 当用户在组织内是 admin/owner 但当前组织角色不足时，展示只读提示
 const showTenantRoleHint = computed(() => {
   if (isCreateMode.value) return !hasTenantAdmin.value
   const orgAdmin = orgInfo.value?.my_role === 'admin' || orgInfo.value?.is_owner
   return !!orgAdmin && !hasTenantAdmin.value
 })
 
-// 是否可以申请权限升级（非管理员成员可申请；后端也要求空间 admin+）
+// 是否可以申请权限升级（非管理员成员可申请；后端也要求组织 admin+）
 const canRequestUpgrade = computed(() => {
   if (isCreateMode.value || !props.orgId) return false
   const myRole = orgInfo.value?.my_role
@@ -908,8 +908,8 @@ const addMemberRoleOptions = computed(() => [
   { label: t('organization.role.admin'), value: 'admin' },
 ])
 
-// 空间搜索结果选项。成员单位是空间，只按空间名搜索，因此直接展示空间名；
-// 空间名缺失时回退到空间 ID。
+// 组织搜索结果选项。成员单位是组织，只按组织名搜索，因此直接展示组织名；
+// 组织名缺失时回退到组织 ID。
 const tenantSearchOptions = computed(() =>
   tenantSearchResults.value.map((c) => ({
     label: c.tenant_name || `tenant#${c.tenant_id}`,
@@ -1176,16 +1176,16 @@ function joinRequestApplicantSecondary(req: JoinRequestResponse): string {
   return ''
 }
 
-// 成员行的主标题：优先展示「空间名」，回退到代表用户名 / 空间 ID。Plan 3
-// 之后每一行成员都对应一个空间，UI 必须先于代表用户呈现空间身份，
+// 成员行的主标题：优先展示「组织名」，回退到代表用户名 / 组织 ID。Plan 3
+// 之后每一行成员都对应一个组织，UI 必须先于代表用户呈现组织身份，
 // 否则用户会误以为这是按"人"加进来的。
 const memberPrimaryLabel = (m: OrganizationMember): string => {
   return m.tenant_name || m.username || `tenant#${m.tenant_id}`
 }
 
-// 副标题：主标题展示的是空间名时，副标题展示代表用户名；如果主标题已经
+// 副标题：主标题展示的是组织名时，副标题展示代表用户名；如果主标题已经
 // 是用户名（无 tenant_name 时的回退），副标题留空，避免重复信息。
-// 邮箱在空间成员列表里没什么用（不是邀请人需要联系的对象），不展示。
+// 邮箱在组织成员列表里没什么用（不是邀请人需要联系的对象），不展示。
 const memberSecondaryLabel = (m: OrganizationMember): string => {
   if (m.tenant_name && m.username) {
     return m.username
@@ -1369,7 +1369,7 @@ const fetchJoinRequests = async () => {
 }
 
 /**
- * 审批结果会同时影响设置弹窗、空间卡片和全局侧栏中的待审批数量。
+ * 审批结果会同时影响设置弹窗、组织卡片和全局侧栏中的待审批数量。
  * 后两处读取的是 organization store，因此必须绕过列表缓存并同步最新计数。
  */
 const refreshOrganizationAfterReview = async () => {
@@ -1550,7 +1550,7 @@ const handleSubmitUpgrade = async () => {
   }
 }
 
-// 添加成员：按完整空间 ID 查询。
+// 添加成员：按完整组织 ID 查询。
 let tenantSearchTimer: ReturnType<typeof setTimeout> | null = null
 const handleTenantSearch = (query: string) => {
   if (tenantSearchTimer) {
@@ -1577,7 +1577,7 @@ const handleTenantSearch = (query: string) => {
   }, 300)
 }
 
-// 添加成员：把选中的空间拉入空间。后端要求 tenant_id；representative_user_id
+// 添加成员：把选中的组织拉入组织。后端要求 tenant_id；representative_user_id
 // 仅做展示/审计用，所以把搜索结果中代表用户也一并带上。
 const handleAddMember = async () => {
   if (!props.orgId || selectedTenantId.value == null) return
@@ -2873,7 +2873,7 @@ watch(addMemberPopupVisible, (visible) => {
 </style>
 
 <style lang="less">
-// 限定在创建弹窗，保留已有共享空间设置页的布局。
+// 限定在创建弹窗，保留已有共享组织设置页的布局。
 .settings-modal-shell.organization-create-overlay {
   .settings-modal { max-width: 860px; height: 560px; }
   .settings-sidebar { width: 176px; }
@@ -3033,7 +3033,7 @@ watch(addMemberPopupVisible, (visible) => {
   }
 }
 
-/* 添加成员 / 权限升级弹出层（与空间成员管理邀请弹层一致） */
+/* 添加成员 / 权限升级弹出层（与组织成员管理邀请弹层一致） */
 .org-add-member-popup-overlay,
 .org-upgrade-popup-overlay,
 .org-approve-request-popup-overlay {

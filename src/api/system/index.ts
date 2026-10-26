@@ -109,7 +109,7 @@ export interface ParserEngineInfo {
   UnavailableReason?: string
 }
 
-/** 解析引擎配置（引擎连接参数存空间；聊天附件解析策略在智能体中配置） */
+/** 解析引擎配置（引擎连接参数存组织；聊天附件解析策略在智能体中配置） */
 export type MinerUParseMethod = 'auto' | 'ocr' | 'txt'
 
 export interface ParserEngineConfig {
@@ -174,7 +174,7 @@ export function reconnectDocReader(addr: string): Promise<ParserEnginesResponse 
   return post('/api/v1/system/docreader/reconnect', { addr })
 }
 
-// ---- 存储引擎配置（空间级，供文档/图片存储与 docreader 使用） ----
+// ---- 存储引擎配置（组织级，供文档/图片存储与 docreader 使用） ----
 
 export interface StorageEngineConfig {
   default_provider: string // "local" | "minio" | "cos" | "tos" | "s3" | "oss" | "ks3" | "obs"

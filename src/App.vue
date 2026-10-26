@@ -110,7 +110,7 @@ const persistOIDCLoginResponse = async (response: any) => {
 
   await syncOIDCUserContext()
 
-  // OIDC 跳转前暂存的邀请 token：拿到会话后兑换并进入对应空间。
+  // OIDC 跳转前暂存的邀请 token：拿到会话后兑换并进入对应组织。
   const pendingInviteToken = sessionStorage.getItem('weknora_pending_invite_token')
   if (pendingInviteToken) {
     sessionStorage.removeItem('weknora_pending_invite_token')
@@ -212,7 +212,7 @@ watch(
   { immediate: true },
 )
 
-// 切换空间后会 hard reload；切换前 stash 的 toast 这里 consume 并弹出，
+// 切换组织后会 hard reload；切换前 stash 的 toast 这里 consume 并弹出，
 // 这样 toast 显示在新页面上，duration 才真正生效。
 const showPendingTenantSwitchToast = () => {
   const pending = consumePendingTenantSwitchToast()

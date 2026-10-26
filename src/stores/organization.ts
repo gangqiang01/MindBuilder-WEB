@@ -64,7 +64,7 @@ export const useOrganizationStore = defineStore('organization', () => {
   const previewData = ref<OrganizationPreview | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
-  /** 各空间内知识库/智能体数量（由 GET /organizations 的 resource_counts 填充，供列表侧栏使用） */
+  /** 各组织内知识库/智能体数量（由 GET /organizations 的 resource_counts 填充，供列表侧栏使用） */
   const resourceCounts = ref<ResourceCountsByOrg | null>(null)
   // 组织 / 共享资源列表不设 TTL：每次 fetch 都发请求（并发共用同一个），
   // 写操作后 `fetch({ force: true })` 排在飞行中的请求之后再拉一次。

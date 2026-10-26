@@ -30,7 +30,7 @@ export type ProtectedFileAccessContext =
   | { mode: 'embed'; channelId: string; token: string }
   /** 知识库作用域：登录态用户读取共享库中归属其他租户的对象。 */
   | { mode: 'knowledgeBase'; kbId: string }
-  /** 消息作用域：登录态用户读取共享智能体回复中的源空间资源。 */
+  /** 消息作用域：登录态用户读取共享智能体回复中的源组织资源。 */
   | { mode: 'message'; sessionId: string; messageId: string };
 
 export interface ProtectedFileRequest {

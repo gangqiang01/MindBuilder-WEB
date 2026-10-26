@@ -265,7 +265,7 @@ const updateDropdownPosition = () => {
       // 有足够空间显示优选高度
       actualHeight = preferredDropdownHeight
     } else {
-      // 空间不够，使用可用空间（但不小于最小高度）
+      // 组织不够，使用可用空间（但不小于最小高度）
       actualHeight = Math.max(minDropdownHeight, availableHeight)
     }
     shouldOpenBelow = false

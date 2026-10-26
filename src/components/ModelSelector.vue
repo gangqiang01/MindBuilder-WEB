@@ -118,7 +118,7 @@ const contextWindowTitle = (tokens?: number) => {
   return t('model.editor.contextWindowTokens', { count: effectiveContextWindow(tokens) })
 }
 
-// 外部传入 allModels 时跟着 prop 走；否则用空间级缓存，设置页改完窗口立刻能看见。
+// 外部传入 allModels 时跟着 prop 走；否则用组织级缓存，设置页改完窗口立刻能看见。
 watch(
   () => [props.allModels, props.modelType, chatResources.allModels] as const,
   ([newModels]) => {
