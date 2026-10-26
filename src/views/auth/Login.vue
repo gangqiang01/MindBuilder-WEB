@@ -37,19 +37,13 @@
                   autocomplete="current-password" size="large" :disabled="loading" @enter="handleLogin" />
               </t-form-item>
 
+              <div class="remember-row">
+                <t-checkbox v-model="remember">{{ $t('auth.rememberMe') }}</t-checkbox>
+              </div>
+
               <t-button type="submit" theme="primary" size="large" block :loading="loading" class="submit-button">
                 {{ loading ? $t('auth.loggingIn') : $t('auth.login') }}
               </t-button>
-
-              <div class="register-cta" v-if="registrationEnabled">
-                <div class="register-cta__divider">
-                  <span>{{ $t('auth.firstTime') }}</span>
-                </div>
-                <t-button theme="default" variant="outline" size="large" block class="register-cta__button"
-                  :disabled="loading" @click="toggleMode">
-                  {{ $t('auth.createAccount') }}
-                </t-button>
-              </div>
 
               <div v-if="oidcEnabled" class="oidc-divider">
                 <span>{{ $t('auth.orContinueWith') }}</span>
@@ -213,6 +207,37 @@ const formData = reactive<{ [key: string]: any }>({
   email: '',
   password: '',
 })
+
+// 记住密码：登录成功后把凭据存到 localStorage，下次进入自动回填。
+// 参考 llm-studio LoginPage 的 btoa/atob 方案，外加 encodeURIComponent 包裹，
+// 避免非 Latin-1 字符（如中文密码）让 btoa 抛异常。
+const REMEMBER_KEY = 'weknora_login_remember'
+const remember = ref(false)
+
+const loadRemembered = () => {
+  const raw = localStorage.getItem(REMEMBER_KEY)
+  if (!raw) return
+  try {
+    const decoded = JSON.parse(decodeURIComponent(escape(atob(raw))))
+    if (decoded.email) formData.email = decoded.email
+    if (decoded.password) formData.password = decoded.password
+    remember.value = true
+  } catch {
+    localStorage.removeItem(REMEMBER_KEY)
+  }
+}
+
+const saveRemembered = () => {
+  if (remember.value) {
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({
+      email: formData.email,
+      password: formData.password,
+    }))))
+    localStorage.setItem(REMEMBER_KEY, encoded)
+  } else {
+    localStorage.removeItem(REMEMBER_KEY)
+  }
+}
 
 // Register form data
 const registerData = reactive<{ [key: string]: any }>({
@@ -438,6 +463,7 @@ const handleLogin = async () => {
     })
 
     if (response.success) {
+      saveRemembered()
       if (inviteToken.value) {
         // 从邀请链接登录：持久化会话后兑换 token 并进入对应组织。
         await persistLoginResponse(response, true)
@@ -518,6 +544,8 @@ const handleRegister = async () => {
 
 // Check if already logged in; for lite edition, attempt transparent auto-setup
 onMounted(async () => {
+  // 回填上次记住的凭据（若存在），先于其他自动流程执行。
+  loadRemembered()
   // Share-link landing: ?token=xxx switches the form into invite-
   // register mode before any other auto-flow (logged-in redirect /
   // auto-setup / OIDC) gets a chance to redirect. Resolution failure
@@ -1109,52 +1137,6 @@ onMounted(async () => {
   font-family: var(--app-font-family);
 }
 
-/* 注册入口：从底部小字链接升级为带分隔线的醒目次级按钮，
-   让首次访客一眼就能找到「创建账户」。 */
-.register-cta {
-  margin-top: 8px;
-
-  &__divider {
-    position: relative;
-    text-align: center;
-    margin: 4px 0 14px;
-    color: var(--td-text-color-secondary);
-    font-size: var(--app-text-md);
-    font-family: var(--app-font-family);
-
-    span {
-      position: relative;
-      z-index: 1;
-      padding: 0 12px;
-      background: rgba(255, 255, 255, 0.97);
-    }
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 50%;
-      border-top: 1px solid var(--td-component-stroke);
-    }
-  }
-
-  &__button {
-    height: 46px;
-    border-radius: var(--app-radius-md);
-    font-size: var(--app-text-lg);
-    font-weight: 500;
-    border-color: var(--td-brand-color);
-    color: var(--td-brand-color);
-
-    &:hover {
-      border-color: var(--td-brand-color-active);
-      color: var(--td-brand-color-active);
-      background: var(--td-success-color-light);
-    }
-  }
-}
-
 .form-subtitle {
   font-size: var(--app-text-md);
   color: var(--td-text-color-secondary);
@@ -1220,6 +1202,10 @@ onMounted(async () => {
   :deep(.t-form-item__control) {
     width: 100%;
   }
+}
+
+.remember-row {
+  margin: -6px 0 8px;
 }
 
 .submit-button {
@@ -1548,10 +1534,6 @@ html[theme-mode="dark"] {
   .form-card {
     background: rgba(36, 36, 36, 0.97) !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
-  }
-
-  .register-cta__divider span {
-    background: rgba(36, 36, 36, 0.97);
   }
 
   .form-content .t-input {

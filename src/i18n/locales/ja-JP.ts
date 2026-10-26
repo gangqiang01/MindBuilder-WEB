@@ -2935,6 +2935,7 @@ export default {
     loginSuccessTitle: 'ログインしました',
     loginSuccessContent: 'おかえりなさい。{name}にログインしました',
     loggingIn: 'ログイン中...',
+    rememberMe: 'パスワードを覚える',
     register: '登録',
     registering: '登録中...',
     createAccount: 'アカウントを作成',

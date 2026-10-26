@@ -60,12 +60,6 @@
           <div class="dropdown-user-meta">
             <div class="dropdown-user-name-row">
               <span class="dropdown-user-name">{{ userName }}</span>
-              <t-tooltip :content="$t('newUserGuide.reopen')" placement="top">
-                <button type="button" class="dropdown-guide-btn" :aria-label="$t('newUserGuide.reopen')"
-                  @click.stop="reopenGuide">
-                  <t-icon name="help-circle" size="14px" />
-                </button>
-              </t-tooltip>
             </div>
             <span v-if="userEmail" class="dropdown-user-email">{{ userEmail }}</span>
           </div>
@@ -232,7 +226,6 @@ import {
 import type { TenantInfo } from '@/api/tenant'
 import { useRoleLabel, useHomeTenant } from '@/composables/useRoleLabel'
 import { getRootZoom, rectToCssPx, cssViewportSize } from '@/utils/zoom'
-import { openNewUserGuide } from '@/config/contextualGuides'
 import { SETTINGS_MANAGEMENT_SHORTCUT_MIN_ROLE } from '@/config/settingsAccess'
 import { docsUrl } from '@/utils/docsUrl'
 const { t } = useI18n()
@@ -505,11 +498,6 @@ const clampFloatingToViewport = (selector: string, target: { value: Record<strin
       target.value = { ...target.value, top: `${Math.max(MARGIN, maxTop)}px` }
     }
   })
-}
-
-const reopenGuide = () => {
-  menuVisible.value = false
-  openNewUserGuide()
 }
 
 const openDocs = () => {
@@ -873,28 +861,6 @@ onUnmounted(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .dropdown-guide-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    margin: 0;
-    padding: 0;
-    border: none;
-    border-radius: var(--app-radius-xs);
-    background: transparent;
-    color: var(--td-text-color-placeholder);
-    cursor: pointer;
-    transition: background-color var(--app-motion-base) ease, color var(--app-motion-base) ease;
-
-    &:hover {
-      background: var(--td-bg-color-container-hover);
-      color: var(--td-text-color-secondary);
-    }
   }
 }
 

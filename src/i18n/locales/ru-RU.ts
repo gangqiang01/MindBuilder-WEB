@@ -6198,6 +6198,7 @@ export default {
     loginSuccessTitle: 'Вход выполнен',
     loginSuccessContent: 'С возвращением. Вы вошли в {name}',
     loggingIn: 'Вход...',
+    rememberMe: 'Запомнить пароль',
     register: 'Регистрация',
     registering: 'Регистрация...',
     createAccount: 'Создать аккаунт',

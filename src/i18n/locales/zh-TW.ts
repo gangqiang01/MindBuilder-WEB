@@ -6199,6 +6199,7 @@ export default {
     loginSuccessTitle: '登入成功',
     loginSuccessContent: '歡迎，你已進入 {name}',
     loggingIn: '登入中...',
+    rememberMe: '記住密碼',
     register: '註冊',
     registering: '註冊中...',
     createAccount: '建立帳戶',

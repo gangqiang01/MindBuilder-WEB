@@ -6198,6 +6198,7 @@ export default {
     loginSuccessTitle: '로그인 성공',
     loginSuccessContent: '환영합니다. {name} 에 입장했습니다',
     loggingIn: '로그인 중...',
+    rememberMe: '비밀번호 기억하기',
     register: '회원가입',
     registering: '가입 중...',
     createAccount: '계정 생성',

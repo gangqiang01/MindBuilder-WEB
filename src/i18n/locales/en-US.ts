@@ -2935,6 +2935,7 @@ export default {
     loginSuccessTitle: 'Login successful',
     loginSuccessContent: 'Welcome back. You are now in {name}',
     loggingIn: 'Logging in...',
+    rememberMe: 'Remember password',
     register: 'Register',
     registering: 'Registering...',
     createAccount: 'Create Account',

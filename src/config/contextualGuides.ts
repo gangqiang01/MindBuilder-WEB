@@ -1,12 +1,5 @@
 import type { SpotlightGuideStep } from '@/types/spotlightGuide'
 
-export const GLOBAL_USER_GUIDE_KEY = 'weknora:new-user-guide-done:v1'
-export const OPEN_NEW_USER_GUIDE_EVENT = 'weknora:open-new-user-guide'
-
-export function openNewUserGuide() {
-  window.dispatchEvent(new CustomEvent(OPEN_NEW_USER_GUIDE_EVENT))
-}
-
 export const KB_EDITOR_FOCUS_SECTION_EVENT = 'weknora:kb-editor-focus-section'
 export const AGENT_EDITOR_FOCUS_SECTION_EVENT = 'weknora:agent-editor-focus-section'
 
@@ -146,6 +139,9 @@ export function markContextualGuideDone(tourId: ContextualGuideTourId) {
   })
 }
 
+// 新手引导已下线：恒返回 false，所有依赖该标记的上下文引导（kbList/kbCreate/
+// kbDetail/chat/tenantModels/agentList/agentCreate）随之永久停用，
+// 不受历史 localStorage 标记影响。
 export function isGlobalUserGuideDone(): boolean {
-  return localStorage.getItem(GLOBAL_USER_GUIDE_KEY) === '1'
+  return false
 }
