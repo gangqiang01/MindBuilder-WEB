@@ -4,7 +4,7 @@
     <div class="form-section">
       <div class="form-panel">
         <!-- Login Card -->
-        <div class="form-card" v-if="!isRegisterMode">
+        <div class="form-card">
           <!-- 登录已有账号时保留邀请上下文。 -->
           <div v-if="inviteLookup" class="invite-banner">
             <t-icon name="link" class="invite-banner__icon" />
@@ -58,71 +58,6 @@
            
           </div>
         </div>
-
-        <!-- Registration must be allowed for this mode and invitation. -->
-        <div class="form-card" v-if="isRegisterMode && registrationEnabled">
-          <!-- Share-link banner: shown only when ?token= resolved to a
-               real invitation row. Sits above the form header so the
-               invitee instantly sees who invited them and into which
-               workspace, without bumping the existing register UX. -->
-          <div v-if="inviteLookup" class="invite-banner">
-            <t-icon name="link" class="invite-banner__icon" />
-            <div class="invite-banner__text">
-              <div class="invite-banner__title">
-                {{ $t('inviteRegister.bannerTitle', { tenant: inviteLookup.tenant_name || '' }) }}
-              </div>
-              <div class="invite-banner__hint">
-                {{ $t('inviteRegister.bannerHint') }}
-              </div>
-            </div>
-          </div>
-          <div v-else-if="inviteLookupError" class="invite-banner invite-banner--error">
-            {{ inviteLookupError }}
-          </div>
-          <div class="form-header">
-            <h2 class="form-title">{{ $t('auth.createAccount') }}</h2>
-            <p class="form-subtitle">{{ $t('auth.registerSubtitle') }}</p>
-          </div>
-
-          <div class="form-content">
-            <t-form ref="registerFormRef" :data="registerData" :rules="registerRules" @submit="handleRegister"
-              layout="vertical" label-align="top">
-              <t-form-item :label="$t('auth.username')" name="username">
-                <t-input v-model="registerData.username" :placeholder="$t('auth.usernamePlaceholder')" size="large"
-                  :disabled="loading" />
-              </t-form-item>
-
-              <t-form-item :label="$t('auth.email')" name="email">
-                <t-input v-model="registerData.email" :placeholder="$t('auth.emailPlaceholder')" type="text"
-                  autocomplete="email" size="large" :disabled="loading" />
-              </t-form-item>
-
-              <t-form-item :label="$t('auth.password')" name="password">
-                <t-input v-model="registerData.password" :placeholder="$t('auth.passwordPlaceholder')" type="password"
-                  autocomplete="new-password" size="large" :disabled="loading" />
-              </t-form-item>
-
-              <t-form-item :label="$t('auth.confirmPassword')" name="confirmPassword">
-                <t-input v-model="registerData.confirmPassword" :placeholder="$t('auth.confirmPasswordPlaceholder')"
-                  type="password" autocomplete="new-password" size="large" :disabled="loading"
-                  @enter="handleRegister" />
-              </t-form-item>
-
-              <t-button type="submit" theme="primary" size="large" block :loading="loading" class="submit-button">
-                {{ loading ? $t('auth.registering') : $t('auth.register') }}
-              </t-button>
-            </t-form>
-
-            <div class="form-footer">
-              <span>{{ $t('auth.haveAccount') }}</span>
-              <a href="#" @click.prevent="toggleMode" class="link-button">
-                {{ $t('auth.backToLogin') }}
-              </a>
-            </div>
-
-            
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -134,18 +69,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { useRoleLabel } from '@/composables/useRoleLabel'
 import { notifyLoginSuccess } from '@/utils/loginNotify'
-import { canRegister } from './registrationPolicy'
-import { newPasswordRules } from '@/utils/passwordPolicy'
 import {
   login,
-  register,
   getOIDCAuthorizationURL,
   getOIDCConfig,
   autoSetup,
-  getAuthConfig,
   userInfoFromApi,
   getInvitationByToken,
-  registerByInvite,
   type InviteLookup,
 } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
@@ -159,25 +89,18 @@ const { formatRole, roleIcon } = useRoleLabel()
 
 // Form references
 const formRef = ref()
-const registerFormRef = ref()
 
 // State management
 const loading = ref(false)
 const oidcLoading = ref(false)
-const isRegisterMode = ref(false)
 const showLanguageMenu = ref(false)
 const oidcEnabled = ref(false)
 const oidcProviderName = ref('')
-// Wait for configuration before showing a registration entry.
-const registrationMode = ref('')
-const registrationEnabled = computed(() => canRegister(registrationMode.value, !!inviteLookup.value))
-const complexPasswordEnabled = ref(false)
 
 // invite-link state. When the URL carries ?token=xxx we resolve it to
-// the originating tenant + role and switch the form into a "register
-// via invitation" mode when invitation registration is enabled. Submitting the register
-// form with this set hits /auth/register-by-invite (auto-login on
-// success) instead of /auth/register.
+// the originating tenant + role for the banner, and an already-logged-in
+// user is auto-joined to the tenant. Accounts are only created by admins
+// in the backend, so this page has no self-service registration.
 const inviteToken = ref('')
 const inviteLookup = ref<InviteLookup | null>(null)
 const inviteLookupError = ref('')
@@ -188,8 +111,6 @@ const languageOptions = [
   { value: 'zh-CN', label: '简体中文', shortLabel: '中文', flag: '🇨🇳' },
   { value: 'zh-TW', label: '繁體中文', shortLabel: '繁中', flag: '繁' },
   { value: 'en-US', label: 'English', shortLabel: 'EN', flag: '🇺🇸' },
-  { value: 'ru-RU', label: 'Русский', shortLabel: 'RU', flag: '🇷🇺' },
-  { value: 'ko-KR', label: '한국어', shortLabel: '한국어', flag: '🇰🇷' },
   { value: 'ja-JP', label: '日本語', shortLabel: '日本語', flag: '🇯🇵' }
 ]
 
@@ -239,14 +160,6 @@ const saveRemembered = () => {
   }
 }
 
-// Register form data
-const registerData = reactive<{ [key: string]: any }>({
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
-})
-
 // Login form validation rules
 const formRules = computed(() => ({
   email: [
@@ -259,42 +172,6 @@ const formRules = computed(() => ({
     { max: 32, message: t('auth.passwordMaxLength'), type: 'error' }
   ],
 }))
-
-// Register form validation rules
-const registerRules = computed(() => ({
-  username: [
-    { required: true, message: t('auth.usernameRequired'), type: 'error' },
-    { min: 2, message: t('auth.usernameMinLength'), type: 'error' },
-    { max: 20, message: t('auth.usernameMaxLength'), type: 'error' },
-    {
-      pattern: /^[a-zA-Z0-9_\u4e00-\u9fa5]+$/,
-      message: t('auth.usernameInvalid'),
-      type: 'error'
-    }
-  ],
-  email: [
-    { required: true, message: t('auth.emailRequired'), type: 'error' },
-    { email: true, message: t('auth.emailInvalid'), type: 'error' }
-  ],
-  password: newPasswordRules(t, complexPasswordEnabled.value),
-  confirmPassword: [
-    { required: true, message: t('auth.confirmPasswordRequired'), type: 'error' },
-    {
-      validator: (val: string) => val === registerData.password,
-      message: t('auth.passwordMismatch'),
-      type: 'error'
-    }
-  ]
-}))
-
-// Toggle login/register mode
-const toggleMode = () => {
-  isRegisterMode.value = !isRegisterMode.value && registrationEnabled.value
-
-  Object.keys(registerData).forEach(key => {
-    (registerData as any)[key] = ''
-  })
-}
 
 // Toggle language menu
 const toggleLanguageMenu = () => {
@@ -326,7 +203,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
-const persistLoginResponse = async (response: any, skipRedirect = false) => {
+const persistLoginResponse = async (response: any) => {
   // Backend renamed `tenant` to `active_tenant` and added `memberships`
   // when tenant-level RBAC landed (issue #1303). The two are otherwise
   // identical — `active_tenant` is the tenant whose ID is encoded in the
@@ -377,7 +254,6 @@ const persistLoginResponse = async (response: any, skipRedirect = false) => {
   // briefly when the deployment is invitation-only.
   await authStore.refreshFromAuthMe()
   await nextTick()
-  if (skipRedirect) return
   router.replace(authStore.hasValidTenant ? '/platform/knowledge-bases' : '/onboarding/workspace')
 }
 
@@ -391,18 +267,6 @@ const loadOIDCConfig = async () => {
   } catch {
     oidcEnabled.value = false
     oidcProviderName.value = ''
-  }
-}
-
-// Registration stays hidden if configuration cannot be loaded.
-const loadAuthConfig = async () => {
-  try {
-    const response = await getAuthConfig()
-    registrationMode.value = response.success ? response.registration_mode : ''
-    complexPasswordEnabled.value = response.complex_password_enabled
-  } catch {
-    registrationMode.value = ''
-    complexPasswordEnabled.value = false
   }
 }
 
@@ -464,12 +328,6 @@ const handleLogin = async () => {
 
     if (response.success) {
       saveRemembered()
-      if (inviteToken.value) {
-        // 从邀请链接登录：持久化会话后兑换 token 并进入对应组织。
-        await persistLoginResponse(response, true)
-        await acceptAndEnter(inviteToken.value)
-        return
-      }
       await persistLoginResponse(response)
       notifyLoginSuccess(response, t, tm, formatRole, roleIcon)
     } else {
@@ -483,110 +341,40 @@ const handleLogin = async () => {
   }
 }
 
-// Handle registration. Dispatches based on whether the user arrived
-// with a share-link token: with token -> register-by-invite (auto-
-// login on success); without -> the normal self-service register
-// (drops back to the login form for the user to sign in).
-const handleRegister = async () => {
-  if (!registrationEnabled.value) return
-  try {
-    const valid = await registerFormRef.value?.validate()
-    if (valid !== true) return
-
-    loading.value = true
-
-    if (inviteToken.value) {
-      const response = await registerByInvite({
-        token: inviteToken.value,
-        username: registerData.username,
-        email: registerData.email,
-        password: registerData.password,
-      })
-      if (!response.success) {
-        MessagePlugin.error(response.message || t('auth.registerFailed'))
-        return
-      }
-      MessagePlugin.success(t('auth.registerSuccess'))
-      // register-by-invite returns the same shape as login (token +
-      // active_tenant + memberships), so reuse the login persistence
-      // path — same store writes, same redirect target.
-      await persistLoginResponse(response)
-      return
-    }
-
-    const response = await register({
-      username: registerData.username,
-      email: registerData.email,
-      password: registerData.password
-    })
-
-    if (response.success) {
-      MessagePlugin.success(t('auth.registerSuccess'))
-
-      // Switch to login mode and fill in email
-      isRegisterMode.value = false
-      formData.email = registerData.email
-
-      // Clear register form
-      Object.keys(registerData).forEach(key => {
-        (registerData as any)[key] = ''
-      })
-    } else {
-      MessagePlugin.error(response.message || t('auth.registerFailed'))
-    }
-  } catch (error: any) {
-    console.error('注册错误:', error)
-    MessagePlugin.error(error.message || t('auth.registerError'))
-  } finally {
-    loading.value = false
-  }
-}
-
 // Check if already logged in; for lite edition, attempt transparent auto-setup
 onMounted(async () => {
   // 回填上次记住的凭据（若存在），先于其他自动流程执行。
   loadRemembered()
-  // Share-link landing: ?token=xxx switches the form into invite-
-  // register mode before any other auto-flow (logged-in redirect /
-  // auto-setup / OIDC) gets a chance to redirect. Resolution failure
-  // surfaces inline; the user can still log in normally if they
-  // already have an account. We check this BEFORE the isLoggedIn
-  // redirect so an existing session doesn't bounce the user to
-  // /platform (and possibly back to /login if the session is stale),
-  // dropping the invite token along the way.
+  // Share-link landing: ?token=xxx resolves the invitation for the
+  // banner and auto-joins an already-logged-in user. We check this
+  // BEFORE the isLoggedIn redirect so an existing session doesn't
+  // bounce the user to /platform (and possibly back to /login if the
+  // session is stale), dropping the invite token along the way.
+  // 账号只能由后台创建，未登录用户停留在登录表单，无自助注册。
   const tokenFromQuery = String(route.query.token || '').trim()
   if (tokenFromQuery) {
     inviteToken.value = tokenFromQuery
     inviteLookupLoading.value = true
-    // 1. 先校验 token：无效/过期则停在登录页报错，不进注册模式。
+    // 1. 先校验 token：无效/过期则停在登录页报错，仅保留登录入口。
     try {
       const resp = await getInvitationByToken(tokenFromQuery)
       if (resp.success && resp.data) {
         inviteLookup.value = resp.data
       } else {
         inviteLookupError.value = resp.message || t('inviteRegister.invalidBody')
-        loadOIDCConfig()
-        loadAuthConfig()
-        return
       }
     } catch {
       inviteLookupError.value = t('inviteRegister.invalidBody')
-      loadOIDCConfig()
-      loadAuthConfig()
-      return
     } finally {
       inviteLookupLoading.value = false
     }
 
-    // 2. 已登录则直接兑换 token 进入组织（三种模式通用）。
+    // 2. 已登录则直接兑换 token 进入组织；未登录则停留在登录表单。
     if (authStore.isLoggedIn && (await authStore.refreshFromAuthMe())) {
       await acceptAndEnter(tokenFromQuery)
       return
     }
 
-    // 3. Only enabled registration modes may create an invited account.
-    await loadAuthConfig()
-    isRegisterMode.value = registrationEnabled.value
     loadOIDCConfig()
     return
   }
@@ -609,7 +397,6 @@ onMounted(async () => {
   }
 
   loadOIDCConfig()
-  loadAuthConfig()
 })
 </script>
 
@@ -1049,11 +836,11 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* Share-link invitation banner. Sits above the register form when the
- * user arrived via /register?token=xxx; gives them confirmation of who
- * invited them before they fill anything in. Subtle, neutral card —
- * the page background is heavily brand-coloured already, so a loud
- * tinted banner clashes; we lean on the form's own surface tokens. */
+/* Share-link invitation banner. Sits above the login form when the
+ * user arrived via an invite link (?token=xxx); gives them confirmation
+ * of who invited them. Subtle, neutral card — the page background is
+ * heavily brand-coloured already, so a loud tinted banner clashes; we
+ * lean on the form's own surface tokens. */
 .invite-banner {
   display: flex;
   align-items: flex-start;

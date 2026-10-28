@@ -35,11 +35,11 @@ function integrationMenu(visibleKeys: string[]): string[] {
 
 const integrationKeys = INTEGRATION_PREVIEW_ITEMS.map((item) => integrationSectionKey(item.key))
 
-test('settings sidebar includes every registered integration, including CLI, in navigation order', () => {
+test('settings sidebar includes every registered integration in navigation order', () => {
   assert.deepEqual(integrationMenu(['general', ...integrationKeys]), integrationKeys)
 })
 
-test('settings sidebar preserves visibility filtering without hiding CLI', () => {
+test('settings sidebar preserves visibility filtering', () => {
   const visible = integrationKeys.filter((key) => key !== 'integration-api' && key !== 'integration-im')
   assert.deepEqual(integrationMenu(visible), visible)
   assert.deepEqual(integrationMenu(['general']), [])
@@ -89,7 +89,7 @@ test('closing settings preserves a known in-app previous route', () => {
 })
 
 test('closing system settings retains its explicit knowledge-base destination', () => {
-  for (const section of ['model-catalog', 'system-global', 'runtime-queues', 'platform-api-keys', 'system-audit-log']) {
+  for (const section of ['system-global', 'system-audit-log']) {
     assert.deepEqual(closeSettings('/platform/chat/session-123', section), [
       'blur', 'close', 'push:/platform/knowledge-bases',
     ])

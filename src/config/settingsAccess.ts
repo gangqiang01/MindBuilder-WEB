@@ -10,9 +10,7 @@ export type SettingsRoleKey = 'viewer' | 'contributor' | 'admin' | 'owner'
 export const SETTINGS_SECTION_MIN_ROLE: Record<string, SettingsRoleKey> = {
   general: 'viewer',
   ollama: 'admin',
-  weknoracloud: 'admin',
   models: 'viewer',
-  websearch: 'admin',
   chathistory: 'admin',
   vectorstore: 'admin',
   parser: 'admin',
@@ -27,7 +25,6 @@ export const SETTINGS_SECTION_MIN_ROLE: Record<string, SettingsRoleKey> = {
   browserconnection: 'viewer',
   tenant: 'viewer',
   members: 'viewer',
-  mymemory: 'viewer',
   memory: 'admin',
   // Everyone sets their own preferences; the workspace part is Admin+ inside.
   assistant: 'viewer',
@@ -47,8 +44,5 @@ export const SETTINGS_MANAGEMENT_SHORTCUT_MIN_ROLE = {
 
 export const SYSTEM_ADMIN_SETTINGS_SECTIONS = new Set([
   'system-global',
-  'model-catalog',
-  'runtime-queues',
-  'platform-api-keys',
   'system-audit-log',
 ])

@@ -69,7 +69,7 @@ test('pickLocalized ignores empty localized strings', () => {
 test('providerDescription mirrors the label lookup', () => {
   const p = provider({ value: 'x', description: 'gpt-4o, o3', descriptions: { 'zh-CN': 'gpt-4o、o3 等' } })
   assert.equal(providerDescription(p, 'zh-CN'), 'gpt-4o、o3 等')
-  assert.equal(providerDescription(p, 'ru-RU'), 'gpt-4o, o3')
+  assert.equal(providerDescription(p, 'ja-JP'), 'gpt-4o, o3')
 })
 
 test('providerIcon only accepts data image URIs', () => {

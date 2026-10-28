@@ -59,6 +59,26 @@ export interface AddMemberResponse {
   message?: string
 }
 
+export interface CreateMemberRequest {
+  username: string
+  email: string
+  role: TenantRole
+  /** 缺省时服务端生成随机初始密码，仅在响应中返回一次 */
+  password?: string
+}
+
+export interface CreateMemberResponse {
+  success: boolean
+  data?: {
+    member: TenantMember
+    /** true = 本次新建了账号；false = 绑定已有账号（密码不受影响） */
+    user_created: boolean
+    /** 仅当新建账号且密码由服务端生成时返回一次 */
+    generated_password?: string
+  }
+  message?: string
+}
+
 export interface SimpleResponse {
   success: boolean
   message?: string
@@ -113,6 +133,24 @@ export async function addMember(
   body: AddMemberRequest,
 ): Promise<AddMemberResponse> {
   return (await post(`/api/v1/tenants/${tenantId}/members`, body)) as unknown as AddMemberResponse
+}
+
+/**
+ * 直接创建用户账号（邮箱未注册时）并立即绑定为空间成员，替代邮箱邀请流程。
+ * Backend: POST /api/v1/tenants/:id/members/create (Owner+, JWT-only).
+ *
+ * 邮箱已存在时不改写其密码，直接绑定角色（user_created=false）；
+ * 密码缺省时服务端生成随机初始密码，通过 generated_password 返回一次。
+ * 409 三种情形（error.details 标签区分前两种）：
+ * - "username_taken"：邮箱未注册，但用户名已被其他账号占用；
+ * - "identity_conflict"：邮箱已注册，但所指账号与用户名对不上；
+ * - 无标签：该用户已是本空间成员。
+ */
+export async function createMember(
+  tenantId: number,
+  body: CreateMemberRequest,
+): Promise<CreateMemberResponse> {
+  return (await post(`/api/v1/tenants/${tenantId}/members/create`, body)) as unknown as CreateMemberResponse
 }
 
 /**

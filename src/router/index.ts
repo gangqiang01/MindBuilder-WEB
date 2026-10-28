@@ -32,7 +32,7 @@ function isLiteSpaDefaultEntry(to: RouteLocationNormalized) {
 }
 
 function isSafeLiteRestoreTarget(path: string) {
-  return path.startsWith('/platform/') && !path.startsWith('/platform/organizations')
+  return path.startsWith('/platform/')
 }
 
 function hasPendingOIDCCallback() {
@@ -58,11 +58,9 @@ const router = createRouter({
     {
       path: "/register",
       name: "registerByInvite",
-      // Share-link landing page reuses the Login form: the same Vue
-      // component renders both modes and detects ?token=xxx on mount
-      // to switch into invite-register flow. Avoids a parallel page
-      // that would duplicate the OIDC / language-switch / styling
-      // surface for one extra field.
+      // 旧版邀请链接落地路径：后端生成的 share link 可能指向这里，
+      // 复用登录页组件。账号只能由后台创建，页面仅渲染登录表单
+      // （带邀请 banner），已登录用户会自动兑换 token 加入组织。
       component: () => import("../views/auth/Login.vue"),
       meta: { requiresAuth: false, requiresInit: false }
     },
@@ -71,19 +69,6 @@ const router = createRouter({
       name: "workspaceOnboarding",
       component: () => import("../views/auth/WorkspaceOnboarding.vue"),
       meta: { requiresAuth: true, requiresInit: false, requiresTenant: false }
-    },
-    {
-      path: "/join",
-      name: "joinOrganization",
-      // 重定向到组织列表页，并将 code 参数转换为 invite_code
-      redirect: (to) => {
-        const code = to.query.code as string
-        return {
-          path: '/platform/organizations',
-          query: code ? { invite_code: code } : {}
-        }
-      },
-      meta: { requiresInit: true, requiresAuth: true }
     },
     {
       path: "/knowledgeBase",
@@ -190,12 +175,6 @@ const router = createRouter({
           component: () => import("../views/chat/index.vue"),
           meta: { requiresInit: true, requiresAuth: true }
         },
-        {
-          path: "organizations",
-          name: "organizationList",
-          component: () => import("../views/organization/OrganizationList.vue"),
-          meta: { requiresInit: true, requiresAuth: true, requiredCapability: 'organizations' }
-        },
         // Compatibility redirects for /platform/system/* URLs. System
         // administration surfaces live as dedicated sections inside the
         // standard Settings modal; keep stable URLs for bookmarks and
@@ -220,7 +199,7 @@ const router = createRouter({
         {
           path: "system/queues",
           name: "systemQueues",
-          redirect: { path: "/platform/settings", query: { section: "runtime-queues" } },
+          redirect: { path: "/platform/settings", query: { section: "system-global" } },
           meta: { requiresInit: true, requiresAuth: true, requiresSystemAdmin: true },
         },
       ],

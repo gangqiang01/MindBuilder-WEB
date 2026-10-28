@@ -103,15 +103,11 @@
                         <div class="menu_item-box">
                             <div class="menu_icon" :class="`menu_icon--${item.icon}`">
                                 <img class="icon"
-                                    :src="getImgSrc(item.icon == 'zhishiku' ? knowledgeIcon : item.icon == 'agent' ? agentIcon : item.icon == 'artifact' ? artifactIcon : item.icon == 'automation' ? automationIcon : item.icon == 'toolbox' ? toolboxIcon : item.icon == 'organization' ? organizationIcon : item.icon == 'logout' ? logoutIcon : item.icon == 'setting' ? settingIcon : prefixIcon)"
+                                    :src="getImgSrc(item.icon == 'zhishiku' ? knowledgeIcon : item.icon == 'agent' ? agentIcon : item.icon == 'artifact' ? artifactIcon : item.icon == 'automation' ? automationIcon : item.icon == 'toolbox' ? toolboxIcon : item.icon == 'model' ? modelIcon : item.icon == 'logout' ? logoutIcon : item.icon == 'setting' ? settingIcon : prefixIcon)"
                                     alt="">
                             </div>
                             <template v-if="!uiStore.sidebarCollapsed">
                                 <span class="menu_title" :title="item.title">{{ item.title }}</span>
-                                <span v-if="item.path === 'organizations' && orgStore.totalPendingJoinRequestCount > 0"
-                                    class="menu-pending-badge"
-                                    :title="t('organization.settings.pendingJoinRequestsBadge')">{{
-                                        orgStore.totalPendingJoinRequestCount }}</span>
                                 <span v-if="item.path === 'toolbox' && toolboxPreview.length" class="menu-toolbox-stack"
                                     :title="toolboxPreview.map((tool) => tool.key === 'browserconnection' && browserStackStatus
                                         ? `${t(tool.title)} (${t(`localBrowser.${browserStackStatus}`)})` : t(tool.title)).join(' · ')">
@@ -128,6 +124,13 @@
                         </div>
                     </div>
                 </t-tooltip>
+                <!-- 模型子菜单：模型管理 / Ollama（点击「模型」展开；折叠态无子菜单空间） -->
+                <div v-if="item.path === 'models' && modelsMenuOpen && !uiStore.sidebarCollapsed" class="models-submenu">
+                    <div class="models-submenu__item" :class="{ 'is-active': isModelsSectionActive('models') }"
+                        @click="openModelSection('models')">{{ t('settings.modelManagement') }}</div>
+                    <div class="models-submenu__item" :class="{ 'is-active': isModelsSectionActive('ollama') }"
+                        @click="openModelSection('ollama')">Ollama</div>
+                </div>
             </div>
 
             <!-- 历史会话：按来源筛选后统一按日期分组展示 -->
@@ -287,7 +290,6 @@ import { useDeploymentCapabilitiesStore } from '@/stores/deploymentCapabilities'
 import { TOOLBOX_ITEMS, canAccessToolboxSection } from '@/config/toolbox';
 import BrowserIcon from '@/components/icons/BrowserIcon.vue';
 import { useBrowserConnectionStore } from '@/stores/browserConnection';
-import { useOrganizationStore } from '@/stores/organization';
 import { useUIStore } from '@/stores/ui';
 import { useCommandPaletteStore } from '@/stores/commandPalette';
 import { useAssistantStore } from '@/stores/assistant';
@@ -338,7 +340,6 @@ const toolboxPreview = computed(() => TOOLBOX_ITEMS.filter((item) => canAccessTo
     hasRole: (role) => authStore.hasRole(role),
     isSupported: (capability) => deploymentCapabilities.isSupported(capability),
 })));
-const orgStore = useOrganizationStore();
 const uiStore = useUIStore();
 const browserConnection = useBrowserConnectionStore();
 const browserStackStatus = computed(() => {
@@ -452,9 +453,6 @@ const isInChatDetail = computed<boolean>(() => route.name === 'chat');
 // 是否在智能体列表页面
 const isInAgentList = computed<boolean>(() => route.name === 'agentList');
 
-// 是否在组织列表页面
-const isInOrganizationList = computed<boolean>(() => route.name === 'organizationList');
-
 // 统一的菜单项激活状态判断
 const isMenuItemActive = (itemPath: string): boolean => {
     const currentRoute = route.name;
@@ -472,12 +470,14 @@ const isMenuItemActive = (itemPath: string): boolean => {
             return currentRoute === 'artifactLibrary';
         case 'automations':
             return currentRoute === 'automationList';
-        case 'organizations':
-            return currentRoute === 'organizationList';
         case 'creatChat':
             return currentRoute === 'kbCreatChat' || currentRoute === 'globalCreatChat';
         case 'settings':
-            return currentRoute === 'settings';
+            return currentRoute === 'settings' && route.query.section !== 'models' && route.query.section !== 'ollama';
+        case 'models':
+            // 模型入口：设置弹窗停留在 模型管理 / Ollama 时高亮
+            return currentRoute === 'settings' &&
+                (route.query.section === 'models' || route.query.section === 'ollama');
         default:
             return itemPath === currentpath.value;
     }
@@ -500,7 +500,7 @@ const getIconActiveState = (itemPath: string) => {
 };
 
 // 分离上下两部分菜单（使用 visibleMenuArr 以便 lite 模式过滤 logout）
-const TOP_MENU_PATHS = new Set(['creatChat', 'knowledge-bases', 'artifacts', 'agents', 'automations', 'toolbox', 'organizations']);
+const TOP_MENU_PATHS = new Set(['creatChat', 'knowledge-bases', 'artifacts', 'agents', 'automations', 'toolbox', 'models']);
 
 const topMenuItems = computed<MenuItem[]>(() => {
     return (visibleMenuArr.value as unknown as MenuItem[]).filter((item: MenuItem) => TOP_MENU_PATHS.has(item.path));
@@ -1100,11 +1100,7 @@ onMounted(async () => {
         ensureSessionInSidebar(initialChatId);
         await syncActiveBucketFromChat(initialChatId);
     }
-    // 若组织列表未加载则拉取一次，用于侧栏「待审批」角标
-    if (deploymentCapabilities.isSupported('organizations') && orgStore.organizations.length === 0) {
-        orgStore.fetchOrganizations();
-    }
-});
+    });
 
 onUnmounted(() => {
     clearInterval(sessionActivityTimer);
@@ -1146,7 +1142,17 @@ let agentIcon = ref('agent.svg');
 let artifactIcon = ref('artifact.svg');
 let toolboxIcon = ref('toolbox.svg');
 let automationIcon = ref('automation.svg');
-let organizationIcon = ref('organization.svg');
+let modelIcon = ref('model.svg');
+// 模型图标高亮：设置弹窗停留在 模型管理 / Ollama 时变绿。
+// 单独监听 route.query.section —— 上面的 name/params watcher 不覆盖 query 变化。
+watch(
+    [() => route.name, () => route.query.section],
+    () => {
+        const modelsActive = route.name === 'settings' &&
+            (route.query.section === 'models' || route.query.section === 'ollama')
+        modelIcon.value = modelsActive ? 'model-green.svg' : 'model.svg'
+    },
+)
 let pathPrefix = ref(route.name)
 const getIcon = (path: string) => {
     // 根据当前路由状态更新所有图标
@@ -1155,7 +1161,6 @@ const getIcon = (path: string) => {
     const settingsActiveState = getIconActiveState('settings');
     const agentsActiveState = route.name === 'agentList';
     const artifactsActiveState = route.name === 'artifactLibrary';
-    const organizationsActiveState = route.name === 'organizationList';
 
     // 知识库图标：只在知识库页面显示绿色
     knowledgeIcon.value = kbActiveState.isKbActive ? 'zhishiku-green.svg' : 'zhishiku.svg';
@@ -1169,9 +1174,6 @@ const getIcon = (path: string) => {
     toolboxIcon.value = route.name === 'toolbox' ? 'toolbox-green.svg' : 'toolbox.svg';
     automationIcon.value = route.name === 'automationList' ? 'automation-green.svg' : 'automation.svg';
 
-    // 组织图标：只在组织页面显示绿色
-    organizationIcon.value = organizationsActiveState ? 'organization-green.svg' : 'organization.svg';
-
     // 对话图标：只在对话创建页面显示绿色，其他情况显示默认
     prefixIcon.value = creatChatActiveState.isCreatChatActive ? 'prefixIcon-green.svg' : 'prefixIcon.svg';
 
@@ -1182,7 +1184,30 @@ const getIcon = (path: string) => {
     logoutIcon.value = 'logout.svg';
 }
 getIcon(typeof route.name === 'string' ? route.name as string : (route.name ? String(route.name) : ''))
+// 模型子菜单展开状态（模型管理 / Ollama）
+const modelsMenuOpen = ref(false)
+
+// 打开设置弹窗到指定分区（模型管理 / Ollama），并收起模型子菜单
+const openModelSection = (section: string) => {
+    modelsMenuOpen.value = false
+    uiStore.openSettings(section)
+    router.push('/platform/settings')
+}
+
+// 模型子菜单项高亮：设置弹窗停留在对应分区时
+const isModelsSectionActive = (section: string): boolean => {
+    return route.name === 'settings' && route.query.section === section
+}
+
+// 任意页面跳转时收起模型子菜单，避免子菜单在其他页面还展开着
+watch(() => route.name, () => {
+    modelsMenuOpen.value = false
+})
+
 const handleMenuClick = async (path: string) => {
+    if (path !== 'models') {
+        modelsMenuOpen.value = false
+    }
     if (path === 'knowledge-bases') {
         // 知识库菜单项：如果在知识库内部，跳转到当前知识库文件页；否则跳转到知识库列表
         const kbId = await getCurrentKbId()
@@ -1193,13 +1218,17 @@ const handleMenuClick = async (path: string) => {
         }
     } else if (path === 'agents') {
         router.push('/platform/agents')
-    } else if (path === 'organizations') {
-        // 组织菜单项：跳转到组织列表
-        router.push('/platform/organizations')
     } else if (path === 'settings') {
         // 设置菜单项：打开设置弹窗并跳转路由
         uiStore.openSettings()
         router.push('/platform/settings')
+    } else if (path === 'models') {
+        // 模型菜单项：展开/收起侧栏子项；折叠态无子菜单空间，直接打开模型管理
+        if (uiStore.sidebarCollapsed) {
+            openModelSection('models')
+        } else {
+            modelsMenuOpen.value = !modelsMenuOpen.value
+        }
     } else {
         gotopage(path)
     }
@@ -1472,6 +1501,35 @@ const resizeSidebar = (delta: number, keyboard: boolean) => {
             top: 0;
             z-index: 2;
             background: var(--td-bg-color-sidebar);
+        }
+    }
+
+    // 模型子菜单（模型管理 / Ollama）：缩进到主菜单文字列，与历史会话行同宽
+    .models-submenu {
+        padding: 2px 0 4px;
+
+        &__item {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            height: 30px;
+            padding: 0 8px 0 calc(var(--sidebar-inset-x) + var(--sidebar-icon-size) + var(--sidebar-icon-gap));
+            box-sizing: border-box;
+            border-radius: var(--app-radius-xs);
+            color: var(--td-text-color-secondary);
+            font-family: var(--app-font-family);
+            font-size: var(--app-text-sm);
+            transition: background-color var(--app-motion-base) ease, color var(--app-motion-base) ease;
+
+            &:hover {
+                background: var(--td-bg-color-container-hover);
+                color: var(--td-text-color-primary);
+            }
+
+            &.is-active {
+                background: var(--td-bg-color-secondarycontainer);
+                color: var(--td-brand-color);
+            }
         }
     }
 
@@ -1973,20 +2031,6 @@ const resizeSidebar = (delta: number, keyboard: boolean) => {
     }
 }
 
-.menu-pending-badge {
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    margin-left: 6px;
-    border-radius: 9px;
-    background: rgba(250, 173, 20, 0.2);
-    color: var(--td-warning-color);
-    font-size: var(--app-text-sm);
-    font-weight: 600;
-    line-height: 18px;
-    text-align: center;
-    flex-shrink: 0;
-}
 
 .menu_box {
     position: relative;

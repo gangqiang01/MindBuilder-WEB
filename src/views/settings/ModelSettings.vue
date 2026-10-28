@@ -27,18 +27,6 @@
         </div>
         <div class="model-header-actions">
           <t-button
-            v-if="authStore.isSystemAdmin"
-            type="button"
-            theme="default"
-            variant="text"
-            size="small"
-            class="model-header-action"
-            @click="uiStore.openSettings('model-catalog')"
-          >
-            <template #icon><t-icon name="control-platform" /></template>
-            {{ $t('modelCatalog.title') }}
-          </t-button>
-          <t-button
             v-if="authStore.hasRole('admin')"
             type="button"
             theme="default"
@@ -489,7 +477,7 @@ const sourceLabel = (type: ModelType) => {
   return t('modelSettings.source.remote')
 }
 
-// Maps a backend `provider` id (e.g. "openai", "aliyun", "weknoracloud")
+// Maps a backend `provider` id (e.g. "openai", "aliyun")
 // to the vendor's localized name from the backend catalog (modelProviders
 // store), so the model card and the editor dropdown always agree. Falls
 // back to the raw id when the catalog has not loaded yet, and to '' when

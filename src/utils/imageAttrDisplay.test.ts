@@ -6,8 +6,6 @@ import { createI18n } from 'vue-i18n'
 import type { ImageAttrSchema, ImageAttrSpec } from '@/api/knowledge-base'
 import enUS from '../i18n/locales/en-US.ts'
 import jaJP from '../i18n/locales/ja-JP.ts'
-import koKR from '../i18n/locales/ko-KR.ts'
-import ruRU from '../i18n/locales/ru-RU.ts'
 import zhCN from '../i18n/locales/zh-CN.ts'
 import { imageAttrConditionDisplay, imageAttrDisplay, imageAttrKeyBase } from './imageAttrDisplay.ts'
 
@@ -168,8 +166,6 @@ const MESSAGES_BY_LOCALE = {
   'zh-CN': { 'zh-CN': zhCN },
   'en-US': { 'en-US': enUS },
   'ja-JP': { 'ja-JP': jaJP },
-  'ko-KR': { 'ko-KR': koKR },
-  'ru-RU': { 'ru-RU': ruRU },
 }
 
 type TestLocale = keyof typeof MESSAGES_BY_LOCALE

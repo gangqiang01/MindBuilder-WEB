@@ -7,7 +7,6 @@ const t = (key: string) => `<${key}>`
 test('routeTitle names the pages the sidebar names', () => {
   assert.equal(routeTitle({ name: 'agentList' }, t), '<menu.agents>')
   assert.equal(routeTitle({ name: 'knowledgeBaseList' }, t), '<menu.knowledgeBase>')
-  assert.equal(routeTitle({ name: 'organizationList' }, t), '<menu.organizations>')
   assert.equal(routeTitle({ name: 'chat', params: { chatid: 'x' } }, t), '<assistant.context.pages.chat>')
 })
 

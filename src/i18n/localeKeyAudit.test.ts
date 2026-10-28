@@ -78,7 +78,6 @@ const PARSER_ENGINE_NAMES = [
   'mineru_cloud',
   'paddleocr_vl',
   'paddleocr_vl_cloud',
-  'weknoracloud',
   'markitdown',
   'opendataloader',
 ] as const
@@ -212,9 +211,7 @@ test('prune rebuild restores registered audit keys from baked-in English default
     'en-US': {},
     'zh-CN': {},
     'zh-TW': {},
-    'ko-KR': {},
     'ja-JP': {},
-    'ru-RU': {},
   } as Record<LocaleName, Record<string, unknown>>
   const rebuilt = rebuildPrunedLocales(emptyBundles, usage)
   const en = rebuilt['en-US'] as Record<string, unknown>

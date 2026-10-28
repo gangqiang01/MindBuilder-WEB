@@ -36,7 +36,8 @@ export const useMenuStore = defineStore('menuStore', () => {
     { title: '', titleKey: 'menu.agents', icon: 'agent', path: 'agents', requiredCapability: 'agents' },
     { title: '', titleKey: 'menu.automations', icon: 'automation', path: 'automations' },
     { title: '', titleKey: 'toolbox.title', icon: 'toolbox', path: 'toolbox' },
-    { title: '', titleKey: 'menu.organizations', icon: 'organization', path: 'organizations', requiredCapability: 'organizations' },
+    // 模型入口从设置挪到侧栏（工具箱下方）；点击展开 模型管理 / Ollama 子项
+    { title: '', titleKey: 'menu.models', icon: 'model', path: 'models' },
     { title: '', titleKey: 'menu.settings', icon: 'setting', path: 'settings' },
     { title: '', titleKey: 'menu.logout', icon: 'logout', path: 'logout' }
   ])
@@ -67,19 +68,13 @@ export const useMenuStore = defineStore('menuStore', () => {
     }
   )
 
-  const liteHiddenPaths = new Set(['logout', 'organizations'])
+  const liteHiddenPaths = new Set(['logout'])
 
-  // 共享组织 (organizations) 仅对当前组织的 admin / owner 暴露入口。
-  // viewer / contributor 即便在共享组织里拥有资源，也无需自行管理共享关系，
-  // 入口在侧栏只会徒增噪音；后端 RBAC 才是权限的最终来源（见 middleware/rbac.go）。
   const visibleMenuArr = computed(() => {
     const authStore = useAuthStore()
     const deploymentCapabilities = useDeploymentCapabilitiesStore()
     return menuArr.filter(item => {
       if (authStore.isLiteMode && liteHiddenPaths.has(item.path)) {
-        return false
-      }
-      if (item.path === 'organizations' && !authStore.hasRole('admin')) {
         return false
       }
       if (!deploymentCapabilities.isSupported(item.requiredCapability)) {

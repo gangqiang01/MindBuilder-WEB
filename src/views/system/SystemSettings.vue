@@ -378,25 +378,10 @@ const savedKey = ref<string | null>(null)
 const saveAnnouncement = ref('')
 let savedKeyTimer: ReturnType<typeof setTimeout> | null = null
 
-type SettingsSection = 'users' | 'access' | 'tenant' | 'runtime' | 'security' | 'other'
+type SettingsSection = 'users' | 'runtime' | 'security'
 
 // Product-oriented order, rather than the registry's alphabetical key order.
-// Unknown/out-of-band rows remain visible in a conditional "Other" tab so the
-// backend's diagnostic contract is preserved when a deployment contains an
-// unexpected key.
-const SETTINGS_SECTION_KEYS: Record<Exclude<SettingsSection, 'other' | 'users'>, readonly string[]> = {
-  access: [
-    'auth.registration_mode',
-    'auth.complex_password_enabled',
-    'auth.default_tenant_mode',
-    'tenant.self_service_creation_enabled',
-    'tenant.max_owned_per_user',
-  ],
-  tenant: [
-    'tenant.default_storage_quota_gb',
-    'tenant.auto_create_api_key',
-    'tenant.auto_accept_invitation',
-  ],
+const SETTINGS_SECTION_KEYS: Record<Exclude<SettingsSection, 'users'>, readonly string[]> = {
   runtime: [
     'asynq.core_concurrency',
     'asynq.enrichment_concurrency',
@@ -409,25 +394,19 @@ const SETTINGS_SECTION_KEYS: Record<Exclude<SettingsSection, 'other' | 'users'>,
   security: ['ssrf.whitelist', 'sandbox.docker_enabled'],
 }
 
-const activeSettingsSection = ref<SettingsSection>('access')
-const knownSettingKeys = new Set(Object.values(SETTINGS_SECTION_KEYS).flat())
+const activeSettingsSection = ref<SettingsSection>('users')
 const settingsByKey = computed<Map<string, SystemSettingItem>>(() => new Map(settings.value.map((item) => [item.key, item])))
-const unknownSettings = computed(() => settings.value.filter((item) => !knownSettingKeys.has(item.key)))
-const hasUnknownSettings = computed(() => unknownSettings.value.length > 0)
 
 const sectionTabs = computed(() => {
   const tabs: { key: SettingsSection; icon: string; label: string }[] = [
-    { key: 'access', icon: 'lock-on', label: t('system.globalSettings.sections.access.title') },
     { key: 'users', icon: 'usergroup', label: t('system.globalSettings.userList.rowLabel') },
-    { key: 'tenant', icon: 'folder', label: t('system.globalSettings.sections.tenant.title') },
     { key: 'runtime', icon: 'server', label: t('system.globalSettings.sections.runtime.title') },
     { key: 'security', icon: 'secured', label: t('system.globalSettings.sections.security.title') },
   ]
-  if (hasUnknownSettings.value) tabs.push({ key: 'other', icon: 'ellipsis', label: t('system.globalSettings.sections.other.title') })
   return tabs
 })
 
-const PANEL_KEYS: readonly SettingsSection[] = ['access', 'users', 'tenant', 'runtime', 'security', 'other']
+const PANEL_KEYS: readonly SettingsSection[] = ['users', 'runtime', 'security']
 
 function panelFromQuery(): SettingsSection | null {
   const raw = Array.isArray(route.query.panel) ? route.query.panel[0] : route.query.panel
@@ -438,7 +417,6 @@ function panelFromQuery(): SettingsSection | null {
 function applyRoutePanel() {
   const panel = panelFromQuery()
   if (!panel || panel === activeSettingsSection.value) return
-  if (panel === 'other' && !hasUnknownSettings.value) return
   activeSettingsSection.value = panel
 }
 
@@ -468,17 +446,8 @@ function onTabKeydown(event: KeyboardEvent, key: SettingsSection) {
 
 watch(() => route.query.panel, applyRoutePanel, { immediate: true })
 
-watch(hasUnknownSettings, (hasUnknown) => {
-  if (!hasUnknown && activeSettingsSection.value === 'other') {
-    showPanel('access')
-    return
-  }
-  applyRoutePanel()
-})
-
 const activeSectionSettings = computed(() => {
   if (activeSettingsSection.value === 'users') return []
-  if (activeSettingsSection.value === 'other') return unknownSettings.value
   return SETTINGS_SECTION_KEYS[activeSettingsSection.value]
     .map((key) => settingsByKey.value.get(key))
     .filter((item): item is SystemSettingItem => Boolean(item))

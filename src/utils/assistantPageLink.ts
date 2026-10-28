@@ -9,7 +9,7 @@ export interface AssistantPageLink {
   display_type: 'open_page'
   page:
     | 'knowledge_base' | 'wiki' | 'agent_editor' | 'settings_models' | 'mcp_services'
-    | 'settings' | 'toolbox' | 'agents' | 'knowledge_bases' | 'organizations' | 'automations'
+    | 'settings' | 'toolbox' | 'agents' | 'knowledge_bases' | 'automations'
   label: string
   detail?: string
   note?: string
@@ -94,8 +94,6 @@ export function pageLinkLocation(link: AssistantPageLink): PageLinkLocation | nu
       return { path: '/platform/agents', query: {} }
     case 'knowledge_bases':
       return { path: '/platform/knowledge-bases', query: {} }
-    case 'organizations':
-      return { path: '/platform/organizations', query: {} }
     case 'automations':
       return {
         path: link.automation_id

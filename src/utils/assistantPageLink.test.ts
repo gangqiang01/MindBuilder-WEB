@@ -42,7 +42,6 @@ test('pages without a resource open the settings section, the tool or the list',
   assert.deepEqual(pageLinkLocation(link({ page: 'toolbox' })), { path: '/platform/toolbox', query: {} })
   assert.deepEqual(pageLinkLocation(link({ page: 'agents' })), { path: '/platform/agents', query: {} })
   assert.deepEqual(pageLinkLocation(link({ page: 'knowledge_bases' })), { path: '/platform/knowledge-bases', query: {} })
-  assert.deepEqual(pageLinkLocation(link({ page: 'organizations' })), { path: '/platform/organizations', query: {} })
 })
 
 test('only a new model or service carries a form, and its endpoint is shown', () => {

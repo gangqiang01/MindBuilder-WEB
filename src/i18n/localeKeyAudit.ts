@@ -18,8 +18,6 @@ import { writeLocaleModule } from './localeSerialize.ts'
 
 import enUS from './locales/en-US.ts'
 import jaJP from './locales/ja-JP.ts'
-import koKR from './locales/ko-KR.ts'
-import ruRU from './locales/ru-RU.ts'
 import zhCN from './locales/zh-CN.ts'
 import zhTW from './locales/zh-TW.ts'
 
@@ -27,9 +25,7 @@ export const LOCALE_BUNDLES = {
   'en-US': enUS,
   'zh-CN': zhCN,
   'zh-TW': zhTW,
-  'ko-KR': koKR,
   'ja-JP': jaJP,
-  'ru-RU': ruRU,
 } as const
 
 export type LocaleName = keyof typeof LOCALE_BUNDLES
@@ -70,6 +66,9 @@ const TM_KEY_PATTERNS = [
 const EXTRA_PREFIXES = [
   // Operation labels use IDs supplied by the backend catalog at runtime.
   'agentStream.operations.names.',
+  // Operation risk labels are keyed by the backend risk value at runtime
+  // (OperationsResult.vue builds `agentStream.operations.risk.${risk}`).
+  'agentStream.operations.risk.',
   'system.globalSettings.listConfirm.',
   'system.globalSettings.keyLabels.',
   'system.globalSettings.keyDescriptions.',
@@ -536,7 +535,7 @@ export function findAllLocaleMessageCompileErrors(
 
 type LocaleTree = Record<string, unknown>
 
-const LOCALE_ORDER: LocaleName[] = ['en-US', 'zh-CN', 'zh-TW', 'ko-KR', 'ru-RU', 'ja-JP']
+const LOCALE_ORDER: LocaleName[] = ['en-US', 'zh-CN', 'zh-TW', 'ja-JP']
 const LOCALES_DIR = join(dirname(fileURLToPath(import.meta.url)), 'locales')
 
 function getLocaleValueAtPathParts(current: unknown, parts: string[]): unknown {

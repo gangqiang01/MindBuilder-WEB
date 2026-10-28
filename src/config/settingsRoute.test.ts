@@ -23,10 +23,6 @@ test('settings nav writes section, and keeps a system-settings panel only there'
     { section: 'general' },
   )
   assert.deepEqual(
-    buildSettingsRouteQuery('runtime-queues', { section: 'system-global' }),
-    { section: 'runtime-queues' },
-  )
-  assert.deepEqual(
     buildSettingsRouteQuery('system-global', { section: 'system-global', panel: 'users', tab: 'im' }),
     { section: 'system-global', panel: 'users' },
   )
@@ -39,11 +35,11 @@ test('settings nav writes section, and keeps a system-settings panel only there'
     { section: 'system-global' },
   )
   assert.deepEqual(
-    buildSettingsRouteQuery(integrationSectionKey('claw'), {
+    buildSettingsRouteQuery(integrationSectionKey('embed'), {
       section: 'integrations',
       tab: 'im',
     }),
-    { section: 'integration-claw' },
+    { section: 'integration-embed' },
   )
   assert.deepEqual(
     buildSettingsRouteQuery(integrationSectionKey('api'), {
@@ -57,18 +53,16 @@ test('settings nav writes section, and keeps a system-settings panel only there'
 
 test('legacy api / integrations / bare-tab query strings normalize to nav keys', () => {
   assert.equal(normalizeSettingsSection('api'), 'integration-api')
-  assert.equal(normalizeSettingsSection('claw'), 'integration-claw')
-  assert.equal(normalizeSettingsSection('cli'), 'integration-cli')
   assert.equal(normalizeSettingsSection('mcpserver'), 'integration-mcpserver')
   // 'mcp' is the MCP-client settings page, not the MCP server integration tab.
   assert.equal(normalizeSettingsSection('mcp'), 'mcp')
-  assert.equal(normalizeSettingsSection('integrations', 'cli'), 'integration-cli')
+  // Removed tabs (cli / chrome / claw) fall back to the default im tab.
+  assert.equal(normalizeSettingsSection('integrations', 'cli'), 'integration-im')
   assert.equal(normalizeSettingsSection('integrations', 'embed'), 'integration-embed')
   assert.equal(normalizeSettingsSection('integrations'), 'integration-im')
-  assert.equal(normalizeSettingsSection('integration-chrome'), 'integration-chrome')
   assert.equal(normalizeSettingsSection('system-global'), 'system-global')
-  assert.equal(isIntegrationSection('integration-chrome'), true)
-  assert.equal(isIntegrationSection('integration-cli'), true)
+  // Removed integration tabs are no longer recognized as integration sections.
+  assert.equal(isIntegrationSection('integration-cli'), false)
   assert.equal(isIntegrationSection('models'), false)
   assert.equal(isIntegrationSection('integration-unknown'), false)
 })
@@ -76,15 +70,15 @@ test('legacy api / integrations / bare-tab query strings normalize to nav keys',
 test('canonical settings query skips a redundant replace', () => {
   assert.equal(
     settingsQueryUnchanged(
-      { section: 'integration-claw' },
-      { section: 'integration-claw' },
+      { section: 'integration-embed' },
+      { section: 'integration-embed' },
     ),
     true,
   )
   assert.equal(
     settingsQueryUnchanged(
-      { section: 'integrations', tab: 'claw' },
-      { section: 'integration-claw' },
+      { section: 'integrations', tab: 'embed' },
+      { section: 'integration-embed' },
     ),
     false,
   )

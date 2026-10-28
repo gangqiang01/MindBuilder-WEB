@@ -9,9 +9,6 @@ import enUS from '../../i18n/locales/en-US'
 import zhCN from '../../i18n/locales/zh-CN'
 import zhTW from '../../i18n/locales/zh-TW'
 import jaJP from '../../i18n/locales/ja-JP'
-import koKR from '../../i18n/locales/ko-KR'
-import ruRU from '../../i18n/locales/ru-RU'
-import { pluralRules } from '../../i18n/pluralizationRules'
 
 const source = readFileSync(new URL('./KnowledgeBase.vue', import.meta.url), 'utf8')
 
@@ -208,14 +205,14 @@ test('a stale folder path reports no folders instead of crashing', async t => {
 // template feeds them into, so a single-number message cannot come back.
 const FOLDER_CONTENTS = 'knowledgeBase.folderTree.folderContentsCount'
 const locales = {
-  'zh-CN': zhCN, 'zh-TW': zhTW, 'en-US': enUS, 'ja-JP': jaJP, 'ko-KR': koKR, 'ru-RU': ruRU,
+  'zh-CN': zhCN, 'zh-TW': zhTW, 'en-US': enUS, 'ja-JP': jaJP,
 }
 
 function renderFolderContents(
   locale: keyof typeof locales,
   counts: { documents: number; folders: number } = { documents: 2, folders: 1 },
 ): string {
-  const i18n = createI18n({ legacy: false, locale, pluralRules, messages: { [locale]: locales[locale] } })
+  const i18n = createI18n({ legacy: false, locale, messages: { [locale]: locales[locale] } })
   // `count` is what vue-i18n uses to pick the plural form; the folder number is
   // the noun that changes, so it drives the choice.
   return i18n.global.t(FOLDER_CONTENTS, { ...counts, count: counts.folders })
@@ -226,18 +223,13 @@ test('every locale renders both numbers as "documents / folders"', () => {
   assert.equal(renderFolderContents('zh-TW'), '2 個文件 / 1 個資料夾')
   assert.equal(renderFolderContents('en-US'), '2 documents / 1 folder')
   assert.equal(renderFolderContents('ja-JP'), '2 件のドキュメント / 1 個のフォルダ')
-  assert.equal(renderFolderContents('ko-KR'), '문서 2개 / 폴더 1개')
-  assert.equal(renderFolderContents('ru-RU'), 'Документов: 2 / 1 папка')
 })
 
 test('plural locales inflect the folder noun', () => {
   assert.equal(renderFolderContents('en-US', { documents: 2, folders: 2 }), '2 documents / 2 folders')
-  assert.equal(renderFolderContents('ru-RU', { documents: 2, folders: 2 }), 'Документов: 2 / 2 папки')
-  assert.equal(renderFolderContents('ru-RU', { documents: 2, folders: 5 }), 'Документов: 2 / 5 папок')
   // No plural change in these locales; the number alone changes.
   assert.equal(renderFolderContents('zh-CN', { documents: 2, folders: 2 }), '2 个文档 / 2 个文件夹')
   assert.equal(renderFolderContents('ja-JP', { documents: 1, folders: 1 }), '1 件のドキュメント / 1 個のフォルダ')
-  assert.equal(renderFolderContents('ko-KR', { documents: 2, folders: 2 }), '문서 2개 / 폴더 2개')
 })
 
 // ── Empty state ─────────────────────────────────────────────────────────────

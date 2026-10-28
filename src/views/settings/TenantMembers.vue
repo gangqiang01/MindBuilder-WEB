@@ -40,7 +40,10 @@
             <template #icon><t-icon name="history" /></template>
             {{ $t('tenantMember.audit.tabLabel') }}
           </t-button>
-          <t-popup v-if="canManage" v-model="invitePopupVisible" trigger="click" placement="bottom-end"
+          <!-- 添加成员：直接创建账号（邮箱未注册时）并立即绑定角色，
+               替代原邮箱邀请流程。密码缺省时由服务端生成，仅在揭示
+               步骤（addStep='reveal'）展示一次。 -->
+          <t-popup v-if="canManage" v-model="addPopupVisible" trigger="click" placement="bottom-end"
             destroy-on-close overlay-class-name="wk-popover wk-popover--form member-invite-popup-overlay">
             <t-button theme="default" variant="text" size="small" class="members-list-add-btn"
               :title="$t('tenantMember.add.button')" :aria-label="$t('tenantMember.add.button')">
@@ -50,101 +53,78 @@
             <template #content>
               <div class="member-invite-popup-inner" @click.stop>
                 <div class="member-invite-popup-title">
-                  {{
-                    addDialogStep === 'form'
-                      ? $t('tenantMember.add.dialogTitle')
-                      : $t('tenantInvitation.confirmInviteTitle')
-                  }}
+                  {{ addStep === 'form' ? $t('tenantMember.add.dialogTitle') : $t('tenantMember.add.revealTitle') }}
                 </div>
-                <t-form v-if="addDialogStep === 'form'" ref="addFormRef" :data="addForm" :rules="addFormRules"
+                <t-form v-if="addStep === 'form'" ref="addFormRef" :data="addForm" :rules="addFormRules"
                   :label-width="80" class="member-invite-form">
+                  <t-form-item :label="$t('tenantMember.add.usernameLabel')" name="username">
+                    <t-input v-model="addForm.username" :placeholder="$t('tenantMember.add.usernamePlaceholder')"
+                      clearable autocomplete="off" />
+                  </t-form-item>
                   <t-form-item :label="$t('tenantMember.add.emailLabel')" name="email">
                     <t-input v-model="addForm.email" :placeholder="$t('tenantMember.add.emailPlaceholder')"
-                      clearable />
+                      clearable autocomplete="off" />
                   </t-form-item>
                   <t-form-item :label="$t('tenantMember.add.roleLabel')" name="role">
                     <t-select v-model="addForm.role" :options="roleOptions" :popup-props="roleSelectPopupProps" />
                   </t-form-item>
+                  <t-form-item name="autoGenerate">
+                    <t-checkbox v-model="addForm.autoGenerate">
+                      {{ $t('tenantMember.add.autoGenerate') }}
+                    </t-checkbox>
+                  </t-form-item>
+                  <template v-if="!addForm.autoGenerate">
+                    <t-form-item :label="$t('tenantMember.add.passwordLabel')" name="password">
+                      <t-input v-model="addForm.password" type="password" autocomplete="new-password"
+                        :placeholder="$t('tenantMember.add.passwordPlaceholder')">
+                        <template #prefix-icon><t-icon name="lock-on" /></template>
+                      </t-input>
+                    </t-form-item>
+                    <t-form-item :label="$t('tenantMember.add.confirmPasswordLabel')" name="confirmPassword">
+                      <t-input v-model="addForm.confirmPassword" type="password" autocomplete="new-password"
+                        :placeholder="$t('tenantMember.add.confirmPasswordPlaceholder')" @enter="submitAdd">
+                        <template #prefix-icon><t-icon name="lock-on" /></template>
+                      </t-input>
+                    </t-form-item>
+                  </template>
                 </t-form>
                 <div v-else class="invite-confirm-body">
-                  {{ $t('tenantInvitation.confirmInviteBody', {
-                    email: addConfirmEmail,
-                    role: addConfirmRoleLabel,
-                  }) }}
-                </div>
-                <div class="invite-popup-footer">
-                  <t-button v-if="addDialogStep === 'form'" variant="outline" :disabled="adding"
-                    @click="invitePopupVisible = false">
-                    {{ $t('common.cancel') }}
-                  </t-button>
-                  <t-button v-else variant="outline" :disabled="adding" @click="goBackToForm">
-                    {{ $t('common.back') }}
-                  </t-button>
-                  <t-button theme="primary" :loading="adding" @click="submitAdd">
-                    {{ dialogConfirmLabel }}
-                  </t-button>
-                </div>
-              </div>
-            </template>
-          </t-popup>
-          <!-- Share-link generator. Sits next to the invite-by-email
-               popup so the two flows live side-by-side: "I know who"
-               (email input) vs "I don't" (one link, group chat). -->
-          <t-popup v-if="canManage" v-model="shareLinkPopupVisible" trigger="click" placement="bottom-end"
-            destroy-on-close overlay-class-name="wk-popover wk-popover--form member-invite-popup-overlay">
-            <t-button theme="default" variant="text" size="small" class="members-list-add-btn"
-              :title="$t('tenantInvitation.shareLink.button')"
-              :aria-label="$t('tenantInvitation.shareLink.button')">
-              <template #icon><t-icon name="link" /></template>
-              {{ $t('tenantInvitation.shareLink.button') }}
-            </t-button>
-            <template #content>
-              <div class="member-invite-popup-inner" @click.stop>
-                <div class="member-invite-popup-title">
-                  {{
-                    shareLinkResult
-                      ? $t('tenantInvitation.shareLink.resultTitle')
-                      : $t('tenantInvitation.shareLink.dialogTitle')
-                  }}
-                </div>
-                <div v-if="!shareLinkResult" class="member-invite-form">
-                  <p class="invite-confirm-body">
-                    {{ $t('tenantInvitation.shareLink.description', { days: INVITATION_TTL_DAYS }) }}
-                  </p>
-                  <t-form :data="shareLinkForm" :label-width="80">
-                    <t-form-item :label="$t('tenantMember.add.roleLabel')" name="role">
-                      <t-select v-model="shareLinkForm.role" :options="roleOptions"
-                        :popup-props="roleSelectPopupProps" />
-                    </t-form-item>
-                  </t-form>
-                </div>
-                <div v-else class="share-link-result">
-                  <p class="invite-confirm-body">
-                    {{ $t('tenantInvitation.shareLink.resultBody') }}
-                  </p>
-                  <div class="share-link-row">
-                    <input class="share-link-row__input"
-                      :value="absoluteInviteURL(shareLinkResult.invite_url || '')"
-                      readonly @click="($event.target as HTMLInputElement).select()" />
-                    <t-button size="small" theme="primary" variant="outline"
-                      @click="copyText(absoluteInviteURL(shareLinkResult.invite_url || ''))">
-                      <template #icon><t-icon name="copy" /></template>
-                      {{ $t('tenantInvitation.copyLink') }}
-                    </t-button>
+                  <p class="create-member-reveal-desc">{{ $t('tenantMember.add.revealBody') }}</p>
+                  <div class="create-member-reveal">
+                    <div class="create-member-reveal-item">
+                      <span class="create-member-reveal-label">{{ $t('tenantMember.add.usernameLabel') }}</span>
+                      <span class="create-member-reveal-value">{{ revealCredentials?.username }}</span>
+                    </div>
+                    <div class="create-member-reveal-item">
+                      <span class="create-member-reveal-label">{{ $t('tenantMember.add.emailLabel') }}</span>
+                      <span class="create-member-reveal-value">{{ revealCredentials?.email }}</span>
+                    </div>
+                    <div class="create-member-reveal-item">
+                      <span class="create-member-reveal-label">{{ $t('tenantMember.add.passwordLabel') }}</span>
+                      <pre class="create-member-reveal-value create-member-reveal-value--mono">{{
+                        revealCredentials?.password
+                      }}</pre>
+                    </div>
                   </div>
                 </div>
                 <div class="invite-popup-footer">
-                  <t-button v-if="!shareLinkResult" variant="outline" :disabled="creatingShareLink"
-                    @click="shareLinkPopupVisible = false">
-                    {{ $t('common.cancel') }}
-                  </t-button>
-                  <t-button v-else variant="outline" @click="shareLinkPopupVisible = false">
-                    {{ $t('common.close') }}
-                  </t-button>
-                  <t-button v-if="!shareLinkResult" theme="primary" :loading="creatingShareLink"
-                    @click="submitShareLink">
-                    {{ $t('tenantInvitation.shareLink.generate') }}
-                  </t-button>
+                  <template v-if="addStep === 'form'">
+                    <t-button variant="outline" :disabled="adding" @click="addPopupVisible = false">
+                      {{ $t('common.cancel') }}
+                    </t-button>
+                    <t-button theme="primary" :loading="adding" @click="submitAdd">
+                      {{ $t('tenantMember.add.submit') }}
+                    </t-button>
+                  </template>
+                  <template v-else>
+                    <t-button variant="outline" @click="copyRevealCredentials">
+                      <template #icon><t-icon name="copy" /></template>
+                      {{ $t('tenantMember.add.revealCopy') }}
+                    </t-button>
+                    <t-button theme="primary" @click="acknowledgeReveal">
+                      {{ $t('tenantMember.add.revealAck') }}
+                    </t-button>
+                  </template>
                 </div>
               </div>
             </template>
@@ -153,143 +133,21 @@
       </div>
       <p class="section-description">
         {{ $t('tenantMember.sectionDescription') }}
-        <a
-          class="doc-link"
-          :href="docsUrl('tenantAuth')"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {{ $t('tenantMember.learnRbacGuide') }}
-          <t-icon name="link" class="link-icon" />
-        </a>
       </p>
     </div>
 
     <div class="members-tabbar">
-      <t-tabs v-model="activeListTab" class="members-tabs">
-        <t-tab-panel value="members">
-          <template #label>
-            <span class="members-tab-label"><t-icon name="usergroup" size="16px" />
-              {{ $t('tenantMember.listTitle') }}<span class="members-list-count-badge">{{ membersTotal }}</span>
-            </span>
-          </template>
-        </t-tab-panel>
-        <t-tab-panel v-if="canManage" value="invitations">
-          <template #label>
-            <span class="members-tab-label"><t-icon name="mail" size="16px" />
-              {{ $t('tenantInvitation.pendingSectionTitle') }}<span class="members-list-count-badge">{{ invitationsTotal }}</span>
-            </span>
-          </template>
-        </t-tab-panel>
-      </t-tabs>
-      <t-input v-show="activeListTab === 'members'" v-model="searchQuery" class="members-list-search"
+      <span class="members-tab-label"><t-icon name="usergroup" size="16px" />
+        {{ $t('tenantMember.listTitle') }}<span class="members-list-count-badge">{{ membersTotal }}</span>
+      </span>
+      <t-input v-model="searchQuery" class="members-list-search"
         :placeholder="$t('tenantMember.searchPlaceholder')" :aria-label="$t('tenantMember.searchPlaceholder')" clearable>
         <template #prefix-icon><t-icon name="search" size="16px" /></template>
       </t-input>
     </div>
 
     <div class="members-tab-layout">
-      <div v-if="canManage" v-show="activeListTab === 'invitations'" class="pending-invitations-section">
-        <div class="pending-invitations-header">
-          <span class="pending-invitations-desc">
-            {{ $t('tenantInvitation.pendingSectionDesc', { days: INVITATION_TTL_DAYS }) }}
-          </span>
-        </div>
-        <div v-if="invitationsLoading" class="loading-inline">
-          <t-loading size="small" />
-          <span>{{ $t('tenantMember.loading') }}</span>
-        </div>
-        <div v-else-if="invitationsError" class="error-inline">
-          <t-alert theme="error" :message="invitationsError">
-            <template #operation>
-              <t-button size="small" @click="loadInvitations">{{ $t('tenantMember.retry') }}</t-button>
-            </template>
-          </t-alert>
-        </div>
-        <div v-else-if="invitationsTotal === 0" class="pending-invitations-empty">
-          {{ $t('tenantInvitation.pendingEmpty') }}
-        </div>
-        <div v-else class="data-table-shell data-table-shell--with-footer pending-invitations-table">
-          <div class="data-table-shell__scroll">
-            <t-table row-key="id" :data="invitations" :columns="invitationColumns" size="medium" hover>
-              <template #invitee="{ row }">
-                <div class="member-cell">
-                  <template v-if="row.is_share_link">
-                    <span class="member-name share-link-title">
-                      <t-icon name="link" size="14px" />
-                      {{ $t('tenantInvitation.shareLink.cellTitle') }}
-                    </span>
-                    <span class="member-email">
-                      {{ (row.accepted_count ?? 0) > 0
-                        ? $t('tenantInvitation.shareLink.cellAccepted', { count: row.accepted_count })
-                        : $t('tenantInvitation.shareLink.cellEmpty') }}
-                    </span>
-                  </template>
-                  <template v-else>
-                    <span class="member-name">{{ inviteePrimary(row) }}</span>
-                    <span v-if="row.invitee_email && row.invitee_name" class="member-email">{{ row.invitee_email
-                      }}</span>
-                  </template>
-                </div>
-              </template>
-              <template #role="{ row }">
-                <t-tag :theme="roleTagTheme(row.role)" size="small">
-                  {{ $t('tenantMember.role.' + row.role) }}
-                </t-tag>
-              </template>
-              <template #inviter="{ row }">
-                <span>{{ inviterPrimary(row) }}</span>
-              </template>
-              <template #expires_at="{ row }">{{ formatDate(row.expires_at) }}</template>
-              <template #status="{ row }">
-                <t-tag :theme="invitationStatusTheme(row.status)" size="small">
-                  {{ row.is_share_link && row.status === 'pending'
-                    ? $t('tenantInvitation.status.shareLinkActive')
-                    : $t('tenantInvitation.status.' + row.status) }}
-                </t-tag>
-              </template>
-              <template #actions="{ row }">
-                <!-- Per-row "copy link" for active share-link rows.
-                     Icon-only with tooltip so two actions ("copy" +
-                     "revoke") fit inside the actions column without
-                     clipping; the full label was too wide. -->
-                <t-tooltip v-if="row.status === 'pending' && row.invite_url"
-                  :content="$t('tenantInvitation.copyLink')" placement="top">
-                  <t-button shape="square" variant="text" size="small"
-                    @click="copyText(absoluteInviteURL(row.invite_url))">
-                    <template #icon><t-icon name="copy" /></template>
-                  </t-button>
-                </t-tooltip>
-                <!-- Inline popconfirm anchored to the revoke button.
-                       Avoids spawning a top-level modal for a simple
-                       yes/no decision; the popover stays inside the
-                       table cell so the user keeps spatial context. -->
-                <t-popconfirm v-if="row.status === 'pending'" theme="warning"
-                  :content="row.is_share_link
-                    ? $t('tenantInvitation.shareLink.revokeConfirm')
-                    : $t('tenantInvitation.revoke.confirmBody', {
-                        email: row.invitee_email || row.invitee_user_id,
-                      })"
-                  :confirm-btn="{ content: $t('tenantInvitation.revoke.confirm'), theme: 'danger' }"
-                  :cancel-btn="$t('common.cancel')" placement="left" @confirm="doRevokeInvitation(row)">
-                  <t-tooltip :content="$t('tenantInvitation.revoke.button')" placement="top">
-                    <t-button theme="danger" shape="square" variant="text" size="small">
-                      <template #icon><t-icon name="close" /></template>
-                    </t-button>
-                  </t-tooltip>
-                </t-popconfirm>
-              </template>
-            </t-table>
-          </div>
-          <div v-if="invitationsTotal > 0" class="data-table-shell__pager">
-            <t-pagination v-model="invitationsPage" v-model:page-size="invitationsPageSize" :total="invitationsTotal"
-              size="small" :show-jumper="false" show-page-number :show-page-size="invitationsTotal > 10"
-              :page-size-options="INVITATIONS_PAGE_SIZE_OPTIONS" @change="onInvitationsPageChange" />
-          </div>
-        </div>
-      </div>
-
-      <div v-show="activeListTab === 'members'" class="members-list-wrap">
+      <div class="members-list-wrap">
         <div v-if="loading && members.length === 0" class="loading-inline">
           <t-loading size="small" />
           <span>{{ $t('tenantMember.loading') }}</span>
@@ -502,7 +360,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { MessagePlugin, type FormRule } from 'tdesign-vue-next'
 import SettingDrawer from '@/components/settings/SettingDrawer.vue'
 import { copyWithToast } from '@/utils/clipboard'
 import { useAuthStore } from '@/stores/auth'
@@ -512,17 +370,13 @@ import {
   listMembers,
   updateMemberRole,
   removeMember,
+  createMember,
+  type CreateMemberRequest,
   type TenantMember,
   type TenantRole,
 } from '@/api/tenant/members'
-import {
-  listTenantInvitations,
-  createInvitation,
-  createInviteLink,
-  revokeInvitation,
-  type TenantInvitation,
-} from '@/api/tenant/invitations'
-import { docsUrl } from '@/utils/docsUrl'
+import { getAuthConfig } from '@/api/auth'
+import { newPasswordRules } from '@/utils/passwordPolicy'
 import {
   listAuditLog,
   type AuditLog,
@@ -548,21 +402,17 @@ const members = ref<TenantMember[]>([])
 const loading = ref(false)
 const error = ref('')
 const adding = ref(false)
-/** 邀请流程：锚在列表头「+」按钮旁的弹出层（非居中模态）。 */
-const invitePopupVisible = ref(false)
-// share-link generator state (separate popup next to the email
-// invite). shareLinkResult is non-null after a successful create —
-// the popup then switches into "here's your link, copy it" mode.
-const shareLinkPopupVisible = ref(false)
-const shareLinkForm = reactive<{ role: TenantRole }>({ role: 'contributor' })
-const creatingShareLink = ref(false)
-const shareLinkResult = ref<TenantInvitation | null>(null)
-// Two-step invite inside the popup: 'form' renders the email/role inputs;
-// 'confirm' swaps the body for an in-place summary; primary CTA toggles label.
-const addDialogStep = ref<'form' | 'confirm'>('form')
+/** 添加成员：锚在列表头「+」按钮旁的弹出层（非居中模态）。 */
+const addPopupVisible = ref(false)
+// Two-step flow inside the popup: 'form' renders the create-member inputs;
+// 'reveal' keeps the popup open to show a server-minted one-time password
+// that must be acknowledged before it can be closed.
+const addStep = ref<'form' | 'reveal'>('form')
+const revealCredentials = ref<{ username: string; email: string; password: string } | null>(null)
+/** 服务端密码复杂度策略（auth.complex_password_enabled），用于本地校验提示。 */
+const complexPasswordEnabled = ref(false)
 const addFormRef = ref<any>(null)
 const searchQuery = ref('')
-const activeListTab = ref('members')
 /** 已应用到服务端筛选的检索词（相对输入框防抖） */
 const memberSearchQ = ref('')
 let memberSearchDebounceTimer: number | undefined
@@ -571,30 +421,10 @@ const membersTotal = ref(0)
 const membersPage = ref(1)
 const membersPageSize = ref(20)
 
-const invitationsTotal = ref(0)
-const invitationsPage = ref(1)
-const invitationsPageSize = ref(20)
-
 /** 历次分页载荷里见过的成员展示字段，补齐审计表里不在当前页的 user id */
 const memberDisplayByUserId = reactive<Record<string, { username?: string; email?: string }>>({})
 
-// Pending invitations live alongside members but in a distinct section
-// at the top of the Members tab — they're "people we've asked to
-// join but haven't yet accepted", and conflating them with the
-// authoritative roster would mislead an Owner trying to see who
-// actually has access. The load happens on the same trigger as the
-// members fetch so the screen renders both at once.
-const invitations = ref<TenantInvitation[]>([])
-const invitationsLoading = ref(false)
-const invitationsError = ref('')
-// Invitation TTL is mirrored from the backend constant
-// (defaultInvitationTTL in tenant_invitation.go). Kept as a UI string
-// for the section description; the authoritative number comes from
-// the server's expires_at on each row.
-const INVITATION_TTL_DAYS = 7
-
 const MEMBERS_PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
-const INVITATIONS_PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 // Audit log moved out of t-tabs into a right-side drawer; this flag
 // controls its visibility. Default closed — most operators come here
@@ -620,32 +450,55 @@ const auditScrollRoot = ref<HTMLElement | null>(null)
 const auditLoadSentinelEl = ref<HTMLElement | null>(null)
 let auditScrollObserver: IntersectionObserver | null = null
 
-// Add dialog model — reset on each open. Default role is contributor:
-// inviting a fresh member with viewer is too restrictive for the
-// expected "let them collaborate on KBs" use case, and admin/owner
-// should be a deliberate promote step after the user accepts.
-const addForm = reactive<{ email: string; role: TenantRole }>({
+// Add-member dialog model — reset on each open. Default role is contributor:
+// adding a fresh member with viewer is too restrictive for the expected
+// "let them collaborate on KBs" use case, and admin/owner should be a
+// deliberate promote step later. autoGenerate defaults to true so the
+// common path is two fields (username + email) and a one-time password
+// reveal, matching the system-admin create-user flow.
+const addForm = reactive<{
+  username: string
+  email: string
+  role: TenantRole
+  autoGenerate: boolean
+  password: string
+  confirmPassword: string
+}>({
+  username: '',
   email: '',
   role: 'contributor',
+  autoGenerate: true,
+  password: '',
+  confirmPassword: '',
 })
+
+// Server-side password complexity policy (auth.complex_password_enabled),
+// loaded when the popup opens so local validation mirrors what the
+// backend will enforce. Load failures fall back to the loose policy —
+// the server remains the source of truth.
+const loadAuthConfig = async () => {
+  try {
+    const resp = await getAuthConfig()
+    complexPasswordEnabled.value = !!resp.complex_password_enabled
+  } catch {
+    complexPasswordEnabled.value = false
+  }
+}
 
 // Role-aware gates. The server enforces every mutation; UI gates here
 // are presentational only, matching the security note in stores/auth.ts.
 const currentRole = computed<TenantRole | ''>(() => (authStore.currentTenantRole || '') as TenantRole | '')
-// Cross-tenant superusers (org-level operators) bypass the Owner gate
-// on the server (see middleware/rbac.go RequireRole). The UI must
-// mirror that or the buttons would be invisible to the exact admins
-// who actually need them. Local Owners of their own tenant come in via
-// the role branch.
+// Cross-tenant superusers (org-level operators) and platform system
+// administrators bypass the Owner gate on the server (see middleware/rbac.go
+// RequireRoleOrSystemAdmin). The UI must mirror that or the buttons would be
+// invisible to the exact admins who actually need them. Local Owners of their
+// own tenant come in via the role branch.
 const canManage = computed(
-  () => currentRole.value === 'owner' || authStore.canAccessAllTenants === true,
+  () =>
+    currentRole.value === 'owner' ||
+    authStore.canAccessAllTenants === true ||
+    authStore.isSystemAdmin === true,
 )
-// Admin+ (and cross-tenant superusers) can view the audit log. Mirrors
-// the server's g.Admin() guard on /tenants/:id/audit-log so we don't
-// render a tab that would just 403.
-watch(canManage, (allowed) => {
-  if (!allowed) activeListTab.value = 'members'
-})
 
 const canViewAudit = computed(
   () =>
@@ -742,28 +595,29 @@ function memberSecondary(row: { username?: string; email?: string }) {
   return ''
 }
 
-const addFormRules = {
+// Computed so the password rules track the (async-loaded) complexity
+// policy. Hidden form items (autoGenerate on) unmount their t-form-item
+// and are not validated — same pattern as the system create-user dialog.
+const addFormRules = computed<Record<string, FormRule[]>>(() => ({
+  username: [
+    { required: true, message: t('tenantMember.add.usernameRequired'), trigger: 'blur' },
+    { min: 2, max: 50, message: t('tenantMember.add.usernameLength'), trigger: 'blur' },
+  ],
   email: [
     { required: true, message: t('tenantMember.errors.emailRequired'), trigger: 'blur' },
     { email: true, message: t('tenantMember.errors.emailFormat'), trigger: 'blur' },
   ],
   role: [{ required: true, message: t('tenantMember.errors.roleRequired'), trigger: 'change' }],
-}
-
-// Pretty role tag colour: Owner stands out, Admin is warning, the rest
-// stay neutral so the table doesn't become a confetti cannon.
-function roleTagTheme(role: TenantRole): 'primary' | 'warning' | 'success' | 'default' {
-  switch (role) {
-    case 'owner':
-      return 'primary'
-    case 'admin':
-      return 'warning'
-    case 'contributor':
-      return 'success'
-    default:
-      return 'default'
-  }
-}
+  password: newPasswordRules(t, complexPasswordEnabled.value),
+  confirmPassword: [
+    { required: true, message: t('tenantMember.errors.passwordConfirmRequired'), trigger: 'blur' },
+    {
+      validator: (value: string) => value === addForm.password,
+      message: t('tenantMember.add.passwordMismatch'),
+      trigger: 'blur',
+    },
+  ],
+}))
 
 /** 成员表/下拉与权限矩阵共用图标（crown 不在 tdesign-icons-vue-next 中）。 */
 function roleIcon(role: TenantRole | string): string {
@@ -850,121 +704,6 @@ watch(searchQuery, () => {
     loadMembers()
   }, 320)
 })
-
-// ---- Pending invitations ------------------------------------------------
-
-const invitationColumns = computed(() => [
-  { colKey: 'invitee', title: t('tenantInvitation.columns.invitee'), ellipsis: true, minWidth: 160 },
-  { colKey: 'role', title: t('tenantInvitation.columns.role'), width: 110 },
-  { colKey: 'inviter', title: t('tenantInvitation.columns.inviter'), ellipsis: true, minWidth: 140 },
-  { colKey: 'expires_at', title: t('tenantInvitation.columns.expiresAt'), width: 160 },
-  { colKey: 'status', title: t('tenantInvitation.columns.status'), width: 100 },
-  ...(canManage.value
-    ? [{ colKey: 'actions', title: t('tenantInvitation.columns.operations'), width: 120, align: 'left' as const }]
-    : []),
-])
-
-function invitationStatusTheme(s: TenantInvitation['status']): 'primary' | 'success' | 'warning' | 'danger' | 'default' {
-  switch (s) {
-    case 'pending':
-      return 'primary'
-    case 'accepted':
-      return 'success'
-    case 'declined':
-    case 'revoked':
-      return 'warning'
-    case 'expired':
-      return 'danger'
-    default:
-      return 'default'
-  }
-}
-
-function inviteePrimary(row: TenantInvitation): string {
-  return row.invitee_name?.trim() || row.invitee_email?.trim() || row.invitee_user_id
-}
-
-function inviterPrimary(row: TenantInvitation): string {
-  return row.inviter_name?.trim() || row.inviter_email?.trim() || row.invited_by || '—'
-}
-
-// loadInvitations is called from the same trigger as loadMembers so
-// the Members tab can render the pending section without an extra
-// round-trip latency budget. canManage gates the fetch — viewers /
-// contributors / admins-without-management see no pending section at
-// all (the route returns 200 but listing pending invites to those
-// roles would be UX noise; the route layer is Viewer+ for the read
-// itself).
-async function loadInvitations() {
-  if (!activeTenantId.value || !canManage.value) {
-    invitations.value = []
-    invitationsTotal.value = 0
-    return
-  }
-  invitationsLoading.value = true
-  invitationsError.value = ''
-  try {
-    const resp = await listTenantInvitations(activeTenantId.value, {
-      page: invitationsPage.value,
-      page_size: invitationsPageSize.value,
-    })
-    if (resp.success && resp.data) {
-      const total = resp.data.total ?? 0
-      const ps = resp.data.page_size ?? invitationsPageSize.value
-      const safePs = Math.max(1, ps)
-      const maxPage = Math.max(1, Math.ceil(total / safePs))
-      if (invitationsPage.value > maxPage) {
-        invitationsPage.value = maxPage
-        invitationsLoading.value = false
-        await loadInvitations()
-        return
-      }
-      invitations.value = resp.data.invitations ?? []
-      invitationsTotal.value = total
-      if (typeof resp.data.page === 'number' && resp.data.page > 0) {
-        invitationsPage.value = resp.data.page
-      }
-      if (typeof resp.data.page_size === 'number' && resp.data.page_size > 0) {
-        invitationsPageSize.value = resp.data.page_size
-      }
-    } else {
-      invitationsError.value = resp.message || t('tenantInvitation.errors.generic')
-    }
-  } catch (err: any) {
-    invitationsError.value = err?.message || t('tenantInvitation.errors.generic')
-  } finally {
-    invitationsLoading.value = false
-  }
-}
-
-function onInvitationsPageChange() {
-  void loadInvitations()
-}
-
-// doRevokeInvitation is wired to the t-popconfirm @confirm event in
-// the table template. The popconfirm itself owns the yes/no surface,
-// so this function is the post-confirmation action only — no nested
-// modal. Errors surface as toasts and the row stays in place for retry.
-async function doRevokeInvitation(row: TenantInvitation) {
-  try {
-    const resp = await revokeInvitation(activeTenantId.value, row.id)
-    if (resp.success) {
-      await loadInvitations()
-      MessagePlugin.success(t('tenantInvitation.revoke.success'))
-    } else {
-      MessagePlugin.error(resp.message || t('tenantInvitation.errors.generic'))
-    }
-  } catch (err: any) {
-    const status = err?.status
-    if (status === 404) {
-      MessagePlugin.error(t('tenantInvitation.errors.notFound'))
-    } else if (status === 409) {
-      MessagePlugin.error(err?.message || t('tenantInvitation.errors.notPending'))
-    } else {
-      MessagePlugin.error(err?.message || t('tenantInvitation.errors.generic'))
-    }
-  }
-}
 
 // ---- Audit-log helpers --------------------------------------------------
 
@@ -1235,135 +974,107 @@ watch(
 
 onUnmounted(() => detachAuditInfiniteScroll())
 
-watch(invitePopupVisible, (open) => {
+// Add-member popup: re-init on every open so the operator never sees
+// stale form values or a previous password reveal. The complexity
+// policy loads in the background; the rules are reactive to it.
+watch(addPopupVisible, async (open) => {
   if (!open) return
+  resetAddForm()
+  await loadAuthConfig()
+  await nextTick()
+  addFormRef.value?.clearValidate?.()
+})
+
+function resetAddForm() {
+  addForm.username = ''
   addForm.email = ''
   addForm.role = 'contributor'
-  addDialogStep.value = 'form'
-})
-
-// Share-link popup: re-init on every open so the operator never sees
-// the previous result on a fresh click.
-watch(shareLinkPopupVisible, (open) => {
-  if (!open) return
-  shareLinkForm.role = 'contributor'
-  shareLinkResult.value = null
-})
-
-// absoluteInviteURL turns the backend's potentially-host-relative
-// invite_url into a copy-friendly absolute URL. The backend returns
-// "/register?token=…" when FRONTEND_BASE_URL is unset (the typical
-// case); the SPA is best-positioned to know its own origin.
-function absoluteInviteURL(raw: string): string {
-  if (!raw) return ''
-  if (/^https?:\/\//i.test(raw)) return raw
-  const origin = (typeof window !== 'undefined' && window.location && window.location.origin) || ''
-  return raw.startsWith('/') ? origin + raw : origin + '/' + raw
+  addForm.autoGenerate = true
+  addForm.password = ''
+  addForm.confirmPassword = ''
+  addStep.value = 'form'
+  revealCredentials.value = null
 }
 
-async function copyText(text: string) {
-  await copyWithToast(text, 'tenantInvitation.copied', 'tenantInvitation.copyFailed')
-}
-
-async function submitShareLink() {
-  creatingShareLink.value = true
-  try {
-    const resp = await createInviteLink(activeTenantId.value, { role: shareLinkForm.role })
-    if (!resp.success || !resp.data) {
-      MessagePlugin.error(resp.message || t('tenantInvitation.errors.generic'))
-      return
-    }
-    shareLinkResult.value = resp.data
-    invitationsPage.value = 1
-    await loadInvitations()
-  } catch (err: any) {
-    MessagePlugin.error(err?.message || t('tenantInvitation.errors.generic'))
-  } finally {
-    creatingShareLink.value = false
-  }
-}
-
-// Live display strings for the in-place confirm step. Recomputed
-// every time the user goes Back, tweaks the form, and re-advances —
-// the summary always mirrors the current form state.
-const addConfirmEmail = computed(() => addForm.email.trim())
-const addConfirmRoleLabel = computed(() => t('tenantMember.role.' + addForm.role))
-
-// submitAdd is wired to the popup footer primary CTA. On step='form' it
-// validates and swaps to summary; on step='confirm' it fires the API.
-// With auto-accept the action is a direct add, so we skip the invitation
-// confirm step entirely and fire the API right after validation.
+// submitAdd is wired to the popup footer primary CTA. Validates the form
+// and fires the create-member API directly — no invitation confirm step:
+// the account is created (or the existing user bound) synchronously.
 async function submitAdd() {
-  if (addDialogStep.value === 'form') {
-    const valid = await addFormRef.value?.validate?.()
-    if (valid !== true) return
-    if (authStore.autoAcceptInvitation) {
-      await sendInvitation(addForm.email.trim(), addForm.role)
-      return
-    }
-    addDialogStep.value = 'confirm'
-    return
-  }
-  await sendInvitation(addForm.email.trim(), addForm.role)
-}
-
-// goBackToForm un-advances from confirm to form inside the popup.
-function goBackToForm() {
-  addDialogStep.value = 'form'
-}
-
-// dialogConfirmLabel: "Send" on the confirm step, or when auto-accept makes
-// the form step a direct add; otherwise "Send invitation".
-const dialogConfirmLabel = computed(() =>
-  addDialogStep.value === 'confirm' || authStore.autoAcceptInvitation
-    ? t('tenantInvitation.confirmSend')
-    : t('tenantInvitation.inviteSubmit'),
-)
-
-// sendInvitation actually fires the create-invitation API call.
-async function sendInvitation(email: string, role: TenantRole) {
+  if (addStep.value !== 'form') return
+  const valid = await addFormRef.value?.validate?.()
+  if (valid !== true) return
   adding.value = true
   try {
-    const resp = await createInvitation(activeTenantId.value, { email, role })
-    if (resp.success) {
-      // auto-accept returns a member (user_id) instead of an invitation (id)
-      const autoJoined = !!resp.data && 'user_id' in resp.data
-      invitePopupVisible.value = false
-      if (autoJoined) {
-        // The invitee is already a member — refresh the roster so they
-        // appear immediately. No toast: the new row is the feedback.
-        await loadMembers()
-      } else {
-        invitationsPage.value = 1
-        await loadInvitations()
-        MessagePlugin.success(t('tenantInvitation.inviteSuccess'))
-      }
-    } else {
-      MessagePlugin.error(resp.message || t('tenantInvitation.errors.generic'))
+    const payload: CreateMemberRequest = {
+      username: addForm.username.trim(),
+      email: addForm.email.trim(),
+      role: addForm.role,
     }
+    if (!addForm.autoGenerate) {
+      payload.password = addForm.password
+    }
+    const resp = await createMember(activeTenantId.value, payload)
+    if (!resp.success || !resp.data) {
+      MessagePlugin.error(resp.message || t('tenantMember.errors.generic'))
+      return
+    }
+    // Refresh the roster in both branches — the new member row is the
+    // primary feedback either way.
+    await loadMembers()
+    if (resp.data.generated_password) {
+      // Server minted a one-time initial password: keep the popup open in
+      // reveal mode so the credential cannot be lost in a toast.
+      revealCredentials.value = {
+        username: resp.data.member.username || payload.username,
+        email: resp.data.member.email || payload.email,
+        password: resp.data.generated_password,
+      }
+      addStep.value = 'reveal'
+      return
+    }
+    addPopupVisible.value = false
+    MessagePlugin.success(t('tenantMember.add.success'))
   } catch (err: any) {
     const status = err?.status
-    if (status === 404) {
-      MessagePlugin.error(t('tenantMember.errors.userNotFound'))
-    } else if (status === 409) {
-      // Server returns the same 409 for both "already a member" and
-      // "already a pending invite". The message body discriminates,
-      // but for the toast we show both possibilities folded into one
-      // helpful line.
-      MessagePlugin.error(
-        err?.message ||
-        `${t('tenantInvitation.errors.alreadyMember')} / ${t(
-          'tenantInvitation.errors.pendingExists',
-        )}`,
-      )
-    } else if (status === 400) {
-      MessagePlugin.error(err?.message || t('tenantMember.errors.invalidRole'))
+    if (status === 409) {
+      // 409 的细分靠后端 AppError.details 标签：
+      // - username_taken：邮箱未注册、仅用户名被其他账号占用；
+      // - identity_conflict / 无标签（已是成员）：合并成通用冲突文案。
+      const detail = err?.error?.details
+      if (detail === 'username_taken') {
+        MessagePlugin.error(t('tenantMember.errors.usernameTaken'))
+      } else {
+        MessagePlugin.error(t('tenantMember.errors.addConflict'))
+      }
     } else {
-      MessagePlugin.error(err?.message || t('tenantInvitation.errors.generic'))
+      MessagePlugin.error(err?.message || t('tenantMember.errors.generic'))
     }
   } finally {
     adding.value = false
   }
+}
+
+// copyRevealCredentials bundles username/email/password into one clipboard
+// payload so the operator can paste the whole account into a chat or ticket.
+async function copyRevealCredentials() {
+  const cred = revealCredentials.value
+  if (!cred) return
+  await copyWithToast(
+    [
+      `${t('tenantMember.add.usernameLabel')}: ${cred.username}`,
+      `${t('tenantMember.add.emailLabel')}: ${cred.email}`,
+      `${t('tenantMember.add.passwordLabel')}: ${cred.password}`,
+    ].join('\n'),
+    'tenantMember.add.revealCopied',
+    'tenantMember.add.revealCopyFailed',
+  )
+}
+
+// acknowledgeReveal closes the popup after the operator confirms the
+// one-time password is saved. The credential is never retrievable again.
+function acknowledgeReveal() {
+  addPopupVisible.value = false
+  MessagePlugin.success(t('tenantMember.add.success'))
 }
 
 async function onRoleChange(row: TenantMember, newRole: string) {
@@ -1445,13 +1156,9 @@ watch(
       memberSearchQ.value = ''
       window.clearTimeout(memberSearchDebounceTimer)
       membersPage.value = 1
-      invitationsPage.value = 1
       membersPageSize.value = 20
-      invitationsPageSize.value = 20
       membersTotal.value = 0
-      invitationsTotal.value = 0
       loadMembers()
-      loadInvitations()
     }
   },
   { immediate: true },
@@ -1944,6 +1651,55 @@ watch(
   color: var(--td-text-color-primary);
   font-size: var(--app-text-base);
   line-height: 1.6;
+}
+
+/* One-time password reveal (create-member flow). Card mirrors the
+ * system create-user dialog so both credential surfaces read the same. */
+.create-member-reveal-desc {
+  margin: 0 0 8px;
+}
+
+.create-member-reveal {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--td-component-stroke);
+  border-radius: var(--app-radius-md, 6px);
+  background: var(--td-bg-color-page);
+  overflow: hidden;
+}
+
+.create-member-reveal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--td-component-stroke);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.create-member-reveal-label {
+  font-size: var(--app-text-sm);
+  line-height: 16px;
+  color: var(--td-text-color-secondary);
+}
+
+.create-member-reveal-value {
+  font-size: var(--app-text-base);
+  line-height: 20px;
+  color: var(--td-text-color-primary);
+  word-break: break-all;
+}
+
+.create-member-reveal-value--mono {
+  margin: 0;
+  font-family: var(--td-font-family-mono, monospace);
+  font-size: var(--app-text-sm);
+  line-height: 18px;
+  white-space: pre-wrap;
+  user-select: all;
 }
 
 .invite-popup-footer {

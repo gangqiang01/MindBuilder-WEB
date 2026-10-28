@@ -68,29 +68,6 @@ export interface OIDCConfigResponse {
   message?: string
 }
 
-// 用户注册接口
-export interface RegisterRequest {
-  username: string
-  email: string
-  password: string
-}
-
-export interface RegisterResponse {
-  success: boolean
-  message?: string
-  data?: {
-    user: {
-      id: string
-      username: string
-      email: string
-    }
-    tenant: {
-      id: string
-      name: string
-    }
-  }
-}
-
 // 用户偏好（与后端 types.UserPreferences 对齐，字段可选 = 没显式设置过）。
 // 新加 key 时记得：后端 service.UpdateUserPreferences 也要在 merge 分支里
 // 处理；前端调用方按需读 / 默认值降级。
@@ -279,21 +256,6 @@ export async function getAuthConfig(): Promise<AuthConfigResponse> {
     return response as unknown as AuthConfigResponse
   } catch {
     return { success: false, registration_mode: '', complex_password_enabled: false }
-  }
-}
-
-/**
- * 用户注册
- */
-export async function register(data: RegisterRequest): Promise<RegisterResponse> {
-  try {
-    const response = await post('/api/v1/auth/register', data)
-    return response as unknown as RegisterResponse
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || t('error.auth.registerFailed')
-    }
   }
 }
 
@@ -508,10 +470,10 @@ export async function validateToken(): Promise<{ success: boolean; valid?: boole
 
 
 
-// ---- share-link registration --------------------------------------------
+// ---- share-link invitation ------------------------------------------------
 
 // InviteLookup is the public projection of a share-link row used by
-// /register?token=xxx — enough to render the registration page header
+// invite links (?token=xxx) — enough to render the login-page banner
 // ("X invited you to Y") without leaking sensitive inviter fields.
 export interface InviteLookup {
   tenant_id: number
@@ -526,16 +488,9 @@ export interface InviteLookupResponse {
   message?: string
 }
 
-export interface RegisterByInviteRequest {
-  token: string
-  email: string
-  username: string
-  password: string
-}
-
 /**
  * Resolve a share-link token (no auth) into the context the
- * registration page needs (tenant name, role, expiry). Returns 410
+ * login page needs (tenant name, role, expiry). Returns 410
  * when the link is invalid / revoked / expired.
  *
  * Uses POST + body (rather than GET + path) so the plaintext token
@@ -550,16 +505,3 @@ export async function getInvitationByToken(token: string): Promise<InviteLookupR
   }
 }
 
-/**
- * Complete registration via a share-link token. The invitee supplies
- * their own email — the token is the authorisation, not an identity
- * lock.
- */
-export async function registerByInvite(data: RegisterByInviteRequest): Promise<LoginResponse> {
-  try {
-    const response = await post('/api/v1/auth/register-by-invite', data)
-    return response as unknown as LoginResponse
-  } catch (error: any) {
-    return { success: false, message: error.message || t('error.auth.registerFailed') }
-  }
-}

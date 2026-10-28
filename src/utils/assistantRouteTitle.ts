@@ -18,7 +18,6 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
   globalCreatChat: 'menu.newChat',
   kbCreatChat: 'menu.newChat',
   chat: 'assistant.context.pages.chat',
-  organizationList: 'menu.organizations',
 }
 
 /** The page the route shows, as the sidebar names it; '' when it has no name. */

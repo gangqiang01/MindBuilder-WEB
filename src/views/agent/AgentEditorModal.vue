@@ -1594,86 +1594,6 @@
         </div>
       </div>
 
-      <!-- 网络搜索配置 -->
-      <div v-show="currentSection === 'websearch'" class="section">
-        <div class="section-header">
-          <h2>{{ $t('agent.editor.webSearchConfig') }}</h2>
-          <p class="section-description">{{ $t('agent.editor.webSearchConfigDesc') }}</p>
-        </div>
-
-        <div class="settings-group">
-          <!-- 网络搜索 -->
-          <div class="setting-row">
-            <div class="setting-info">
-              <label>{{ $t('agent.editor.webSearch') }}</label>
-              <p class="desc">{{ $t('agentEditor.desc.webSearch') }}</p>
-            </div>
-            <div class="setting-control">
-              <t-switch v-model="formData.config.web_search_enabled" />
-            </div>
-          </div>
-
-          <!-- 网络搜索最大结果数 -->
-          <div v-if="formData.config.web_search_enabled" class="setting-row">
-            <div class="setting-info">
-              <label>{{ $t('agent.editor.webSearchProvider') }}</label>
-              <p class="desc">{{ $t('agentEditor.desc.webSearchProvider') }}</p>
-            </div>
-            <div class="setting-control">
-              <t-select v-model="formData.config.web_search_provider_id" clearable
-                :placeholder="$t('agent.editor.webSearchProviderPlaceholder')" style="width: 240px;">
-                <t-option v-for="p in webSearchProviderList" :key="p.id" :value="p.id" :label="p.name">
-                  <span>{{ p.name }}</span>
-                  <t-tag v-if="p.is_default" theme="primary" size="small" style="margin-left: 6px;">{{
-                    $t('common.default')
-                    }}</t-tag>
-                </t-option>
-              </t-select>
-            </div>
-          </div>
-
-          <!-- 网络搜索最大结果数 -->
-          <div v-if="formData.config.web_search_enabled" class="setting-row">
-            <div class="setting-info">
-              <label>{{ $t('agent.editor.webSearchMaxResults') }}</label>
-              <p class="desc">{{ $t('agentEditor.desc.webSearchMaxResults') }}</p>
-            </div>
-            <div class="setting-control">
-              <div class="slider-wrapper">
-                <t-slider v-model="formData.config.web_search_max_results" :min="1" :max="10" />
-                <span class="slider-value">{{ formData.config.web_search_max_results }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 自动抓取页面内容 -->
-          <div v-if="formData.config.web_search_enabled" class="setting-row">
-            <div class="setting-info">
-              <label>{{ $t('agent.editor.webFetchEnabled') }}</label>
-              <p class="desc">{{ $t('agentEditor.desc.webFetchEnabled') }}</p>
-            </div>
-            <div class="setting-control">
-              <t-switch v-model="formData.config.web_fetch_enabled" />
-            </div>
-          </div>
-
-          <!-- 抓取页面数 -->
-          <div v-if="formData.config.web_search_enabled && formData.config.web_fetch_enabled"
-            class="setting-row">
-            <div class="setting-info">
-              <label>{{ $t('agent.editor.webFetchTopN') }}</label>
-              <p class="desc">{{ $t('agentEditor.desc.webFetchTopN') }}</p>
-            </div>
-            <div class="setting-control">
-              <div class="slider-wrapper">
-                <t-slider v-model="formData.config.web_fetch_top_n" :min="1" :max="10" />
-                <span class="slider-value">{{ formData.config.web_fetch_top_n }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- 检索策略（仅普通模式且有知识库能力时显示；Agent 模式的 search_knowledge
            使用全局检索配置，这里的设置对它不生效） -->
       <div v-show="currentSection === 'retrieval' && hasKnowledgeBase && !isAgentMode" class="section">
@@ -2835,7 +2755,6 @@ const navItems = computed(() => {
   if (hasKnowledgeBase.value && !isAgentMode.value) {
     items.push({ key: 'retrieval', icon: 'search', label: t('agent.editor.retrievalStrategy') });
   }
-  items.push({ key: 'websearch', icon: 'internet', label: t('agent.editor.webSearchConfig') });
   items.push({ key: 'multimodal', icon: 'attach', label: t('agentEditor.imageUpload.navLabel') });
   // Agent 模式能力
   if (isAgentMode.value) {
@@ -2864,7 +2783,7 @@ const navGroups = computed(() => {
     {
       key: 'knowledge',
       label: t('agentEditor.navGroups.knowledge'),
-      items: pickItems(['knowledge', 'retrieval', 'websearch']),
+      items: pickItems(['knowledge', 'retrieval']),
     },
     {
       key: 'capability',

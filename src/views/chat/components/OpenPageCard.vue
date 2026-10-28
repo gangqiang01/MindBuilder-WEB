@@ -77,7 +77,6 @@ const icon = computed(() => {
     case 'settings': return props.link.section === 'system' ? 'info-circle' : 'setting-1'
     case 'toolbox': return 'tools'
     case 'agents': return 'robot'
-    case 'organizations': return 'usergroup'
     case 'automations': return 'time'
     default: return props.link.knowledge_id ? 'file' : 'folder'
   }

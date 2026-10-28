@@ -5,16 +5,12 @@ import { createI18n } from 'vue-i18n'
 
 import enUS from '../i18n/locales/en-US.ts'
 import jaJP from '../i18n/locales/ja-JP.ts'
-import koKR from '../i18n/locales/ko-KR.ts'
-import ruRU from '../i18n/locales/ru-RU.ts'
 import zhCN from '../i18n/locales/zh-CN.ts'
 import zhTW from '../i18n/locales/zh-TW.ts'
 
 const messages = {
   'en-US': enUS,
   'ja-JP': jaJP,
-  'ko-KR': koKR,
-  'ru-RU': ruRU,
   'zh-CN': zhCN,
   'zh-TW': zhTW,
 }
