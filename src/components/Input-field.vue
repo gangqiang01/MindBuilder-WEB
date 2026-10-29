@@ -1075,13 +1075,8 @@ watch(
 
 const handleGoToConversationModels = () => {
   showModelSelector.value = false;
-  router.push('/platform/settings');
-  setTimeout(() => {
-    const event = new CustomEvent('settings-nav', {
-      detail: { section: 'models', subsection: 'chat' },
-    });
-    window.dispatchEvent(event);
-  }, 100);
+  // 模型管理已独立成页；modelType 让模型页选中「对话」类型过滤器
+  router.push({ path: '/platform/models', query: { modelType: 'chat' } });
 };
 
 const handleModelChange = (value: string | number | Array<string | number> | undefined) => {

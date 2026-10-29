@@ -10,8 +10,11 @@ import {
 test('management shortcuts are stricter than read-only settings pages', () => {
   assert.equal(SETTINGS_SECTION_MIN_ROLE.members, 'viewer')
   assert.equal(SETTINGS_MANAGEMENT_SHORTCUT_MIN_ROLE.members, 'owner')
-  assert.equal(SETTINGS_SECTION_MIN_ROLE.models, 'viewer')
-  assert.equal(SETTINGS_MANAGEMENT_SHORTCUT_MIN_ROLE.models, 'admin')
+  // 模型管理已有独立页 /platform/models 和侧栏入口，头像菜单不再放管理快捷入口。
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(SETTINGS_MANAGEMENT_SHORTCUT_MIN_ROLE, 'models'),
+    false,
+  )
 })
 
 test('the skill catalog is admin-only like the sandbox it installs into', () => {

@@ -69,8 +69,8 @@ export function pageLinkLocation(link: AssistantPageLink): PageLinkLocation | nu
       }
     case 'settings_models':
       return {
-        path: '/platform/settings',
-        query: { section: 'models', ...(link.model_id ? { model_id: link.model_id } : {}) },
+        path: '/platform/models',
+        query: { ...(link.model_id ? { model_id: link.model_id} : {}) },
       }
     case 'mcp_services':
       return {

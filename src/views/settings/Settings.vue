@@ -42,7 +42,7 @@
     </template>
     <div class="content-wrapper" :class="{
       'content-wrapper--wide': currentSection === 'members',
-      'content-wrapper--resource-list': ['models', 'members', 'sandbox'].includes(currentSection),
+      'content-wrapper--resource-list': ['members', 'sandbox'].includes(currentSection),
       'content-wrapper--full': SYSTEM_ADMIN_SECTIONS.has(currentSection) || isIntegrationSection(currentSection),
     }">
       <!-- 角色不允许访问当前 section（deep-link 进来 / 跨组织切换后角色降级）—— 优先于具体 section 渲染。
@@ -59,16 +59,6 @@
         <!-- 常规设置 -->
         <div v-if="currentSection === 'general'" class="section">
           <GeneralSettings />
-        </div>
-
-        <!-- Ollama 设置 -->
-        <div v-if="currentSection === 'ollama'" class="section">
-          <OllamaSettings />
-        </div>
-
-        <!-- 模型配置 -->
-        <div v-if="currentSection === 'models'" class="section">
-          <ModelSettings />
         </div>
 
         <!-- 消息管理 -->
@@ -165,8 +155,6 @@ import SystemInfo from './SystemInfo.vue'
 import TenantInfo from './TenantInfo.vue'
 import UserProfile from './UserProfile.vue'
 import GeneralSettings from './GeneralSettings.vue'
-import ModelSettings from './ModelSettings.vue'
-import OllamaSettings from './OllamaSettings.vue'
 import ChatHistorySettings from './ChatHistorySettings.vue'
 import EnvVarSettings from './EnvVarSettings.vue'
 import MemoryWorkspaceSettings from './MemoryWorkspaceSettings.vue'
@@ -237,10 +225,11 @@ type NavGroup = {
 // 设置二级导航的最低可见角色来自 settingsAccess.ts，和
 // internal/router/router.go 的守卫矩阵对齐。
 // 以「页面里至少有 1 个有意义的写操作所要求的最低角色」为基准，把基础设
-// 施配置（models 写、ollama 下载、parser/storage/vector/mcp
-// CRUD、sandbox 连接、skills 安装、chat-history 配置）统一收到 admin；只读类（general / system info /
+// 施配置（parser/storage/vector/mcp CRUD、sandbox 连接、skills 安装、
+// chat-history 配置）统一收到 admin；只读类（general / system info /
 // tenant-info / members 名册）保留 viewer 可见；最高敏感的 reset api
 // key 是 owner-only。改这张表前请在 router.go 里复核对应路由组。
+// 注：models / ollama 已挪到独立页 /platform/models，仍共用这张表做入口门槛。
 //
 // 特别说明：
 // - chathistory 页面唯一的「启用消息索引」开关 PUT /tenants/kv/chat-history-config
@@ -306,8 +295,6 @@ const navItems = computed(() => {
   }))
   const all: NavItem[] = [
     { key: 'general', icon: 'setting', label: t('general.title') },
-    { key: 'ollama', icon: 'server', label: 'Ollama' },
-    { key: 'models', icon: 'control-platform', label: t('settings.modelManagement') },
     { key: 'chathistory', icon: 'chat', label: t('chatHistorySettings.title') },
     { key: 'memory', icon: 'bulletpoint', label: t('memoryWorkspaceSettings.title') },
     { key: 'vectorstore', icon: 'data-base', label: t('settings.vectorStoreEngine') },
@@ -350,11 +337,6 @@ const navGroups = computed<NavGroup[]>(() => {
       key: 'workspace',
       label: t('settings.navGroups.workspace'),
       items: pickItems(['tenant', 'members', 'chathistory', 'memory']),
-    },
-    {
-      key: 'models_runtime',
-      label: t('settings.navGroups.modelsRuntime'),
-      items: pickItems(['models', 'ollama']),
     },
     {
       key: 'integrations',
@@ -456,10 +438,22 @@ const redirectToToolbox = (section: string, subSection?: string | null) => {
   return true
 }
 
+// 模型管理 / Ollama 已挪到独立页 /platform/models（模型管理 / Ollama 两个标签）；
+// 旧入口（openSettings / settings-nav / URL section）统一重定向过去。
+const redirectToModelsPage = (section: string, subSection?: string | null) => {
+  if (section !== 'models' && section !== 'ollama') return false
+  uiStore.closeSettings()
+  const query: Record<string, string> = { tab: section }
+  if (section === 'models' && subSection) query.modelType = subSection
+  void router.push({ path: '/platform/models', query })
+  return true
+}
+
 // 监听初始导航设置
 watch(() => uiStore.settingsInitialSection, (section) => {
   if (section && visible.value) {
     const normalizedSection = normalizeSettingsSection(section)
+    if (redirectToModelsPage(normalizedSection, uiStore.settingsInitialSubSection)) return
     if (redirectToToolbox(normalizedSection, uiStore.settingsInitialSubSection)) return
     if (deploymentCapabilities.loaded && !isSectionSupported(normalizedSection)) {
       MessagePlugin.warning(t('settings.capabilityUnavailable'))
@@ -501,6 +495,7 @@ watch(
       section,
       typeof route.query.tab === 'string' ? route.query.tab : undefined,
     )
+    if (redirectToModelsPage(normalizedSection)) return
     if (capabilitiesLoaded && !isSectionSupported(normalizedSection)) {
       MessagePlugin.warning(t('settings.capabilityUnavailable'))
       const fallback = navItems.value[0]?.key || 'general'
@@ -538,6 +533,7 @@ const handleSettingsNav = (e: CustomEvent) => {
   const { section, subsection } = e.detail
   if (section) {
     const normalizedSection = normalizeSettingsSection(section)
+    if (redirectToModelsPage(normalizedSection, subsection)) return
     if (redirectToToolbox(normalizedSection, subsection)) return
     if (deploymentCapabilities.loaded && !isSectionSupported(normalizedSection)) {
       MessagePlugin.warning(t('settings.capabilityUnavailable'))

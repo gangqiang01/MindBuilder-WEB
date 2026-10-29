@@ -94,6 +94,12 @@ const router = createRouter({
           meta: { requiresInit: true, requiresAuth: true }
         },
         {
+          path: "models",
+          name: "models",
+          component: () => import("../views/models/ModelsPage.vue"),
+          meta: { requiresInit: true, requiresAuth: true }
+        },
+        {
           path: "knowledge-bases",
           name: "knowledgeBaseList",
           component: () => import("../views/knowledge/KnowledgeBaseList.vue"),
@@ -277,6 +283,16 @@ router.beforeEach(async (to, from, next) => {
   if (to.path === '/platform/settings' && isToolboxSection(to.query.section)) {
     next({ ...toolboxLocation(to.query.section,
       typeof to.query.sandboxId === 'string' ? to.query.sandboxId : undefined), replace: true })
+    return
+  }
+
+  // 模型管理 / Ollama 已从设置弹窗挪到独立页 /platform/models；
+  // 保留旧书签和助手链接（section=models/ollama，可携带 model_id）。
+  if (to.path === '/platform/settings' && (to.query.section === 'models' || to.query.section === 'ollama')) {
+    const query = { ...to.query }
+    query.tab = to.query.section === 'ollama' ? 'ollama' : 'models'
+    delete query.section
+    next({ path: '/platform/models', query, replace: true })
     return
   }
 

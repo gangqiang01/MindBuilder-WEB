@@ -1,5 +1,5 @@
 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="4.75" y="4.75" width="10.5" height="10.5" rx="2" stroke="#07C05F" stroke-width="1.5" stroke-linejoin="round"/>
-  <rect x="7.75" y="7.75" width="4.5" height="4.5" rx="1" stroke="#07C05F" stroke-width="1.5" stroke-linejoin="round"/>
-  <path d="M7.25 4.75V2.75M10 4.75V2.75M12.75 4.75V2.75M7.25 15.25V17.25M10 15.25V17.25M12.75 15.25V17.25M4.75 7.25H2.75M4.75 10H2.75M4.75 12.75H2.75M15.25 7.25H17.25M15.25 10H17.25M15.25 12.75H17.25" stroke="#07C05F" stroke-width="1.5" stroke-linecap="round"/>
+  <rect x="4.75" y="4.75" width="10.5" height="10.5" rx="2" stroke="#008CD6" stroke-width="1.5" stroke-linejoin="round"/>
+  <rect x="7.75" y="7.75" width="4.5" height="4.5" rx="1" stroke="#008CD6" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M7.25 4.75V2.75M10 4.75V2.75M12.75 4.75V2.75M7.25 15.25V17.25M10 15.25V17.25M12.75 15.25V17.25M4.75 7.25H2.75M4.75 10H2.75M4.75 12.75H2.75M15.25 7.25H17.25M15.25 10H17.25M15.25 12.75H17.25" stroke="#008CD6" stroke-width="1.5" stroke-linecap="round"/>
 </svg>

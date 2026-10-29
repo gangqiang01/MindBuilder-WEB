@@ -36,7 +36,7 @@ export const useMenuStore = defineStore('menuStore', () => {
     { title: '', titleKey: 'menu.agents', icon: 'agent', path: 'agents', requiredCapability: 'agents' },
     { title: '', titleKey: 'menu.automations', icon: 'automation', path: 'automations' },
     { title: '', titleKey: 'toolbox.title', icon: 'toolbox', path: 'toolbox' },
-    // 模型入口从设置挪到侧栏（工具箱下方）；点击展开 模型管理 / Ollama 子项
+    // 模型入口从设置挪到侧栏（工具箱下方）；点击打开独立模型页（模型管理 / Ollama 两个标签）
     { title: '', titleKey: 'menu.models', icon: 'model', path: 'models' },
     { title: '', titleKey: 'menu.settings', icon: 'setting', path: 'settings' },
     { title: '', titleKey: 'menu.logout', icon: 'logout', path: 'logout' }

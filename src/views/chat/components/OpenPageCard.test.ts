@@ -55,7 +55,7 @@ test('opening a new-model link hands its form to the page, then navigates', () =
   assert.equal(state.endpoint.value, 'https://api.example/v1')
   state.open()
   assert.equal(JSON.stringify(drafts), JSON.stringify([{ kind: 'model', draft: { type: 'chat', base_url: 'https://api.example/v1' } }]))
-  assert.equal(JSON.stringify(pushed), JSON.stringify([{ path: '/platform/settings', query: { section: 'models' } }]))
+  assert.equal(JSON.stringify(pushed), JSON.stringify([{ path: '/platform/models', query: {} }]))
 })
 
 test('a plain link clears any waiting form', () => {
@@ -89,11 +89,11 @@ test('manual opening remembers the current page and the label follows navigation
   assert.equal(state.canReturn.value, true)
   state.activate()
   assert.equal(router.currentRoute.value.fullPath, '/platform/knowledge-bases')
-  await router.push('/platform/settings?section=models')
+  await router.push('/platform/settings?section=memory')
   assert.equal(state.canReturn.value, false, 'another settings section is not the target')
   state.activate()
   state.activate()
-  assert.equal(router.currentRoute.value.fullPath, '/platform/settings?section=models')
+  assert.equal(router.currentRoute.value.fullPath, '/platform/settings?section=memory')
 })
 
 test('unsafe or identical return destinations do not turn the action into return', () => {

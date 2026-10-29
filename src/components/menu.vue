@@ -108,30 +108,11 @@
                             </div>
                             <template v-if="!uiStore.sidebarCollapsed">
                                 <span class="menu_title" :title="item.title">{{ item.title }}</span>
-                                <span v-if="item.path === 'toolbox' && toolboxPreview.length" class="menu-toolbox-stack"
-                                    :title="toolboxPreview.map((tool) => tool.key === 'browserconnection' && browserStackStatus
-                                        ? `${t(tool.title)} (${t(`localBrowser.${browserStackStatus}`)})` : t(tool.title)).join(' · ')">
-                                    <span v-for="tool in toolboxPreview" :key="tool.key" class="menu-toolbox-stack__item">
-                                        <template v-if="tool.key === 'browserconnection'">
-                                            <BrowserIcon width="12" height="12" />
-                                            <i v-if="browserStackStatus" class="menu-toolbox-stack__status"
-                                                :class="`is-${browserStackStatus}`" aria-hidden="true" />
-                                        </template>
-                                        <t-icon v-else :name="tool.icon" size="12px" />
-                                    </span>
-                                </span>
                             </template>
                         </div>
                     </div>
                 </t-tooltip>
-                <!-- 模型子菜单：模型管理 / Ollama（点击「模型」展开；折叠态无子菜单空间） -->
-                <div v-if="item.path === 'models' && modelsMenuOpen && !uiStore.sidebarCollapsed" class="models-submenu">
-                    <div class="models-submenu__item" :class="{ 'is-active': isModelsSectionActive('models') }"
-                        @click="openModelSection('models')">{{ t('settings.modelManagement') }}</div>
-                    <div class="models-submenu__item" :class="{ 'is-active': isModelsSectionActive('ollama') }"
-                        @click="openModelSection('ollama')">Ollama</div>
                 </div>
-            </div>
 
             <!-- 历史会话：按来源筛选后统一按日期分组展示 -->
             <div class="submenu" v-if="!uiStore.sidebarCollapsed">
@@ -473,11 +454,10 @@ const isMenuItemActive = (itemPath: string): boolean => {
         case 'creatChat':
             return currentRoute === 'kbCreatChat' || currentRoute === 'globalCreatChat';
         case 'settings':
-            return currentRoute === 'settings' && route.query.section !== 'models' && route.query.section !== 'ollama';
+            return currentRoute === 'settings';
         case 'models':
-            // 模型入口：设置弹窗停留在 模型管理 / Ollama 时高亮
-            return currentRoute === 'settings' &&
-                (route.query.section === 'models' || route.query.section === 'ollama');
+            // 模型入口：独立模型页（模型管理 / Ollama）
+            return currentRoute === 'models';
         default:
             return itemPath === currentpath.value;
     }
@@ -1143,14 +1123,11 @@ let artifactIcon = ref('artifact.svg');
 let toolboxIcon = ref('toolbox.svg');
 let automationIcon = ref('automation.svg');
 let modelIcon = ref('model.svg');
-// 模型图标高亮：设置弹窗停留在 模型管理 / Ollama 时变绿。
-// 单独监听 route.query.section —— 上面的 name/params watcher 不覆盖 query 变化。
+// 模型图标高亮：停留在独立模型页时变绿。
 watch(
-    [() => route.name, () => route.query.section],
+    () => route.name,
     () => {
-        const modelsActive = route.name === 'settings' &&
-            (route.query.section === 'models' || route.query.section === 'ollama')
-        modelIcon.value = modelsActive ? 'model-green.svg' : 'model.svg'
+        modelIcon.value = route.name === 'models' ? 'model-green.svg' : 'model.svg'
     },
 )
 let pathPrefix = ref(route.name)
@@ -1184,30 +1161,7 @@ const getIcon = (path: string) => {
     logoutIcon.value = 'logout.svg';
 }
 getIcon(typeof route.name === 'string' ? route.name as string : (route.name ? String(route.name) : ''))
-// 模型子菜单展开状态（模型管理 / Ollama）
-const modelsMenuOpen = ref(false)
-
-// 打开设置弹窗到指定分区（模型管理 / Ollama），并收起模型子菜单
-const openModelSection = (section: string) => {
-    modelsMenuOpen.value = false
-    uiStore.openSettings(section)
-    router.push('/platform/settings')
-}
-
-// 模型子菜单项高亮：设置弹窗停留在对应分区时
-const isModelsSectionActive = (section: string): boolean => {
-    return route.name === 'settings' && route.query.section === section
-}
-
-// 任意页面跳转时收起模型子菜单，避免子菜单在其他页面还展开着
-watch(() => route.name, () => {
-    modelsMenuOpen.value = false
-})
-
 const handleMenuClick = async (path: string) => {
-    if (path !== 'models') {
-        modelsMenuOpen.value = false
-    }
     if (path === 'knowledge-bases') {
         // 知识库菜单项：如果在知识库内部，跳转到当前知识库文件页；否则跳转到知识库列表
         const kbId = await getCurrentKbId()
@@ -1223,12 +1177,8 @@ const handleMenuClick = async (path: string) => {
         uiStore.openSettings()
         router.push('/platform/settings')
     } else if (path === 'models') {
-        // 模型菜单项：展开/收起侧栏子项；折叠态无子菜单空间，直接打开模型管理
-        if (uiStore.sidebarCollapsed) {
-            openModelSection('models')
-        } else {
-            modelsMenuOpen.value = !modelsMenuOpen.value
-        }
+        // 模型菜单项：打开独立模型页（模型管理 / Ollama 两个标签）
+        router.push('/platform/models')
     } else {
         gotopage(path)
     }
@@ -1503,36 +1453,6 @@ const resizeSidebar = (delta: number, keyboard: boolean) => {
             background: var(--td-bg-color-sidebar);
         }
     }
-
-    // 模型子菜单（模型管理 / Ollama）：缩进到主菜单文字列，与历史会话行同宽
-    .models-submenu {
-        padding: 2px 0 4px;
-
-        &__item {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            height: 30px;
-            padding: 0 8px 0 calc(var(--sidebar-inset-x) + var(--sidebar-icon-size) + var(--sidebar-icon-gap));
-            box-sizing: border-box;
-            border-radius: var(--app-radius-xs);
-            color: var(--td-text-color-secondary);
-            font-family: var(--app-font-family);
-            font-size: var(--app-text-sm);
-            transition: background-color var(--app-motion-base) ease, color var(--app-motion-base) ease;
-
-            &:hover {
-                background: var(--td-bg-color-container-hover);
-                color: var(--td-text-color-primary);
-            }
-
-            &.is-active {
-                background: var(--td-bg-color-secondarycontainer);
-                color: var(--td-brand-color);
-            }
-        }
-    }
-
 
     .active-upload {
         color: var(--td-brand-color);
@@ -1948,90 +1868,6 @@ const resizeSidebar = (delta: number, keyboard: boolean) => {
     }
 }
 
-.menu-toolbox-stack {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    margin-left: auto;
-}
-
-.menu-toolbox-stack__item {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    box-sizing: border-box;
-    border: 1px solid var(--td-component-stroke);
-    border-radius: 50%;
-    background: var(--td-bg-color-container);
-    color: var(--td-text-color-secondary);
-    rotate: var(--stack-rotate, 0deg);
-    --stack-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    animation: menu-toolbox-stack-in 420ms var(--stack-spring) both;
-    animation-delay: var(--stack-delay, 0ms);
-    transition:
-        margin var(--app-motion-slow) var(--stack-spring),
-        rotate var(--app-motion-slow) var(--stack-spring),
-        translate var(--app-motion-slow) var(--stack-spring),
-        color var(--app-motion-base) ease,
-        box-shadow var(--app-motion-base) ease;
-    transition-delay: var(--stack-delay, 0ms);
-
-    & + & {
-        margin-left: -6px;
-    }
-
-    &:nth-child(1) { z-index: 3; --stack-rotate: -10deg; }
-    &:nth-child(2) { z-index: 2; --stack-delay: 50ms; }
-    &:nth-child(3) { z-index: 1; --stack-rotate: 10deg; --stack-delay: 100ms; }
-}
-
-.menu-toolbox-stack__status {
-    position: absolute;
-    right: -1px;
-    bottom: -1px;
-    width: 6px;
-    height: 6px;
-    border-radius: var(--app-radius-pill);
-    box-shadow: 0 0 0 1.5px var(--td-bg-color-container);
-
-    &.is-connected {
-        background: var(--td-success-color);
-    }
-
-    &.is-offline {
-        background: var(--td-warning-color);
-    }
-}
-
-@keyframes menu-toolbox-stack-in {
-    from {
-        opacity: 0;
-        scale: 0.4;
-    }
-}
-
-.menu_item:hover .menu-toolbox-stack__item {
-    color: var(--td-text-color-primary);
-    rotate: 0deg;
-    translate: 0 -1px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.menu_item:hover .menu-toolbox-stack__item + .menu-toolbox-stack__item {
-    margin-left: 3px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .menu-toolbox-stack__item {
-        animation: none;
-        transition: color var(--app-motion-base) ease;
-    }
-}
-
-
 .menu_box {
     position: relative;
 }
@@ -2092,7 +1928,7 @@ html[theme-mode="dark"] .aside_box .menu_item_c_active .menu_icon img.icon {
     opacity: 0.9;
 }
 
-// Active (green) icons should not be inverted
+// Active blue icons should not be inverted
 html[theme-mode="dark"] .aside_box .menu_item_active .menu_icon img.icon {
     filter: none;
     opacity: 1;
