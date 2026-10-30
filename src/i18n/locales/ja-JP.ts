@@ -206,6 +206,7 @@ export default {
       roleRequired: 'ロールは必須です',
       passwordConfirmRequired: '初期パスワードを再入力してください',
       lastOwner: '最後のオーナーの降格・削除・退出はできません。先に他のメンバーをオーナーに昇格させてください。',
+      protectedAdmin: 'システム admin ユーザーは削除できません。',
       notFound: 'メンバーシップが見つかりません。',
       addConflict: '追加できません：このメールアドレスまたはユーザー名は別のアカウントに紐付いているか、すでにメンバーです。',
       usernameTaken: '追加できません：このユーザー名は他のアカウントで既に使われています。新しいアカウントを作る場合は別のユーザー名を、既存アカウントを追加する場合はそのメールアドレスを入力してください。',
@@ -2791,6 +2792,32 @@ export default {
     languageSaved: '言語設定を保存しました'
   },
   model: {
+    // 思考強度（reasoning effort）のレベルラベルと説明。新規会話/エージェント
+    // 編集/モデルデバッグなどの思考強度セレクタで使用。キーは utils/reasoningEffort.ts
+    // の levelLabelKey / levelDescriptionKey が組み立てる：model.reasoning.levels.<level>
+    // および model.reasoning.levelDescriptions.<level>。
+    reasoning: {
+      levels: {
+        off: 'オフ',
+        auto: '自動',
+        minimal: '最小',
+        low: '低',
+        medium: '中',
+        high: '高',
+        xhigh: '超高',
+        max: '最大'
+      },
+      levelDescriptions: {
+        off: '思考せず直接回答',
+        auto: 'モデル / ベンダーに思考強度を任せる',
+        minimal: 'ほぼ思考せず素早く応答',
+        low: '軽い思考',
+        medium: 'バランスを取った思考',
+        high: '深い思考',
+        xhigh: 'さらに深く思考、時間を要する',
+        max: '最大強度で思考、品質優先'
+      }
+    },
     modelName: 'モデル名',
     defaultTag: 'デフォルト',
     addModelInSettings: 'モデルを追加するにはシステム設定を開いてください',
@@ -3132,12 +3159,19 @@ export default {
         generated: {
           successTitle: 'ユーザを作成しました',
           successBody: 'このユーザにランダムなパスワードを生成しました。パスワードは一度だけ表示されます。',
+          manualBody: 'ユーザを作成しました。以下がこのユーザのログインパスワードです。適切に保存するか、別の手段で本人へお伝えください。',
           usernameLabel: 'ユーザ名',
           emailLabel: 'メールアドレス',
           passwordLabel: '生成されたパスワード',
           copyBtn: 'アカウント情報をコピー',
           copySuccess: 'アカウント情報をクリップボードにコピーしました',
-          acknowledgeBtn: 'パスワードを保存しました'
+          acknowledgeBtn: 'パスワードを保存しました',
+          emailStatus: {
+            sent: 'アカウント情報メールを {email} に送信しました',
+            failed: 'メール送信に失敗しました：{error}。別の方法で本人にパスワードをお伝えください。',
+            disabled: 'メール通知が無効です。ログインパスワードを直接本人にお伝えください。',
+            not_configured: 'メールサーバーが未設定です。ログインパスワードを直接本人にお伝えください。'
+          }
         },
         validation: {
           usernameRequired: 'ユーザ名を入力してください',
@@ -3177,8 +3211,11 @@ export default {
         next: '次へ',
         pageCount: '{shown} 件表示 / ページ内 {total}',
         enable: '有効化',
+        disable: '無効化',
         resetPassword: 'パスワードリセット',
+        confirmDisable: 'アカウント {name} を無効化しますか？有効なセッションは即時に失効します。',
         confirmEnable: 'アカウント {name} を有効化しますか？',
+        enabledMsg: '{name} を有効化しました',
         disabledMsg: '{name} を無効化しました',
         actionFailed: '操作に失敗しました',
         loadFailed: 'ユーザー一覧の読み込みに失敗しました',
@@ -3186,8 +3223,10 @@ export default {
         roleUser: '一般ユーザー',
         confirmRevoke: '{name} のシステム管理者権限を取り消しますか？',
         confirmPromote: '{name} をシステム管理者に昇格させますか？',
+        revokeBtn: '取り消す',
         promoteBtn: '昇格',
         revokedMsg: '{name} の管理者権限を取り消しました',
+        promotedMsg: '{name} をシステム管理者に昇格しました',
         roleFailed: 'ロールの変更に失敗しました'
       },
       reset: {
@@ -3226,6 +3265,14 @@ export default {
         bodyAuthRegistrationMode: '「{label}」を次の値に変更します: {value}\n\nself_serveに切り替えると、インターネット上の誰でもアカウントを登録できるようになります。意図した変更かどうか確認してください。',
         bodySandboxDockerEnabled: '有効にすると、組織管理者がサンドボックスをローカルのDockerデーモンに接続できるようになります。ローカルのdocker.sockはホストのroot権限に相当します。デーモンをマウントするプライベートな単一ノード環境、またはTLSで保護されたリモートのtcp://エンドポイントを使用する場合にのみ利用してください。'
       },
+      emailTest: {
+        label: 'テストメールを送信',
+        description: '現在保存されている SMTP 設定でテストメールを送信し、サーバー・ポート・認証情報が正しいか検証します。各設定項目を保存してからテストしてください。',
+        recipientPlaceholder: '宛先メールアドレスを入力',
+        sendBtn: 'テストメールを送信',
+        success: 'テストメールを送信しました。受信箱をご確認ください',
+        failed: 'テストメールの送信に失敗しました'
+      },
       enumLabels: {
         auth: {
           default_tenant_mode: {
@@ -3236,6 +3283,13 @@ export default {
             self_serve: 'セルフサービス（誰でも登録可能）',
             invite_register: '招待リンクでのみ登録可能',
             invite_only: '登録禁止（既存アカウントは招待を承諾可能）'
+          }
+        },
+        email: {
+          smtp_encryption: {
+            starttls: 'STARTTLS（587）',
+            ssl: 'SSL/TLS（465）',
+            none: '暗号化なし（非推奨）'
           }
         }
       },
@@ -3268,6 +3322,16 @@ export default {
           registration_mode: '登録モード。公開登録では誰でもアカウントを作成できます。招待登録には有効な招待リンクが必要です。登録禁止でも既存アカウントは招待を承諾できます。保存後すぐに反映されます。',
           default_tenant_mode: '公開登録後の組織作成方式です。create_personalはオーナー権限の組織を作成し、tenantlessはアカウントのみを作成して、ユーザが招待を承諾するか組織を作成するまで待ちます。新規ユーザにのみ適用されます。',
           complex_password_enabled: '複雑なパスワードを必須にするかどうかです。有効にすると、パスワードに大文字・小文字・数字・特殊文字を含める必要があります。変更はすぐに反映され、新規登録ユーザおよび新たなパスワード変更・リセットにのみ適用されます。特殊文字は{specialChars}です'
+        },
+        email: {
+          enabled: 'メール通知を有効にするかどうか。有効にすると、システム管理者がユーザを作成した際、アカウント情報（ユーザ名／初期パスワード）を本人のメールアドレスへ送信します。メールサーバー未設定や送信失敗があった場合もユーザ作成には影響しません。管理者は別の手段でパスワードを伝えることができます。',
+          smtp_host: 'SMTP サーバーアドレス（例：smtp.example.com）。空欄の場合は未設定とみなし、送信をスキップします。',
+          smtp_port: 'SMTP サーバーポート。STARTTLS では 587、SSL/TLS では 465、平文では 25 が一般的です。',
+          smtp_encryption: 'SMTP サーバーとの暗号化方式。starttls = 平文で接続後にアップグレード（587 で一般的）；ssl = 最初から TLS 接続（465 で一般的）；none = 平文・暗号化なし（信頼できる内部ネットワークのみ、非推奨）。',
+          smtp_username: 'SMTP 認証ユーザ名（通常は送信元メールアドレス）。空欄の場合は SMTP サーバーが認証を必要としないことを意味します。',
+          smtp_password: 'SMTP 認証パスワード／認証コード。システム管理者のみ閲覧可能です。ログインパスワードではなく、メールサービスプロバイダが発行する認証コードの使用を推奨します。',
+          from_address: '送信元アドレス（From）。空欄の場合は SMTP 認証ユーザ名を送信元として使用します。',
+          site_url: 'サイトのログインアドレス（例：https://mindbuilder.example.com）。新規ユーザ宛のアカウント通知メールに含め、ログインしやすくします。空欄の場合はリンクを表示しません。'
         }
       },
       keyLabels: {
@@ -3299,6 +3363,16 @@ export default {
           registration_mode: '登録モード',
           default_tenant_mode: 'デフォルトの組織作成方式',
           complex_password_enabled: '複雑なパスワードを必須にする'
+        },
+        email: {
+          enabled: 'メール通知を有効化',
+          smtp_host: 'SMTP サーバーアドレス',
+          smtp_port: 'SMTP ポート',
+          smtp_encryption: '暗号化方式',
+          smtp_username: 'SMTP ユーザ名',
+          smtp_password: 'SMTP パスワード',
+          from_address: '送信元アドレス',
+          site_url: 'サイトログインアドレス'
         }
       },
       runtime: {
@@ -3529,6 +3603,10 @@ export default {
         access: {
           title: '登録とアクセス',
           description: '登録方法、パスワード要件、組織作成のルールを管理します。'
+        },
+        email: {
+          title: 'メールサーバー',
+          description: 'SMTP メールサーバーを設定し、ユーザ作成後に本人へアカウント情報を送信します。未設定や送信失敗があってもユーザ作成には影響しません。'
         }
       },
       priorityHint: {
@@ -4274,6 +4352,14 @@ export default {
       editingBadge: '編集中',
       pageActions: 'ページ操作',
       viewTabs: 'ナレッジベースのビュー',
+      tabDocuments: 'ドキュメント',
+      tabDocumentsTip: 'このナレッジベースのドキュメントを閲覧・管理します',
+      tabWiki: 'Wiki',
+      tabWikiTip: 'このナレッジベースから生成されたWikiページを閲覧・編集します',
+      tabGraph: 'グラフ',
+      tabGraphTip: 'このナレッジベース内のWikiページ間のリンクを確認します',
+      tabGallery: 'ギャラリー',
+      tabGalleryTip: 'このナレッジベースのドキュメントから抽出された画像を閲覧します',
       searchPlaceholder: 'Wikiページを検索...',
       searchNoResults: '一致するページが見つかりません',
       viewModeToggle: 'ディレクトリ表示を切り替え',
@@ -4399,7 +4485,65 @@ export default {
           builtin_is_enabled_description: '所属ドキュメントチャンクが検索対象かどうか',
           builtin_is_enabled_value_true: '有効',
           builtin_is_enabled_value_false: '無効'
-        }
+        },
+        allImages: 'すべての画像',
+        count: '{count} 枚の画像',
+        countFiltered: '{count} 件の結果',
+        searchPlaceholder: '画像を検索...',
+        sourceFilter: 'ソースドキュメント',
+        filters: 'フィルター',
+        clearFilters: 'フィルターをクリア',
+        searchIn: '検索対象',
+        searchInHint: 'キーワード検索に含める画像属性を選択します。',
+        attrSection: '属性で絞り込む',
+        attrHint: '属性値で画像を除外または表示します。',
+        keywordsPlaceholder: 'キーワードを入力（複数はカンマ区切り）',
+        noAttrs: '利用可能なフィルター属性はありません。',
+        sort: '並べ替え',
+        sortField: '並べ替え項目',
+        sortOrder: '順序',
+        orderAsc: '昇順',
+        orderDesc: '降順',
+        emptyFiltered: '条件に一致する画像はありません',
+        empty: '画像はまだありません',
+        emptyHint: 'ドキュメントから抽出された画像がここに表示されます。',
+        imageLoadError: '画像を読み込めません。',
+        noCaption: '説明はありません。',
+        verdictDefault: '既定',
+        verdictOn: '含める',
+        verdictOff: '除外',
+        sourceFilterTitle: 'ソースドキュメントで絞り込む',
+        sourceFilterClear: '選択をクリア',
+        sourceFilterSubtitle: '画像を表示するドキュメントを選択します。',
+        sourceFilterSearch: 'ドキュメントを検索...',
+        sourceFilterOverflowHits: '{total} 件中、最大 {cap} 件を表示しています。検索条件を絞ってください。',
+        sourceFilterOverflowRecent: '最近の {cap} 件を表示しています。古いドキュメントは検索してください。',
+        sourceFilterSelectAll: '検索結果のすべてのドキュメントを選択または解除',
+        sourceFilterSelected: '{count} 件選択中',
+        sourceFilterEmpty: 'ドキュメントが見つかりません。',
+        sourceFilterTooMany: '選択したドキュメントが多すぎます。選択範囲を絞ってください。',
+        title: '画像ビューアー',
+        zoomOut: '縮小',
+        zoomReset: 'ズームをリセット',
+        zoomIn: '拡大',
+        actualSize: '実際のサイズ',
+        rotate: '回転',
+        download: '画像をダウンロード',
+        openOriginal: '元の画像を開く',
+        toggleInfo: '画像の詳細を切り替え',
+        viewerClose: 'ビューアーを閉じる',
+        prev: '前の画像',
+        next: '次の画像',
+        caption: '説明',
+        copy: 'コピー',
+        ocr: '認識テキスト',
+        noOcr: '認識テキストはありません。',
+        attributes: '属性',
+        details: '詳細',
+        source: 'ソースドキュメント',
+        openSource: 'ソースドキュメントを開く',
+        dimensions: 'サイズ',
+        status: '状態'
       }
     },
     indexing: {
@@ -5227,8 +5371,7 @@ export default {
     extractFailed: 'エンティティとリレーションの抽出に失敗しました',
     exampleLoaded: '例を読み込みました',
     exampleCleared: '例をクリアしました',
-    disabledWarning: 'ナレッジグラフのデータベースが有効になっていないため、エンティティとリレーションの抽出は利用できません',
-    howToEnable: 'ナレッジグラフを有効にするには？'
+    disabledWarning: 'ナレッジグラフのデータベースが有効になっていないため、エンティティとリレーションの抽出は利用できません'
   },
   retrievalSettings: {
     recallTab: '検索候補',

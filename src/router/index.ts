@@ -379,13 +379,22 @@ router.beforeEach(async (to, from, next) => {
 
   // 部署能力只描述“后端是否提供该功能”，不反映服务健康或是否已配置。
   // 探测失败时 Store 会 fail-open，真正的权限和可用性仍由后端接口校验。
-  const deploymentCapabilities = useDeploymentCapabilitiesStore()
-  await deploymentCapabilities.ensureLoaded()
+  //
+  // 只在目标路由声明了 requiredCapability 时才等待探测结果：否则这个
+  // await 会让每次鉴权跳转都卡在一次 GET /system/capabilities 往返上
+  // （axios 默认 30s 超时）。登录后跳转到 /platform/knowledge-bases 这类
+  // 不依赖能力位的页面也会被拖住几秒，后端偶发慢响应时甚至卡到超时才跳。
+  // 能力数据在 main.ts 启动时后台预热，声明了 requiredCapability 的路由
+  // 到这里通常已 loaded，ensureLoaded 会立即返回。
   const requiredCapability = to.meta.requiredCapability as DeploymentCapabilityKey | undefined
-  if (requiredCapability && !deploymentCapabilities.isSupported(requiredCapability)) {
-    MessagePlugin.warning(i18n.global.t('settings.capabilityUnavailable'))
-    next('/platform/knowledge-bases')
-    return
+  if (requiredCapability) {
+    const deploymentCapabilities = useDeploymentCapabilitiesStore()
+    await deploymentCapabilities.ensureLoaded()
+    if (!deploymentCapabilities.isSupported(requiredCapability)) {
+      MessagePlugin.warning(i18n.global.t('settings.capabilityUnavailable'))
+      next('/platform/knowledge-bases')
+      return
+    }
   }
 
   // SystemAdmin gate — checked AFTER auth so a non-admin who's logged

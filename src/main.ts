@@ -20,6 +20,7 @@ import { initFont } from "@/composables/useFont";
 import { installTDesignIconOfflineGuard } from "@/utils/tdesign-icon-offline";
 import { installAutofillGuard } from "@/utils/disable-autofill";
 import { useAuthStore } from "@/stores/auth";
+import { useDeploymentCapabilitiesStore } from "@/stores/deploymentCapabilities";
 
 // 必须在 Vue 组件挂载之前执行，避免 tdesign-icons 运行时请求 tdesign.gtimg.com
 installTDesignIconOfflineGuard();
@@ -57,6 +58,11 @@ async function bootstrap() {
   await router.isReady();
   app.mount("#app");
   installAutofillGuard();
+
+  // 后台预热部署能力（GET /system/capabilities）：路由守卫只在声明了
+  // requiredCapability 的路由上 await 它，但那些路由首次进入时仍需要数据。
+  // 这里 fire-and-forget，不阻塞挂载；store 内部去重，守卫/视图复用同一请求。
+  void useDeploymentCapabilitiesStore().ensureLoaded();
 }
 
 bootstrap();

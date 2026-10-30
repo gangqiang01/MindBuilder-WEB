@@ -70,6 +70,7 @@ const EXTRA_PREFIXES = [
   // (OperationsResult.vue builds `agentStream.operations.risk.${risk}`).
   'agentStream.operations.risk.',
   'system.globalSettings.listConfirm.',
+  'system.globalSettings.userList.',
   'system.globalSettings.keyLabels.',
   'system.globalSettings.keyDescriptions.',
   'system.globalSettings.enumLabels.',
@@ -117,12 +118,10 @@ const EXTRA_PREFIXES = [
   // touching the audit. The panel's own wording is literal and lives in the
   // locale files under knowledgeEditor.advanced.multimodal.imagePipeline*.
   'imagePipeline.',
-  // Gallery attribute labels are keyed by the namespaced attribute id from
-  // the gallery contract, likewise runtime-built; static labels for the few
-  // builtin attributes ship in the locale files as
-  // knowledgeEditor.wikiBrowser.gallery.attr.builtin_caption …, and
-  // everything else falls back to the contract wording.
-  'knowledgeEditor.wikiBrowser.gallery.attr.',
+  // Gallery keys are built from the gallery namespace in its toolbar,
+  // viewer, and source picker; attribute labels can also come from the
+  // runtime contract.
+  'knowledgeEditor.wikiBrowser.gallery.',
 ] as const
 
 /** Keys that must survive pruning even when static analysis misses them. */

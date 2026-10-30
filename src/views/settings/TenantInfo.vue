@@ -301,6 +301,7 @@ const showLeaveDangerZone = computed(() => {
 const showDeleteDangerZone = computed(() => {
   if (loading.value || error.value || !tenantInfo.value) return false
   if (Number(tenantInfo.value.id) !== activeTenantNumericId.value) return false
+  if (tenantInfo.value.name === 'Default') return false
   return authStore.hasRole('owner')
 })
 
@@ -357,6 +358,8 @@ function confirmLeaveTenant() {
         const status = err?.status
         if (status === 409) {
           MessagePlugin.error(t('tenantMember.errors.lastOwner'))
+        } else if (status === 403) {
+          MessagePlugin.error(t('tenantMember.errors.protectedAdmin'))
         } else {
           MessagePlugin.error(err?.message || t('tenantMember.errors.generic'))
         }

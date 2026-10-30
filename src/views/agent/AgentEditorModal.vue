@@ -1730,11 +1730,6 @@
         </div>
       </div>
 
-      <!-- 共享管理（仅编辑模式且非内置智能体） -->
-      <div v-if="editorMode === 'edit' && editorAgent?.id && !editorAgent?.is_builtin"
-        v-show="currentSection === 'share'" class="section">
-        <AgentShareSettings :agent-id="editorAgent.id" :agent="editorAgent" />
-      </div>
     </div>
 
     <template #footer-note>
@@ -1838,7 +1833,6 @@ import ModelSelector from '@/components/ModelSelector.vue';
 import SandboxSkillsPanel from '@/components/SandboxSkillsPanel.vue';
 import SettingDrawer from '@/components/settings/SettingDrawer.vue';
 import KBParserSettings, { type ParserEngineRule } from '@/views/knowledge/settings/KBParserSettings.vue';
-import AgentShareSettings from '@/components/AgentShareSettings.vue';
 import { SKILL_ICON } from '@/types/mention';
 import { listEmbedChannels } from '@/api/embed';
 import { ASSISTANT_ACCESS_LEVELS, type AssistantAccessLevel } from '@/api/assistant';
@@ -1935,6 +1929,7 @@ const copyAgentId = async () => {
 // 旧入口把技能沙箱拆成独立 tab；合并后仍接受 section=sandbox。
 const AGENT_EDITOR_SECTION_ALIASES: Record<string, string> = {
   sandbox: 'skills',
+  share: 'basic',
 };
 
 function resolveEditorSection(section?: string | null): string {
@@ -2762,10 +2757,6 @@ const navItems = computed(() => {
     items.push({ key: 'mcp', icon: 'server', label: t('agentEditor.mcp.label') });
     items.push({ key: 'skills', icon: SKILL_ICON, label: t('agent.editor.skillsConfig') });
   }
-  // 发布（仅编辑模式）
-  if (editorMode.value === 'edit' && editorAgent.value?.id && !editorAgent.value?.is_builtin && !authStore.isLiteMode) {
-    items.push({ key: 'share', icon: 'share', label: t('knowledgeEditor.sidebar.share') });
-  }
   return items;
 });
 
@@ -2789,11 +2780,6 @@ const navGroups = computed(() => {
       key: 'capability',
       label: t('agentEditor.navGroups.capability'),
       items: pickItems(['multimodal', 'tools', 'mcp', 'skills']),
-    },
-    {
-      key: 'integration',
-      label: t('agentEditor.navGroups.integration'),
-      items: pickItems(['share']),
     },
   ].filter((group) => group.items.length > 0);
 });

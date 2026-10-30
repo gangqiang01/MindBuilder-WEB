@@ -28,7 +28,9 @@
         </div>
         <p class="system-admin-action-popup-hint">
           {{ createUserSuccess
-            ? t('system.globalSettings.createUser.generated.successBody')
+            ? (createUserSuccess.passwordGenerated
+              ? t('system.globalSettings.createUser.generated.successBody')
+              : t('system.globalSettings.createUser.generated.manualBody'))
             : t('system.globalSettings.createUser.warning') }}
         </p>
         <template v-if="createUserSuccess">
@@ -52,6 +54,18 @@
               <pre
                 class="create-user-reveal-value create-user-reveal-value--mono">{{ createUserSuccess.generatedPassword }}</pre>
             </div>
+          </div>
+          <!--
+            Best-effort credential mail outcome. A failed/disabled send
+            never blocks user creation — the reveal always carries the
+            password so the admin can relay it out of band. Only shown
+            when the backend reported a status (older backends omit it).
+          -->
+          <div v-if="createUserSuccess.emailStatus"
+            class="create-user-reveal-email"
+            :class="`create-user-reveal-email--${createUserSuccess.emailStatus}`">
+            <t-icon :name="emailStatusIcon" size="16px" />
+            <span>{{ emailStatusText }}</span>
           </div>
           <div class="system-admin-action-popup-footer">
             <t-button theme="primary" variant="outline" @click="copyAccountDetails">
@@ -132,7 +146,7 @@ const emit = defineEmits<{
   created: []
 }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const submitting = ref(false)
 const dismissing = ref(false)
@@ -246,6 +260,7 @@ async function submit() {
       response,
       { username: payload.username, email: payload.email },
       form.autoGenerate,
+      form.autoGenerate ? '' : form.newPassword,
     )
     const next = applyCreateUserResponse(createUserSuccess.value, view)
     createUserSuccess.value = next.success
@@ -281,6 +296,33 @@ async function copyAccountDetails() {
     'system.globalSettings.createUser.generated.copySuccess',
   )
 }
+
+// Email-mail outcome shown under the credential reveal. The mail is
+// best-effort: a non-sent status is informational, never an error — the
+// user was created and the admin has the password in hand regardless.
+const emailStatusText = computed(() => {
+  const reveal = createUserSuccess.value
+  if (!reveal?.emailStatus) return ''
+  const key = `system.globalSettings.createUser.generated.emailStatus.${reveal.emailStatus}`
+  if (!te(key)) return ''
+  if (reveal.emailStatus === 'failed' && reveal.emailError) {
+    return t(key, { error: reveal.emailError })
+  }
+  if (reveal.emailStatus === 'sent' || reveal.emailStatus === 'not_configured') {
+    return t(key, { email: reveal.email })
+  }
+  return t(key)
+})
+
+const emailStatusIcon = computed(() => {
+  switch (createUserSuccess.value?.emailStatus) {
+    case 'sent': return 'check-circle'
+    case 'failed': return 'error-circle'
+    case 'disabled':
+    case 'not_configured': return 'info-circle'
+    default: return 'info-circle'
+  }
+})
 
 function acknowledge() {
   if (!createUserSuccess.value) return
@@ -336,5 +378,39 @@ function acknowledge() {
   line-height: 18px;
   white-space: pre-wrap;
   user-select: all;
+}
+
+.create-user-reveal-email {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-radius: var(--app-radius-md);
+  font-size: var(--app-text-sm);
+  line-height: 18px;
+  color: var(--td-text-color-primary);
+  background: var(--td-bg-color-container);
+
+  :deep(.t-icon) {
+    flex: 0 0 auto;
+    margin-top: 1px;
+  }
+}
+
+.create-user-reveal-email--sent {
+  background: var(--td-success-bg-color);
+  color: var(--td-success-color);
+}
+
+.create-user-reveal-email--failed {
+  background: var(--td-warning-bg-color);
+  color: var(--td-warning-color);
+}
+
+.create-user-reveal-email--disabled,
+.create-user-reveal-email--not_configured {
+  background: var(--td-bg-color-page);
+  color: var(--td-text-color-secondary);
 }
 </style>

@@ -192,6 +192,17 @@ test('new GitLab data sources continue to test credentials without persistence',
   } finally { f.close() }
 })
 
+test('new data source choices omit Lark and Seafile while existing connectors remain editable', async () => {
+  const f = await fixture({ create: true })
+  try {
+    const selectableTypes = f.vm.selectableConnectorDefs.map((def: any) => def.type)
+    assert.equal(selectableTypes.includes('lark'), false)
+    assert.equal(selectableTypes.includes('seafile'), false)
+    assert.equal(selectableTypes.includes('lark_drive'), true)
+    assert.ok(f.vm.connectorDefs.find((def: any) => def.type === 'seafile'))
+  } finally { f.close() }
+})
+
 const seafileRepoA = '0f1e2d3c-4b5a-4968-8776-655443322110'
 const seafileRepoB = 'ffffffff-0000-4000-8000-000000000001'
 

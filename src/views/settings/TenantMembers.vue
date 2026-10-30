@@ -197,7 +197,7 @@
               <template #joined_at="{ row }">{{ formatDate(row.joined_at) }}</template>
               <template #actions="{ row }">
                 <t-popconfirm
-                  v-if="canManage && row.user_id !== currentUserId"
+                  v-if="canManage && row.user_id !== currentUserId && row.username?.toLowerCase() !== 'admin'"
                   :content="$t('tenantMember.remove.confirmBody', { name: row.username || row.email })"
                   :confirm-btn="{ content: $t('tenantMember.remove.confirm'), theme: 'danger' }"
                   :cancel-btn="{ content: $t('common.cancel') }"
@@ -1136,6 +1136,8 @@ async function removeRow(row: TenantMember) {
     const status = err?.status
     if (status === 409) {
       MessagePlugin.error(t('tenantMember.errors.lastOwner'))
+    } else if (status === 403) {
+      MessagePlugin.error(t('tenantMember.errors.protectedAdmin'))
     } else if (status === 404) {
       MessagePlugin.error(t('tenantMember.errors.notFound'))
     } else {

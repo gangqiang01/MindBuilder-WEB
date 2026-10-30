@@ -408,6 +408,15 @@ export interface CreateSystemUserResponse {
    * be fetched again.
    */
   generated_password?: string
+  /**
+   * Outcome of the best-effort credential notification mail, populated
+   * only on a fresh create. "sent" | "failed" | "disabled" | "not_configured".
+   * A missing/failed email never blocks user creation — the UI surfaces
+   * the status so the admin can deliver the password out of band.
+   */
+  email_status?: 'sent' | 'failed' | 'disabled' | 'not_configured'
+  /** Send error reason, populated only when email_status === 'failed'. */
+  email_error?: string
 }
 
 export interface CreateSystemUserResult extends CreateSystemUserResponse {
@@ -427,6 +436,18 @@ export interface CreateSystemUserResult extends CreateSystemUserResponse {
 export async function createSystemUser(req: CreateSystemUserRequest): Promise<CreateSystemUserResult> {
   const response = await post<CreateSystemUserResponse>('/api/v1/system/admin/users/create', req)
   return { ...response, created: response.$httpStatus === 201 }
+}
+
+// ---- Email server (SMTP) ----
+
+/**
+ * Send a probe mail through the configured SMTP relay (SystemAdmin only).
+ * Used by the system settings "email" tab to verify host/port/credentials
+ * before relying on user-creation notifications. Synchronous, ~10s cap.
+ */
+export async function testSystemEmail(to: string): Promise<{ ok: boolean; message: string }> {
+  const response = await post<{ ok: boolean; message: string }>('/api/v1/system/admin/email/test', { to })
+  return { ok: !!response.ok, message: response.message ?? '' }
 }
 
 // ---- System Settings (P1) ----

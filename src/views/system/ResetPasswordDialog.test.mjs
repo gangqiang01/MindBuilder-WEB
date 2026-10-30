@@ -69,7 +69,6 @@ function mountResetRow(email = 'user@example.com') {
     const resetBusy = ref(false)
     const loading = false
     const busyId = null
-    const createVisible = false
     const authStore = { currentUserId: 'self' }
     const row = { id: 'target', email: ${JSON.stringify(email)}, is_active: true }
     const announce = (message) => { saveAnnouncement.value = message }

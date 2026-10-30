@@ -117,18 +117,39 @@ const wikiIndexingTip = computed(() => {
 // exist on wiki KBs; a stale wiki/graph tab on another KB renders documents,
 // so the header marks documents active then too.
 const kbViewTabs = computed(() => {
-  const w = 'knowledgeEditor.wikiBrowser'
   const tabs: Array<{ key: KbTab; icon: string; label: string; tip: string; indexing?: boolean }> = [
-    { key: 'documents', icon: 'file', label: t(`${w}.tabDocuments`), tip: t(`${w}.tabDocumentsTip`) },
+    {
+      key: 'documents',
+      icon: 'file',
+      label: t('knowledgeEditor.wikiBrowser.tabDocuments'),
+      tip: t('knowledgeEditor.wikiBrowser.tabDocumentsTip'),
+    },
   ]
   if (isWiki.value) {
     const indexing = wikiIsIndexing.value
     tabs.push(
-      { key: 'wiki', icon: 'book-open', label: 'Wiki', tip: indexing ? wikiIndexingTip.value : t(`${w}.tabWikiTip`), indexing },
-      { key: 'graph', icon: 'relation', label: t(`${w}.tabGraph`), tip: indexing ? wikiIndexingTip.value : t(`${w}.tabGraphTip`), indexing },
+      {
+        key: 'wiki',
+        icon: 'book-open',
+        label: t('knowledgeEditor.wikiBrowser.tabWiki'),
+        tip: indexing ? wikiIndexingTip.value : t('knowledgeEditor.wikiBrowser.tabWikiTip'),
+        indexing,
+      },
+      {
+        key: 'graph',
+        icon: 'relation',
+        label: t('knowledgeEditor.wikiBrowser.tabGraph'),
+        tip: indexing ? wikiIndexingTip.value : t('knowledgeEditor.wikiBrowser.tabGraphTip'),
+        indexing,
+      },
     )
   }
-  tabs.push({ key: 'gallery', icon: 'image', label: t(`${w}.tabGallery`), tip: t(`${w}.tabGalleryTip`) })
+  tabs.push({
+    key: 'gallery',
+    icon: 'image',
+    label: t('knowledgeEditor.wikiBrowser.tabGallery'),
+    tip: t('knowledgeEditor.wikiBrowser.tabGalleryTip'),
+  })
   return tabs
 })
 const shownKbTab = computed<KbTab>(() =>

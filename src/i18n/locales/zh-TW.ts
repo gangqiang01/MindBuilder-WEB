@@ -206,6 +206,7 @@ export default {
       roleRequired: '請選擇角色',
       passwordConfirmRequired: '請再次輸入初始密碼',
       lastOwner: '無法降級、移除或退出最後一位 Owner，請先把其他成員提升為 Owner。',
+      protectedAdmin: '系統 admin 使用者不能移除。',
       notFound: '未找到對應的成員。',
       addConflict: '新增失敗：此電子信箱或使用者名稱已指向其他帳號，或該使用者已是本空間成員。',
       usernameTaken: '新增失敗：該使用者名稱已被其他帳號佔用。建立新帳號請換一個使用者名稱；若要新增的是已有帳號，請直接填寫其已註冊的電子信箱。',
@@ -2791,6 +2792,32 @@ export default {
     languageSaved: '語言設定已儲存'
   },
   model: {
+    // 思考強度（reasoning effort）分級標籤與說明。供新對話/智能體編輯/模型
+    // 除錯等處的思考強度選擇器使用，key 由 utils/reasoningEffort.ts 的
+    // levelLabelKey / levelDescriptionKey 拼出：model.reasoning.levels.<level>
+    // 與 model.reasoning.levelDescriptions.<level>。
+    reasoning: {
+      levels: {
+        off: '關閉',
+        auto: '自動',
+        minimal: '極簡',
+        low: '低',
+        medium: '中',
+        high: '高',
+        xhigh: '極高',
+        max: '最大'
+      },
+      levelDescriptions: {
+        off: '不進行思考，直接回答',
+        auto: '由模型 / 廠商決定思考強度',
+        minimal: '盡量少地思考，快速回應',
+        low: '輕度思考',
+        medium: '中度思考，兼顧速度與品質',
+        high: '深入思考',
+        xhigh: '更深入的思考，耗時更長',
+        max: '最大強度思考，品質優先'
+      }
+    },
     modelName: '模型名稱',
     defaultTag: '預設',
     addModelInSettings: '前往全局設定新增模型',
@@ -3132,12 +3159,19 @@ export default {
         generated: {
           successTitle: '使用者已建立',
           successBody: '已為該使用者生成一個隨機密碼。此密碼只會顯示一次。',
+          manualBody: '使用者已建立。下方為該使用者的登入密碼，請妥善保存或透過其他管道告知對方。',
           usernameLabel: '使用者名',
           emailLabel: '電子信箱',
           passwordLabel: '生成的密碼',
           copyBtn: '複製帳號資訊',
           copySuccess: '帳號資訊已複製到剪貼簿',
-          acknowledgeBtn: '我已儲存密碼'
+          acknowledgeBtn: '我已儲存密碼',
+          emailStatus: {
+            sent: '帳號資訊郵件已寄至 {email}',
+            failed: '郵件寄送失敗：{error}。請透過其他方式將密碼告知該使用者。',
+            disabled: '郵件通知未開啟。請直接將登入密碼告知該使用者。',
+            not_configured: '未設定郵件伺服器。請直接將登入密碼告知該使用者。'
+          }
         },
         validation: {
           usernameRequired: '請輸入使用者名',
@@ -3177,8 +3211,11 @@ export default {
         next: '下一頁',
         pageCount: '{shown} 筆 / 本頁 {total}',
         enable: '啟用',
+        disable: '停用',
         resetPassword: '重設密碼',
+        confirmDisable: '確定停用帳號 {name} 嗎？將立即撤銷其登入狀態。',
         confirmEnable: '確定啟用帳號 {name} 嗎？',
+        enabledMsg: '已啟用 {name}',
         disabledMsg: '已停用 {name}',
         actionFailed: '操作失敗',
         loadFailed: '載入使用者列表失敗',
@@ -3186,8 +3223,10 @@ export default {
         roleUser: '一般使用者',
         confirmRevoke: '確定撤銷 {name} 的系統管理員權限嗎？',
         confirmPromote: '確定將 {name} 提升為系統管理員嗎？',
+        revokeBtn: '撤銷',
         promoteBtn: '提升',
         revokedMsg: '已撤銷 {name} 的管理員權限',
+        promotedMsg: '已將 {name} 提升為系統管理員',
         roleFailed: '修改角色失敗'
       },
       reset: {
@@ -3226,6 +3265,14 @@ export default {
         bodyAuthRegistrationMode: '即將把「{label}」改為：{value}\n\n如果切到 self_serve，公網任何人都可以註冊帳號 — 務必確認是預期行為。',
         bodySandboxDockerEnabled: '打開後，組織管理員可以把沙箱指到本機 Docker。本機 docker.sock 等同宿主機 root，只適合已掛載 daemon 或配了 TLS 遠程 tcp:// 的私有化單機。'
       },
+      emailTest: {
+        label: '寄送測試郵件',
+        description: '使用目前已儲存的 SMTP 設定寄送一封測試郵件，驗證伺服器、連接埠與憑證是否正確。儲存各設定項後再測試。',
+        recipientPlaceholder: '輸入收件信箱位址',
+        sendBtn: '寄送測試郵件',
+        success: '測試郵件已寄出，請到收件匣查收',
+        failed: '寄送測試郵件失敗'
+      },
       enumLabels: {
         auth: {
           default_tenant_mode: {
@@ -3236,6 +3283,13 @@ export default {
             self_serve: '自助註冊（任何人可註冊）',
             invite_register: '僅限邀請註冊（需有效邀請連結）',
             invite_only: '禁止註冊（已有帳號仍可接受邀請）'
+          }
+        },
+        email: {
+          smtp_encryption: {
+            starttls: 'STARTTLS（587）',
+            ssl: 'SSL/TLS（465）',
+            none: '無加密（不推薦）'
           }
         }
       },
@@ -3268,6 +3322,16 @@ export default {
           registration_mode: '註冊模式。開放註冊允許任何人建立帳號；僅限邀請註冊要求有效邀請連結；禁止註冊不允許建立帳號，但已有帳號仍可接受邀請。儲存後立即生效。',
           default_tenant_mode: '公開註冊後的組織初始化策略。create_personal 會自動建立個人組織並授予 Owner；tenantless 僅建立帳戶，使用者需要接受邀請或主動建立組織。只影響之後註冊的使用者。',
           complex_password_enabled: '是否啟用複雜密碼。開啟後密碼必須包含大小寫字母、數字和特殊字符。修改後立即生效，只影響新註冊使用者或新密碼修改/重設操作。特殊字符包含：{specialChars}'
+        },
+        email: {
+          enabled: '是否啟用郵件通知。開啟後，系統管理員建立使用者成功時會嘗試把帳號資訊（使用者名/初始密碼）寄到該使用者信箱；未設定郵件伺服器或寄送失敗均不影響使用者建立，管理員仍可當面或透過其他管道告知密碼。',
+          smtp_host: 'SMTP 伺服器位址（例如 smtp.example.com）。留空表示未設定，寄送郵件時將直接跳過。',
+          smtp_port: 'SMTP 伺服器連接埠。STARTTLS 常用 587，SSL/TLS 常用 465，明文常用 25。',
+          smtp_encryption: '與 SMTP 伺服器的加密方式。starttls = 先明文連線再升級（587 常用）；ssl = 一開始就 TLS 連線（465 常用）；none = 明文不加密（僅限可信內網，不推薦）。',
+          smtp_username: 'SMTP 認證使用者名（通常是發件信箱）。留空表示 SMTP 伺服器不需要認證。',
+          smtp_password: 'SMTP 認證密碼 / 授權碼。僅系統管理員可見；建議使用信箱服務商產生的授權碼而非登入密碼。',
+          from_address: '發件人位址（From）。留空時使用 SMTP 認證使用者名作為發件人。',
+          site_url: '站點登入位址（例如 https://mindbuilder.example.com），會包含在寄給新使用者的帳號郵件中，方便對方直接登入。留空則不顯示連結。'
         }
       },
       keyLabels: {
@@ -3299,6 +3363,16 @@ export default {
           registration_mode: '註冊模式',
           default_tenant_mode: '註冊預設組織策略',
           complex_password_enabled: '啟用複雜密碼'
+        },
+        email: {
+          enabled: '啟用郵件通知',
+          smtp_host: 'SMTP 伺服器位址',
+          smtp_port: 'SMTP 連接埠',
+          smtp_encryption: '加密方式',
+          smtp_username: 'SMTP 使用者名',
+          smtp_password: 'SMTP 密碼',
+          from_address: '發件人位址',
+          site_url: '站點登入位址'
         }
       },
       runtime: {
@@ -3529,6 +3603,10 @@ export default {
         access: {
           title: '註冊與存取',
           description: '管理註冊方式、密碼要求及使用者建立組織的規則。'
+        },
+        email: {
+          title: '郵件伺服器',
+          description: '設定 SMTP 郵件伺服器，用於建立使用者後向對方寄送帳號資訊。未設定或寄送失敗均不影響使用者建立。'
         }
       },
       priorityHint: {
@@ -4274,6 +4352,14 @@ export default {
       editingBadge: '編輯中',
       pageActions: '頁面操作',
       viewTabs: '知識庫檢視',
+      tabDocuments: '文件',
+      tabDocumentsTip: '瀏覽及管理此知識庫中的文件',
+      tabWiki: 'Wiki',
+      tabWikiTip: '瀏覽及編輯由此知識庫產生的 Wiki 頁面',
+      tabGraph: '圖譜',
+      tabGraphTip: '探索此知識庫中 Wiki 頁面之間的連結關係',
+      tabGallery: '圖片庫',
+      tabGalleryTip: '瀏覽從此知識庫文件中擷取的圖片',
       searchPlaceholder: '搜尋 Wiki 頁面...',
       searchNoResults: '沒有找到比對的頁面',
       viewModeToggle: '切換目錄檢視',
@@ -4399,7 +4485,65 @@ export default {
           builtin_is_enabled_description: '所屬文件片段是否參與檢索',
           builtin_is_enabled_value_true: '已啟用',
           builtin_is_enabled_value_false: '已停用'
-        }
+        },
+        allImages: '全部圖片',
+        count: '{count} 張圖片',
+        countFiltered: '{count} 個結果',
+        searchPlaceholder: '搜尋圖片...',
+        sourceFilter: '來源文件',
+        filters: '篩選',
+        clearFilters: '清除篩選',
+        searchIn: '搜尋範圍',
+        searchInHint: '選擇要納入關鍵字搜尋的圖片屬性。',
+        attrSection: '依屬性篩選',
+        attrHint: '依屬性值排除或包含圖片。',
+        keywordsPlaceholder: '輸入關鍵字，多個關鍵字以逗號分隔',
+        noAttrs: '沒有可用的篩選屬性。',
+        sort: '排序',
+        sortField: '排序欄位',
+        sortOrder: '排序順序',
+        orderAsc: '升冪',
+        orderDesc: '降冪',
+        emptyFiltered: '沒有符合篩選條件的圖片',
+        empty: '尚無圖片',
+        emptyHint: '從文件中擷取的圖片會顯示在這裡。',
+        imageLoadError: '無法載入此圖片。',
+        noCaption: '尚無圖片描述。',
+        verdictDefault: '預設',
+        verdictOn: '包含',
+        verdictOff: '排除',
+        sourceFilterTitle: '依來源文件篩選',
+        sourceFilterClear: '清除選取',
+        sourceFilterSubtitle: '選擇要顯示其圖片的文件。',
+        sourceFilterSearch: '搜尋文件...',
+        sourceFilterOverflowHits: '共 {total} 個結果，目前最多顯示 {cap} 個。請縮小搜尋範圍。',
+        sourceFilterOverflowRecent: '目前顯示最近的 {cap} 個文件。搜尋可查找較早的文件。',
+        sourceFilterSelectAll: '選取或取消選取目前結果中的所有文件',
+        sourceFilterSelected: '已選取 {count} 個',
+        sourceFilterEmpty: '找不到文件。',
+        sourceFilterTooMany: '選取的文件過多，請縮小範圍後再試。',
+        title: '圖片檢視器',
+        zoomOut: '縮小',
+        zoomReset: '重設縮放',
+        zoomIn: '放大',
+        actualSize: '實際大小',
+        rotate: '旋轉',
+        download: '下載圖片',
+        openOriginal: '開啟原始圖片',
+        toggleInfo: '切換圖片詳細資訊',
+        viewerClose: '關閉檢視器',
+        prev: '上一張圖片',
+        next: '下一張圖片',
+        caption: '圖片描述',
+        copy: '複製',
+        ocr: '辨識文字',
+        noOcr: '尚無辨識文字。',
+        attributes: '屬性',
+        details: '詳細資訊',
+        source: '來源文件',
+        openSource: '開啟來源文件',
+        dimensions: '尺寸',
+        status: '狀態'
       }
     },
     indexing: {
@@ -5227,8 +5371,7 @@ export default {
     extractFailed: '實體關係提取失敗',
     exampleLoaded: '示例已載入',
     exampleCleared: '示例已清除',
-    disabledWarning: '知識圖譜資料庫未啟用，實體關係提取功能將無法使用',
-    howToEnable: '如何啟用知識圖譜？'
+    disabledWarning: '知識圖譜資料庫未啟用，實體關係提取功能將無法使用'
   },
   retrievalSettings: {
     recallTab: '召回',

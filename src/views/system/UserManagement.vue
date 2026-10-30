@@ -1,16 +1,5 @@
 <template>
   <section class="user-management" :aria-label="t('system.globalSettings.userList.rowLabel')">
-    <Teleport to="#system-users-actions">
-      <div v-show="active">
-        <CreateUserDialog v-model:visible="createVisible" :active="active" @created="fetchPage(0)" @announced="announce">
-          <t-button variant="text" size="small" class="user-management__create"
-            :disabled="loading || busyId !== null || resetVisibleId !== null">
-            <template #icon><t-icon name="add" size="16px" /></template>
-            {{ t('system.globalSettings.createUser.action') }}
-          </t-button>
-        </CreateUserDialog>
-      </div>
-    </Teleport>
     <Teleport to="#system-users-toolbar">
       <div v-show="active" class="user-management__tools">
         <t-input v-model="search" :disabled="locked" class="user-management__search" clearable
@@ -69,7 +58,7 @@
                 @update:visible="value => { resetVisibleId = value ? row.id : null }"
                 @busy-change="resetBusy = $event" @announced="announce">
                 <t-button variant="text" class="user-management__action"
-                  :disabled="loading || busyId !== null || resetBusy || (resetVisibleId !== null && resetVisibleId !== row.id) || createVisible || row.id === authStore.currentUserId || !row.is_active"
+                  :disabled="loading || busyId !== null || resetBusy || (resetVisibleId !== null && resetVisibleId !== row.id) || row.id === authStore.currentUserId || !row.is_active"
                   :title="t('system.globalSettings.userList.resetPassword')" :aria-label="t('system.globalSettings.userList.resetPassword')">
                   {{ t('system.globalSettings.userList.resetPassword') }}
                 </t-button>
@@ -113,7 +102,6 @@ import { useI18n } from 'vue-i18n'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { listAllUsers, setUserStatus, promoteUserToSystemAdmin, revokeSystemAdmin, type SystemAdminUser } from '@/api/system'
 import { useAuthStore } from '@/stores/auth'
-import CreateUserDialog from './CreateUserDialog.vue'
 import ResetPasswordDialog from './ResetPasswordDialog.vue'
 
 const props = defineProps<{ active: boolean }>()
@@ -132,8 +120,7 @@ const pendingRole = ref<SystemAdminUser | null>(null)
 const statusVisibleId = ref<string | null>(null)
 const resetVisibleId = ref<string | null>(null)
 const resetBusy = ref(false)
-const createVisible = ref(false)
-const locked = computed(() => busyId.value !== null || resetVisibleId.value !== null || createVisible.value)
+const locked = computed(() => busyId.value !== null || resetVisibleId.value !== null)
 const roleOptions = computed(() => [
   { value: 'user', label: t('system.globalSettings.userList.roleUser') },
   { value: 'admin', label: t('system.globalSettings.userList.roleAdmin') },

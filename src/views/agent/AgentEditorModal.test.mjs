@@ -35,6 +35,15 @@ test('shows a post-create hint after the first successful save', () => {
   assert.match(source, /agent\.editor\.postCreateHint\.title/)
 })
 
+test('agent editor omits publishing and sharing navigation', () => {
+  const navItems = source.match(/const navItems = computed\(\(\) => \{([\s\S]*?)^\}\);/m)?.[1]
+  assert.ok(navItems, 'expected to find the nav items computed')
+  assert.doesNotMatch(navItems, /key: 'share'/)
+  assert.doesNotMatch(source, /AgentShareSettings|currentSection === 'share'/)
+  assert.doesNotMatch(source, /key: 'integration',\s*label: t\('agentEditor\.navGroups\.integration'\)/)
+  assert.match(source, /share: 'basic'/)
+})
+
 // Locate a settings row by the i18n key of its label and return the attributes
 // that sit before class="setting-row" — i.e. whatever v-if guards that row.
 // Anchoring on the label keeps these assertions stable across reformatting.

@@ -11,6 +11,11 @@ export type CreateUserIdentity = {
 
 export type CreateUserReveal = CreateUserIdentity & {
   generatedPassword: string
+  /** True when the password was server-minted; false when the admin supplied it. */
+  passwordGenerated: boolean
+  /** Best-effort credential-mail outcome. Undefined when the backend did not report one. */
+  emailStatus?: string
+  emailError?: string
 }
 
 export type CreateUserView =
@@ -21,10 +26,22 @@ export type CreateUserView =
 
 export type CreateUserNotice = 'reveal' | 'created' | 'idempotent' | 'missingPassword'
 
+/**
+ * Map the create-user response into the view to render.
+ *
+ * The reveal is shown whenever a usable credential is in hand:
+ *   - a server-minted random password (generated_password present), or
+ *   - a caller-supplied password on a fresh create.
+ * Surfacing the manually-set password too satisfies the "show the created
+ * password after creation" requirement unambiguously and gives the admin a
+ * single copy-to-clipboard surface. `manualPassword` is the plaintext the
+ * admin typed (only meaningful when autoGenerate is false).
+ */
 export function resolveCreateUserView(
   response: Omit<CreateSystemUserResult, 'user'>,
   identity: CreateUserIdentity,
   autoGenerate: boolean,
+  manualPassword = '',
 ): CreateUserView {
   const generated = response.generated_password ?? ''
   if (generated) {
@@ -33,13 +50,29 @@ export function resolveCreateUserView(
       username: identity.username,
       email: identity.email,
       generatedPassword: generated,
+      passwordGenerated: true,
+      emailStatus: response.email_status,
+      emailError: response.email_error,
     }
   }
   if (!response.created) {
     return { kind: 'idempotent' }
   }
   if (autoGenerate) {
+    // Server should have returned a generated password; if it didn't, the
+    // credential is irretrievable and the admin must reset it.
     return { kind: 'missingPassword' }
+  }
+  if (manualPassword) {
+    return {
+      kind: 'reveal',
+      username: identity.username,
+      email: identity.email,
+      generatedPassword: manualPassword,
+      passwordGenerated: false,
+      emailStatus: response.email_status,
+      emailError: response.email_error,
+    }
   }
   return { kind: 'created' }
 }
@@ -60,6 +93,9 @@ export function applyCreateUserResponse(
           username: view.username,
           email: view.email,
           generatedPassword: view.generatedPassword,
+          passwordGenerated: view.passwordGenerated,
+          emailStatus: view.emailStatus,
+          emailError: view.emailError,
         },
         close: false,
         notice: 'reveal',

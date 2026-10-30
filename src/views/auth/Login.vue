@@ -5,21 +5,6 @@
       <div class="form-panel">
         <!-- Login Card -->
         <div class="form-card">
-          <!-- 登录已有账号时保留邀请上下文。 -->
-          <div v-if="inviteLookup" class="invite-banner">
-            <t-icon name="link" class="invite-banner__icon" />
-            <div class="invite-banner__text">
-              <div class="invite-banner__title">
-                {{ $t('inviteRegister.bannerTitle', { tenant: inviteLookup.tenant_name || '' }) }}
-              </div>
-              <div class="invite-banner__hint">
-                {{ $t('inviteRegister.bannerHintLogin') }}
-              </div>
-            </div>
-          </div>
-          <div v-else-if="inviteLookupError" class="invite-banner invite-banner--error">
-            {{ inviteLookupError }}
-          </div>
           <div class="form-header">
             <h2 class="form-title">MindBuilder</h2>
           </div>
@@ -249,10 +234,18 @@ const persistLoginResponse = async (response: any) => {
     }
   }
 
-  // Pull runtime capabilities (including whether ordinary users may create
-  // workspaces) before entering the main UI so create actions never flash
-  // briefly when the deployment is invitation-only.
-  await authStore.refreshFromAuthMe()
+  // Kick off the /auth/me capability sync but DON'T await it: the login
+  // response already carries user/token/tenant/memberships, which is
+  // enough to render the platform. /auth/me only tops up capabilities
+  // (can_create_tenant / auto_accept_invitation), and canCreateTenant
+  // defaults fail-closed (false) so the "create workspace" button simply
+  // appears a moment later instead of flashing. Awaiting this call was
+  // making the post-login redirect wait a full extra round trip — several
+  // seconds on a slow backend — after the login API had already succeed.
+  // The request is sequenced/shared (authMeRequest), so any ensureAuthMe
+  // caller on the landing page reuses this in-flight request rather than
+  // firing a duplicate.
+  void authStore.refreshFromAuthMe()
   await nextTick()
   router.replace(authStore.hasValidTenant ? '/platform/knowledge-bases' : '/onboarding/workspace')
 }
@@ -992,7 +985,7 @@ onMounted(async () => {
 }
 
 .remember-row {
-  margin: -6px 0 8px;
+  margin: 10px 0 8px;
 }
 
 .submit-button {

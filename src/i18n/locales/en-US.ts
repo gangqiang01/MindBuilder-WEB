@@ -2701,8 +2701,7 @@ export default {
     extractFailed: 'Entity-relationship extraction failed',
     exampleLoaded: 'Example loaded',
     exampleCleared: 'Example cleared',
-    disabledWarning: 'Knowledge graph database is not enabled, entity-relationship extraction will not be available',
-    howToEnable: 'How to enable knowledge graph?'
+    disabledWarning: 'Knowledge graph database is not enabled, entity-relationship extraction will not be available'
   },
   initialization: {
     skip: 'Skip',
@@ -3544,6 +3543,14 @@ export default {
       editingBadge: 'Editing',
       pageActions: 'Page actions',
       viewTabs: 'Knowledge base views',
+      tabDocuments: 'Documents',
+      tabDocumentsTip: 'Browse and manage documents in this knowledge base',
+      tabWiki: 'Wiki',
+      tabWikiTip: 'Browse and edit Wiki pages generated from this knowledge base',
+      tabGraph: 'Graph',
+      tabGraphTip: 'Explore links between Wiki pages in this knowledge base',
+      tabGallery: 'Gallery',
+      tabGalleryTip: 'Browse images extracted from documents in this knowledge base',
       gallery: {
         attr: {
           builtin_caption: 'Caption',
@@ -3558,7 +3565,65 @@ export default {
           builtin_is_enabled_description: 'Whether the owning document chunk takes part in retrieval.',
           builtin_is_enabled_value_true: 'Enabled',
           builtin_is_enabled_value_false: 'Disabled'
-        }
+        },
+        allImages: 'All images',
+        count: '{count} images',
+        countFiltered: '{count} results',
+        searchPlaceholder: 'Search images...',
+        sourceFilter: 'Source documents',
+        filters: 'Filters',
+        clearFilters: 'Clear filters',
+        searchIn: 'Search in',
+        searchInHint: 'Choose which image attributes are included in keyword search.',
+        attrSection: 'Filter by attribute',
+        attrHint: 'Exclude or include images by attribute value.',
+        keywordsPlaceholder: 'Enter keywords, separated by commas',
+        noAttrs: 'No filterable attributes available.',
+        sort: 'Sort',
+        sortField: 'Sort by',
+        sortOrder: 'Order',
+        orderAsc: 'Ascending',
+        orderDesc: 'Descending',
+        emptyFiltered: 'No images match these filters',
+        empty: 'No images yet',
+        emptyHint: 'Images extracted from documents will appear here.',
+        imageLoadError: 'Unable to load this image.',
+        noCaption: 'No caption available.',
+        verdictDefault: 'Default',
+        verdictOn: 'Include',
+        verdictOff: 'Exclude',
+        sourceFilterTitle: 'Filter by source document',
+        sourceFilterClear: 'Clear selection',
+        sourceFilterSubtitle: 'Choose documents whose images should be shown.',
+        sourceFilterSearch: 'Search documents...',
+        sourceFilterOverflowHits: 'Showing up to {cap} results out of {total}. Refine your search.',
+        sourceFilterOverflowRecent: 'Showing the {cap} most recent documents. Search to find older documents.',
+        sourceFilterSelectAll: 'Select or clear all documents in these results',
+        sourceFilterSelected: '{count} selected',
+        sourceFilterEmpty: 'No documents found.',
+        sourceFilterTooMany: 'Too many documents selected. Narrow the selection and try again.',
+        title: 'Image viewer',
+        zoomOut: 'Zoom out',
+        zoomReset: 'Reset zoom',
+        zoomIn: 'Zoom in',
+        actualSize: 'Actual size',
+        rotate: 'Rotate',
+        download: 'Download image',
+        openOriginal: 'Open original image',
+        toggleInfo: 'Toggle image details',
+        viewerClose: 'Close viewer',
+        prev: 'Previous image',
+        next: 'Next image',
+        caption: 'Caption',
+        copy: 'Copy',
+        ocr: 'Recognized text',
+        noOcr: 'No recognized text available.',
+        attributes: 'Attributes',
+        details: 'Details',
+        source: 'Source document',
+        openSource: 'Open source document',
+        dimensions: 'Dimensions',
+        status: 'Status'
       },
       searchPlaceholder: 'Search wiki pages...',
       searchNoResults: 'No matching pages found',
@@ -4407,6 +4472,10 @@ export default {
           title: 'Registration & access',
           description: 'Manage registration, password requirements, and organization-creation rules.'
         },
+        email: {
+          title: 'Email server',
+          description: 'Configure the SMTP relay used to send account details to a newly created user. A missing relay or a failed send never blocks user creation.'
+        },
         tenant: {
           title: 'Organization defaults',
           description: 'Set initial quotas and compatibility behavior for new organizations without rewriting existing organizations.'
@@ -4661,6 +4730,16 @@ export default {
         },
         model: {
           max_concurrency: 'Default per-model concurrency limit'
+        },
+        email: {
+          enabled: 'Enable email notification',
+          smtp_host: 'SMTP server host',
+          smtp_port: 'SMTP port',
+          smtp_encryption: 'Encryption',
+          smtp_username: 'SMTP username',
+          smtp_password: 'SMTP password',
+          from_address: 'From address',
+          site_url: 'Site login URL'
         }
       },
       keyDescriptions: {
@@ -4692,6 +4771,16 @@ export default {
         },
         model: {
           max_concurrency: 'Default cap on concurrent background (ingestion/enrichment) calls to a single model, keyed by model ID and shared across replicas. Read on every call and applied immediately with no restart. 0 or a negative value disables the default cap (each model still honours its own limit configured in model management). Affects background tasks only, not interactive chat.'
+        },
+        email: {
+          enabled: 'Whether email notification is enabled. When on, creating a user attempts to send the account details (username / initial password) to the user’s inbox. A missing relay or a failed send never blocks user creation — the admin can still deliver the password out of band.',
+          smtp_host: 'SMTP server host (e.g. smtp.example.com). Empty means not configured; sends are skipped.',
+          smtp_port: 'SMTP server port. STARTTLS commonly uses 587, SSL/TLS 465, plaintext 25.',
+          smtp_encryption: 'Encryption with the SMTP server. starttls = upgrade a plaintext connection (common on 587); ssl = implicit TLS from the start (common on 465); none = plaintext, no encryption (trusted internal networks only, not recommended).',
+          smtp_username: 'SMTP authentication username (usually the sender mailbox). Empty means the SMTP server requires no authentication.',
+          smtp_password: 'SMTP authentication password / app password. Visible to system admins only; prefer a provider-issued app password over the account login password.',
+          from_address: 'From address. Empty falls back to the SMTP username.',
+          site_url: 'Site login URL (e.g. https://mindbuilder.example.com), included in the new-user account email so they can sign in directly. Empty omits the link.'
         }
       },
       enumLabels: {
@@ -4705,6 +4794,13 @@ export default {
             create_personal: 'Create personal organization',
             tenantless: 'Do not create an organization'
           }
+        },
+        email: {
+          smtp_encryption: {
+            starttls: 'STARTTLS (587)',
+            ssl: 'SSL/TLS (465)',
+            none: 'None (not recommended)'
+          }
         }
       },
       confirm: {
@@ -4713,6 +4809,14 @@ export default {
         emptyValue: '(empty)',
         bodyAuthRegistrationMode: 'About to change "{label}" to: {value}\n\nIf switched to self_serve, anyone on the public internet can register an account — please confirm this is intended.',
         bodySandboxDockerEnabled: 'Once on, organization admins can point a sandbox at the local Docker daemon. A local docker.sock is equivalent to root on the host. Use this only on a private single-node install that mounts the daemon or uses a TLS-protected remote tcp:// endpoint.'
+      },
+      emailTest: {
+        label: 'Send test email',
+        description: 'Sends a probe mail using the saved SMTP settings to verify the host, port and credentials. Save the settings before testing.',
+        recipientPlaceholder: 'Enter recipient email address',
+        sendBtn: 'Send test email',
+        success: 'Test email sent — check the inbox',
+        failed: 'Failed to send test email'
       },
       listConfirm: {
         ssrf: {
@@ -4760,8 +4864,11 @@ export default {
         next: 'Next',
         pageCount: '{shown} shown / {total} on page',
         enable: 'Enable',
+        disable: 'Disable',
         resetPassword: 'Reset password',
+        confirmDisable: 'Disable account {name}? Their active sessions will be revoked immediately.',
         confirmEnable: 'Enable account {name}?',
+        enabledMsg: 'Enabled {name}',
         disabledMsg: 'Disabled {name}',
         actionFailed: 'Action failed',
         loadFailed: 'Failed to load users',
@@ -4769,8 +4876,10 @@ export default {
         roleUser: 'Regular user',
         confirmRevoke: 'Revoke system-admin privileges from {name}?',
         confirmPromote: 'Promote {name} to system administrator?',
+        revokeBtn: 'Revoke',
         promoteBtn: 'Promote',
         revokedMsg: 'Revoked admin privileges from {name}',
+        promotedMsg: 'Promoted {name} to system administrator',
         roleFailed: 'Failed to change role'
       },
       passwordReset: {
@@ -4814,12 +4923,19 @@ export default {
         generated: {
           successTitle: 'User created',
           successBody: 'A random password was generated for this user. It will only be shown once.',
+          manualBody: 'The user has been created. The login password is shown below — save it or deliver it to the user through another channel.',
           usernameLabel: 'Username',
           emailLabel: 'Email',
           passwordLabel: 'Generated password',
           copyBtn: 'Copy account details',
           copySuccess: 'Account details copied to clipboard',
-          acknowledgeBtn: 'I have saved the password'
+          acknowledgeBtn: 'I have saved the password',
+          emailStatus: {
+            sent: 'Account details email sent to {email}',
+            failed: 'Email delivery failed: {error}. Deliver the password to the user through another channel.',
+            disabled: 'Email notification is disabled. Deliver the login password to the user directly.',
+            not_configured: 'No email server configured. Deliver the login password to the user directly.'
+          }
         }
       },
       bulkApply: {
@@ -4943,6 +5059,32 @@ export default {
     }
   },
   model: {
+    // Reasoning-effort level labels and descriptions. Used by the reasoning
+    // selectors in the new-conversation composer, agent editor and model
+    // debug drawer. Keys are assembled by utils/reasoningEffort.ts:
+    // model.reasoning.levels.<level> and model.reasoning.levelDescriptions.<level>.
+    reasoning: {
+      levels: {
+        off: 'Off',
+        auto: 'Auto',
+        minimal: 'Minimal',
+        low: 'Low',
+        medium: 'Medium',
+        high: 'High',
+        xhigh: 'Extra high',
+        max: 'Max'
+      },
+      levelDescriptions: {
+        off: 'No thinking; answer directly',
+        auto: 'Let the model / vendor pick the intensity',
+        minimal: 'Barely think; respond fast',
+        low: 'Light thinking',
+        medium: 'Balanced thinking',
+        high: 'Deep thinking',
+        xhigh: 'Deeper thinking; takes longer',
+        max: 'Maximum intensity; quality first'
+      }
+    },
     modelName: 'Model Name',
     defaultTag: 'Default',
     addModelInSettings: 'Go to global settings to add models',
@@ -7687,6 +7829,7 @@ export default {
       roleRequired: 'Role is required',
       passwordConfirmRequired: 'Please re-enter the initial password',
       lastOwner: 'Cannot demote, remove, or leave as the last Owner. Promote another member to Owner first.',
+      protectedAdmin: 'The system admin user cannot be removed.',
       notFound: 'Membership not found.',
       addConflict: 'Could not add: this email or username belongs to another account, or the user is already a member.',
       usernameTaken: 'Could not add: this username is already used by another account. Pick a different username to create the new account, or enter the existing account\'s registered email to bind it.',

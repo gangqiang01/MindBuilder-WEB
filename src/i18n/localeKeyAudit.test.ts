@@ -127,6 +127,19 @@ const RUNTIME_TASK_TYPE_KEYS = [
   'wikiFinalize',
 ] as const
 
+const GALLERY_UI_KEYS = [
+  'allImages', 'count', 'countFiltered', 'searchPlaceholder', 'sourceFilter', 'filters',
+  'clearFilters', 'searchIn', 'searchInHint', 'attrSection', 'attrHint', 'keywordsPlaceholder',
+  'noAttrs', 'sort', 'sortField', 'sortOrder', 'orderAsc', 'orderDesc', 'emptyFiltered', 'empty',
+  'emptyHint', 'imageLoadError', 'noCaption', 'verdictDefault', 'verdictOn', 'verdictOff',
+  'sourceFilterTitle', 'sourceFilterClear', 'sourceFilterSubtitle', 'sourceFilterSearch',
+  'sourceFilterOverflowHits', 'sourceFilterOverflowRecent', 'sourceFilterSelectAll',
+  'sourceFilterSelected', 'sourceFilterEmpty', 'sourceFilterTooMany', 'title', 'zoomOut',
+  'zoomReset', 'zoomIn', 'actualSize', 'rotate', 'download', 'openOriginal', 'toggleInfo',
+  'viewerClose', 'prev', 'next', 'caption', 'copy', 'ocr', 'noOcr', 'attributes', 'details',
+  'source', 'openSource', 'dimensions', 'status',
+] as const
+
 test('registered audit action labels exist as flat keys in every locale', () => {
   const failures: string[] = []
 
@@ -273,6 +286,20 @@ test('runtime queue worker pool and queue labels exist in every locale', () => {
   assert.deepEqual(failures, [], failures.slice(0, 20).join('\n'))
 })
 
+test('system user-management labels exist in every locale', () => {
+  const keys = ['disable', 'confirmDisable', 'enabledMsg', 'promotedMsg', 'revokeBtn']
+  const failures: string[] = []
+
+  for (const [localeName, localeKeys] of Object.entries(localeKeysByName) as Array<[LocaleName, Set<string>]>) {
+    for (const key of keys) {
+      const path = `system.globalSettings.userList.${key}`
+      if (!localeKeys.has(path)) failures.push(`${localeName}: missing ${path}`)
+    }
+  }
+
+  assert.deepEqual(failures, [], failures.join('\n'))
+})
+
 test('parser engine display keys exist in every locale', () => {
   const failures: string[] = []
 
@@ -286,6 +313,22 @@ test('parser engine display keys exist in every locale', () => {
   }
 
   assert.deepEqual(failures, [], failures.join('\n'))
+})
+
+test('gallery UI translations exist in every locale and survive pruning', () => {
+  const failures: string[] = []
+
+  for (const name of GALLERY_UI_KEYS) {
+    const key = `knowledgeEditor.wikiBrowser.gallery.${name}`
+    if (!referencedKeys.has(key)) failures.push(`pruning would remove ${key}`)
+    for (const [locale, bundle] of Object.entries(LOCALE_BUNDLES)) {
+      if (typeof getLocaleValueAtPath(bundle, key) !== 'string') {
+        failures.push(`${locale}: missing ${key}`)
+      }
+    }
+  }
+
+  assert.deepEqual(failures, [], failures.slice(0, 20).join('\n'))
 })
 
 test('locale messages compile with vue-i18n syntax rules', () => {

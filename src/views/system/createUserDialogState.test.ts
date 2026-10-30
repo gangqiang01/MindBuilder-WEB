@@ -23,6 +23,27 @@ test('reveal wins whenever the server minted a one-time password', () => {
     username: 'alice',
     email: 'alice@example.com',
     generatedPassword: 'OnceOnly9',
+    passwordGenerated: true,
+    emailStatus: undefined,
+    emailError: undefined,
+  })
+})
+
+test('a supplied password on a fresh create also reveals (so the admin can copy it)', () => {
+  const view = resolveCreateUserView(
+    { created: true, email_status: 'sent' },
+    identity,
+    false,
+    'PlainPass9',
+  )
+  assert.deepEqual(view, {
+    kind: 'reveal',
+    username: 'alice',
+    email: 'alice@example.com',
+    generatedPassword: 'PlainPass9',
+    passwordGenerated: false,
+    emailStatus: 'sent',
+    emailError: undefined,
   })
 })
 
@@ -34,13 +55,6 @@ test('created:false is the 200 retry signal when no password was minted', () => 
   assert.deepEqual(
     resolveCreateUserView({ created: false }, identity, false),
     { kind: 'idempotent' },
-  )
-})
-
-test('created:true with a supplied password is a real create', () => {
-  assert.deepEqual(
-    resolveCreateUserView({ created: true }, identity, false),
-    { kind: 'created' },
   )
 })
 
@@ -56,6 +70,7 @@ test('a later idempotent response does not close an open reveal', () => {
     username: 'alice',
     email: 'alice@example.com',
     generatedPassword: 'OnceOnly9',
+    passwordGenerated: true,
   }
   const next = applyCreateUserResponse(current, { kind: 'idempotent' })
   assert.equal(next.close, false)
@@ -72,6 +87,7 @@ test('applyCreateUserResponse opens reveal and keeps the dialog open', () => {
       username: 'alice',
       email: 'alice@example.com',
       generatedPassword: 'OnceOnly9',
+      passwordGenerated: true,
     },
   )
   assert.equal(next.close, false)
@@ -104,7 +120,7 @@ test('locked visible dialog captures Escape before Settings can unmount', () => 
 
 test('formats username, email and password for a single clipboard paste', () => {
   const text = formatCreateUserCredentials(
-    { username: 'alice', email: 'alice@example.com', generatedPassword: 'OnceOnly9' },
+    { username: 'alice', email: 'alice@example.com', generatedPassword: 'OnceOnly9', passwordGenerated: true },
     { username: 'Username', email: 'Email', password: 'Password' },
   )
   assert.equal(text, 'Username: alice\nEmail: alice@example.com\nPassword: OnceOnly9')

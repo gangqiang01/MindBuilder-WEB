@@ -206,6 +206,7 @@ export default {
       roleRequired: '请选择角色',
       passwordConfirmRequired: '请再次输入初始密码',
       lastOwner: '无法降级、移除或退出最后一位 Owner，请先把其他成员提升为 Owner。',
+      protectedAdmin: '系统 admin 用户不能移除。',
       notFound: '未找到对应的成员。',
       addConflict: '添加失败：该邮箱或用户名已指向其他账号，或该用户已是本空间成员。',
       usernameTaken: '添加失败：该用户名已被其他账号占用。新建账号请换一个用户名；要添加的是已有账号，请直接填写其已注册的邮箱。',
@@ -2791,6 +2792,32 @@ export default {
     languageSaved: '语言设置已保存'
   },
   model: {
+    // 思考强度（reasoning effort）分级标签与说明。供新对话/智能体编辑/模型
+    // 调试等处的思考强度选择器使用，key 由 utils/reasoningEffort.ts 的
+    // levelLabelKey / levelDescriptionKey 拼出：model.reasoning.levels.<level>
+    // 与 model.reasoning.levelDescriptions.<level>。
+    reasoning: {
+      levels: {
+        off: '关闭',
+        auto: '自动',
+        minimal: '极简',
+        low: '低',
+        medium: '中',
+        high: '高',
+        xhigh: '极高',
+        max: '最大'
+      },
+      levelDescriptions: {
+        off: '不进行思考，直接回答',
+        auto: '由模型 / 厂商决定思考强度',
+        minimal: '尽量少地思考，快速响应',
+        low: '轻度思考',
+        medium: '中度思考，兼顾速度与质量',
+        high: '深入思考',
+        xhigh: '更深入的思考，耗时更长',
+        max: '最大强度思考，质量优先'
+      }
+    },
     modelName: '模型名称',
     defaultTag: '默认',
     addModelInSettings: '前往全局设置添加模型',
@@ -3132,12 +3159,19 @@ export default {
         generated: {
           successTitle: '用户已创建',
           successBody: '已为该用户生成一个随机密码。此密码只会显示一次。',
+          manualBody: '用户已创建。下方为该用户的登录密码，请妥善保存或通过其他渠道告知对方。',
           usernameLabel: '用户名',
           emailLabel: '邮箱',
           passwordLabel: '生成的密码',
           copyBtn: '复制账号信息',
           copySuccess: '账号信息已复制到剪贴板',
-          acknowledgeBtn: '我已保存密码'
+          acknowledgeBtn: '我已保存密码',
+          emailStatus: {
+            sent: '账号信息邮件已发送至 {email}',
+            failed: '邮件发送失败：{error}。请通过其他方式将密码告知该用户。',
+            disabled: '邮件通知未开启。请直接将登录密码告知该用户。',
+            not_configured: '未配置邮件服务器。请直接将登录密码告知该用户。'
+          }
         },
         validation: {
           usernameRequired: '请输入用户名',
@@ -3177,8 +3211,11 @@ export default {
         next: '下一页',
         pageCount: '{shown} 条 / 本页 {total}',
         enable: '启用',
+        disable: '停用',
         resetPassword: '重置密码',
+        confirmDisable: '确定停用账号 {name} 吗？将立即吊销其登录状态。',
         confirmEnable: '确定启用账号 {name} 吗？',
+        enabledMsg: '已启用 {name}',
         disabledMsg: '已停用 {name}',
         actionFailed: '操作失败',
         loadFailed: '加载用户列表失败',
@@ -3186,8 +3223,10 @@ export default {
         roleUser: '普通用户',
         confirmRevoke: '确定撤销 {name} 的系统管理员权限吗？',
         confirmPromote: '确定将 {name} 提升为系统管理员吗？',
+        revokeBtn: '撤销',
         promoteBtn: '提升',
         revokedMsg: '已撤销 {name} 的管理员权限',
+        promotedMsg: '已将 {name} 提升为系统管理员',
         roleFailed: '修改角色失败'
       },
       reset: {
@@ -3226,6 +3265,14 @@ export default {
         bodyAuthRegistrationMode: '即将把「{label}」改为：{value}\n\n如果切到 self_serve，公网任何人都可以注册账号 — 务必确认是预期行为。',
         bodySandboxDockerEnabled: '打开后，组织管理员可以把沙箱指到本机 Docker。本机 docker.sock 等同宿主机 root，只适合已挂载 daemon 或配了 TLS 远程 tcp:// 的私有化单机。'
       },
+      emailTest: {
+        label: '发送测试邮件',
+        description: '使用当前已保存的 SMTP 配置发送一封测试邮件，验证服务器、端口与凭据是否正确。保存各配置项后再测试。',
+        recipientPlaceholder: '输入收件邮箱地址',
+        sendBtn: '发送测试邮件',
+        success: '测试邮件已发送，请到收件箱查收',
+        failed: '发送测试邮件失败'
+      },
       enumLabels: {
         auth: {
           default_tenant_mode: {
@@ -3236,6 +3283,13 @@ export default {
             self_serve: '自助注册（任何人可注册）',
             invite_register: '仅限邀请注册（需有效邀请链接）',
             invite_only: '禁止注册（已有账号仍可接受邀请）'
+          }
+        },
+        email: {
+          smtp_encryption: {
+            starttls: 'STARTTLS（587）',
+            ssl: 'SSL/TLS（465）',
+            none: '无加密（不推荐）'
           }
         }
       },
@@ -3268,6 +3322,16 @@ export default {
           registration_mode: '注册模式。开放注册允许任何人创建账号；仅限邀请注册要求有效邀请链接；禁止注册不允许创建账号，但已有账号仍可接受邀请。保存后立即生效。',
           default_tenant_mode: '公开注册后的组织初始化策略。create_personal 会自动创建个人组织并授予 Owner；tenantless 仅创建账户，用户需要接受邀请或主动创建组织。只影响之后注册的用户。',
           complex_password_enabled: '是否启用复杂密码。开启后密码必须包含大小写字母、数字和特殊字符。修改后立即生效，只影响新注册用户或新密码修改/重置操作。特殊字符包含：{specialChars}'
+        },
+        email: {
+          enabled: '是否启用邮件通知。开启后，系统管理员创建用户成功时会尝试把账号信息（用户名/初始密码）发送到该用户邮箱；未配置邮件服务器或发送失败均不影响用户创建，管理员仍可当面或通过其他渠道告知密码。',
+          smtp_host: 'SMTP 服务器地址（例如 smtp.example.com）。留空表示未配置，发送邮件时将直接跳过。',
+          smtp_port: 'SMTP 服务器端口。STARTTLS 常用 587，SSL/TLS 常用 465，明文常用 25。',
+          smtp_encryption: '与 SMTP 服务器的加密方式。starttls = 先明文连接再升级（587 常用）；ssl = 一开始就 TLS 连接（465 常用）；none = 明文不加密（仅限可信内网，不推荐）。',
+          smtp_username: 'SMTP 认证用户名（通常是发件邮箱）。留空表示 SMTP 服务器不需要认证。',
+          smtp_password: 'SMTP 认证密码 / 授权码。仅系统管理员可见；建议使用邮箱服务商生成的授权码而非登录密码。',
+          from_address: '发件人地址（From）。留空时使用 SMTP 认证用户名作为发件人。',
+          site_url: '站点登录地址（例如 https://mindbuilder.example.com），会包含在发送给新用户的账号邮件中，方便对方直接登录。留空则不展示链接。'
         }
       },
       keyLabels: {
@@ -3299,6 +3363,16 @@ export default {
           registration_mode: '注册模式',
           default_tenant_mode: '注册默认组织策略',
           complex_password_enabled: '启用复杂密码'
+        },
+        email: {
+          enabled: '启用邮件通知',
+          smtp_host: 'SMTP 服务器地址',
+          smtp_port: 'SMTP 端口',
+          smtp_encryption: '加密方式',
+          smtp_username: 'SMTP 用户名',
+          smtp_password: 'SMTP 密码',
+          from_address: '发件人地址',
+          site_url: '站点登录地址'
         }
       },
       runtime: {
@@ -3529,6 +3603,10 @@ export default {
         access: {
           title: '注册与访问',
           description: '管理注册方式、密码要求和用户创建组织的规则。'
+        },
+        email: {
+          title: '邮件服务器',
+          description: '配置 SMTP 邮件服务器，用于创建用户后向对方发送账号信息。未配置或发送失败均不影响用户创建。'
         }
       },
       priorityHint: {
@@ -4274,6 +4352,14 @@ export default {
       editingBadge: '编辑中',
       pageActions: '页面操作',
       viewTabs: '知识库视图',
+      tabDocuments: '文档',
+      tabDocumentsTip: '查看和管理此知识库中的文档',
+      tabWiki: 'Wiki',
+      tabWikiTip: '查看和编辑由此知识库生成的 Wiki 页面',
+      tabGraph: '图谱',
+      tabGraphTip: '探索此知识库中 Wiki 页面之间的链接关系',
+      tabGallery: '图片库',
+      tabGalleryTip: '浏览从此知识库文档中提取的图片',
       searchPlaceholder: '搜索 Wiki 页面...',
       searchNoResults: '没有找到匹配的页面',
       viewModeToggle: '切换目录视图',
@@ -4399,7 +4485,65 @@ export default {
           builtin_is_enabled_description: '所属文档片段是否参与检索',
           builtin_is_enabled_value_true: '已启用',
           builtin_is_enabled_value_false: '已停用'
-        }
+        },
+        allImages: '全部图片',
+        count: '{count} 张图片',
+        countFiltered: '{count} 个结果',
+        searchPlaceholder: '搜索图片...',
+        sourceFilter: '来源文档',
+        filters: '筛选',
+        clearFilters: '清除筛选',
+        searchIn: '搜索范围',
+        searchInHint: '选择要纳入关键词搜索的图片属性。',
+        attrSection: '按属性筛选',
+        attrHint: '按属性值排除或包含图片。',
+        keywordsPlaceholder: '输入关键词，多个关键词用逗号分隔',
+        noAttrs: '没有可用的筛选属性。',
+        sort: '排序',
+        sortField: '排序字段',
+        sortOrder: '排序顺序',
+        orderAsc: '升序',
+        orderDesc: '降序',
+        emptyFiltered: '没有符合筛选条件的图片',
+        empty: '暂无图片',
+        emptyHint: '从文档中提取的图片会显示在这里。',
+        imageLoadError: '无法加载此图片。',
+        noCaption: '暂无图片描述。',
+        verdictDefault: '默认',
+        verdictOn: '包含',
+        verdictOff: '排除',
+        sourceFilterTitle: '按来源文档筛选',
+        sourceFilterClear: '清除选择',
+        sourceFilterSubtitle: '选择要显示其图片的文档。',
+        sourceFilterSearch: '搜索文档...',
+        sourceFilterOverflowHits: '共 {total} 个结果，当前最多显示 {cap} 个。请缩小搜索范围。',
+        sourceFilterOverflowRecent: '当前显示最近的 {cap} 个文档。搜索可查找更早的文档。',
+        sourceFilterSelectAll: '选择或取消选择当前结果中的所有文档',
+        sourceFilterSelected: '已选择 {count} 个',
+        sourceFilterEmpty: '没有找到文档。',
+        sourceFilterTooMany: '选择的文档过多，请缩小范围后重试。',
+        title: '图片查看器',
+        zoomOut: '缩小',
+        zoomReset: '重置缩放',
+        zoomIn: '放大',
+        actualSize: '实际大小',
+        rotate: '旋转',
+        download: '下载图片',
+        openOriginal: '打开原始图片',
+        toggleInfo: '切换图片详情',
+        viewerClose: '关闭查看器',
+        prev: '上一张图片',
+        next: '下一张图片',
+        caption: '图片描述',
+        copy: '复制',
+        ocr: '识别文本',
+        noOcr: '暂无识别文本。',
+        attributes: '属性',
+        details: '详情',
+        source: '来源文档',
+        openSource: '打开来源文档',
+        dimensions: '尺寸',
+        status: '状态'
       }
     },
     indexing: {
@@ -5227,8 +5371,7 @@ export default {
     extractFailed: '实体关系提取失败',
     exampleLoaded: '示例已加载',
     exampleCleared: '示例已清除',
-    disabledWarning: '知识图谱数据库未启用，实体关系提取功能将无法使用',
-    howToEnable: '如何启用知识图谱？'
+    disabledWarning: '知识图谱数据库未启用，实体关系提取功能将无法使用'
   },
   retrievalSettings: {
     recallTab: '召回',

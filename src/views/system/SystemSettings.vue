@@ -31,7 +31,6 @@
     <div class="section-header">
       <div class="section-header__titlewrap">
         <h2>{{ t('system.globalSettings.title') }}</h2>
-        <div id="system-users-actions" />
       </div>
       <div class="section-description">
         <p>{{ activeSectionDescription }}</p>
@@ -168,9 +167,10 @@
                       @update:model-value="onSsrfWhitelistModelUpdate" />
                   </div>
                 </t-popconfirm>
-                <t-input v-else v-model="editValues[item.key]" :placeholder="placeholderFor(item)"
+                <t-input v-else v-model="editValues[item.key]" :type="item.is_secret ? 'password' : 'text'"
+                  :placeholder="placeholderFor(item)"
                   :aria-label="keyLabel(item.key)" :disabled="savingKey === item.key" class="setting-input" clearable
-                  @blur="onChange(item)" />
+                  autocomplete="off" @blur="onChange(item)" />
 
                 <!--
             Per-row saving spinner. Appears next to the control while
@@ -234,6 +234,38 @@
             </div>
           </div>
         </div>
+
+        <!--
+          SMTP relay probe — lives only in the email tab, below the rows.
+          Uses the saved settings; saves are per-row on @blur above, so the
+          admin should save (blur) before testing. Default-denied for API
+          keys on the backend; here it's interactive SystemAdmin only.
+        -->
+        <div v-if="activeSettingsSection === 'email'" class="setting-row setting-row--test-email">
+          <div class="setting-info">
+            <div class="setting-label">
+              <span>{{ t('system.globalSettings.emailTest.label') }}</span>
+            </div>
+            <p class="desc">{{ t('system.globalSettings.emailTest.description') }}</p>
+          </div>
+          <div class="setting-control setting-control--test-email">
+            <!--
+              Stack the send button under the recipient input rather than
+              beside it: the input is wide (full row) and the button reads
+              as a follow-up action, so a vertical column matches the rest
+              of the email tab better than a cramped side-by-side row.
+            -->
+            <t-input v-model="testEmailTo" type="text" clearable autocomplete="off"
+              :disabled="emailTesting" class="setting-input setting-input--wide"
+              :placeholder="t('system.globalSettings.emailTest.recipientPlaceholder')"
+              :aria-label="t('system.globalSettings.emailTest.recipientPlaceholder')" />
+            <t-button theme="primary" variant="outline" :loading="emailTesting"
+              :disabled="!testEmailTo.trim() || emailTesting" class="setting-test-email-btn"
+              @click="sendTestEmail">
+              {{ t('system.globalSettings.emailTest.sendBtn') }}
+            </t-button>
+          </div>
+        </div>
       </section>
       <div class="sr-only" role="status" aria-live="polite">{{ saveAnnouncement }}</div>
     </template>
@@ -250,6 +282,7 @@ import {
   updateSystemSetting,
   resetSystemSetting,
   applyDefaultStorageQuotaToAllTenants,
+  testSystemEmail,
   type SystemSettingItem,
 } from '@/api/system'
 import UserManagement from './UserManagement.vue'
@@ -378,7 +411,7 @@ const savedKey = ref<string | null>(null)
 const saveAnnouncement = ref('')
 let savedKeyTimer: ReturnType<typeof setTimeout> | null = null
 
-type SettingsSection = 'users' | 'runtime' | 'security'
+type SettingsSection = 'users' | 'runtime' | 'security' | 'email'
 
 // Product-oriented order, rather than the registry's alphabetical key order.
 const SETTINGS_SECTION_KEYS: Record<Exclude<SettingsSection, 'users'>, readonly string[]> = {
@@ -392,6 +425,16 @@ const SETTINGS_SECTION_KEYS: Record<Exclude<SettingsSection, 'users'>, readonly 
     'model.max_concurrency',
   ],
   security: ['ssrf.whitelist', 'sandbox.docker_enabled'],
+  email: [
+    'email.enabled',
+    'email.smtp_host',
+    'email.smtp_port',
+    'email.smtp_encryption',
+    'email.smtp_username',
+    'email.smtp_password',
+    'email.from_address',
+    'email.site_url',
+  ],
 }
 
 const activeSettingsSection = ref<SettingsSection>('users')
@@ -402,11 +445,12 @@ const sectionTabs = computed(() => {
     { key: 'users', icon: 'usergroup', label: t('system.globalSettings.userList.rowLabel') },
     { key: 'runtime', icon: 'server', label: t('system.globalSettings.sections.runtime.title') },
     { key: 'security', icon: 'secured', label: t('system.globalSettings.sections.security.title') },
+    { key: 'email', icon: 'mail', label: t('system.globalSettings.sections.email.title') },
   ]
   return tabs
 })
 
-const PANEL_KEYS: readonly SettingsSection[] = ['users', 'runtime', 'security']
+const PANEL_KEYS: readonly SettingsSection[] = ['users', 'runtime', 'security', 'email']
 
 function panelFromQuery(): SettingsSection | null {
   const raw = Array.isArray(route.query.panel) ? route.query.panel[0] : route.query.panel
@@ -900,6 +944,33 @@ onMounted(() => {
 onUnmounted(() => {
   if (savedKeyTimer) clearTimeout(savedKeyTimer)
 })
+
+// ---- SMTP relay test (email tab) ----
+// Probe button: sends a short mail via the saved settings. Errors surface
+// as a toast AND inline so the admin sees the relay's complaint verbatim.
+const testEmailTo = ref('')
+const emailTesting = ref(false)
+
+async function sendTestEmail() {
+  const to = testEmailTo.value.trim()
+  if (!to || emailTesting.value) return
+  emailTesting.value = true
+  try {
+    const result = await testSystemEmail(to)
+    const msg = result.message || t('system.globalSettings.emailTest.success')
+    MessagePlugin.success(msg)
+    saveAnnouncement.value = msg
+  } catch (err: any) {
+    // Backend returns {error} for "not configured"/"disabled" (400) and
+    // {error} for relay failures (502); both surface as err.message via
+    // the shared axios interceptor.
+    const msg = err?.message || t('system.globalSettings.emailTest.failed')
+    MessagePlugin.error(msg)
+    saveAnnouncement.value = msg
+  } finally {
+    emailTesting.value = false
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -1184,6 +1255,16 @@ onUnmounted(() => {
 .setting-control-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+// Test-email control: recipient input on top, send button below it
+// (inherits the column + flex-end layout from .setting-control).
+.setting-control--test-email {
+  gap: 8px;
+}
+
+.setting-test-email-btn {
+  flex: 0 0 auto;
 }
 
 .setting-input {
