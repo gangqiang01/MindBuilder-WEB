@@ -42,26 +42,27 @@ test('settings nav writes section, and keeps a system-settings panel only there'
     { section: 'integration-embed' },
   )
   assert.deepEqual(
-    buildSettingsRouteQuery(integrationSectionKey('api'), {
+    buildSettingsRouteQuery(integrationSectionKey('mcpserver'), {
       section: 'integrations',
       tab: 'im',
       agentId: 'agt_1',
     }),
-    { section: 'integration-api', agentId: 'agt_1' },
+    { section: 'integration-mcpserver', agentId: 'agt_1' },
   )
 })
 
-test('legacy api / integrations / bare-tab query strings normalize to nav keys', () => {
-  assert.equal(normalizeSettingsSection('api'), 'integration-api')
+test('legacy integrations / bare-tab query strings normalize to nav keys', () => {
   assert.equal(normalizeSettingsSection('mcpserver'), 'integration-mcpserver')
   // 'mcp' is the MCP-client settings page, not the MCP server integration tab.
   assert.equal(normalizeSettingsSection('mcp'), 'mcp')
-  // Removed tabs (cli / chrome / claw) fall back to the default im tab.
+  // Removed tabs (api / cli / chrome / claw) fall back to the default im tab.
+  assert.equal(normalizeSettingsSection('integrations', 'api'), 'integration-im')
   assert.equal(normalizeSettingsSection('integrations', 'cli'), 'integration-im')
   assert.equal(normalizeSettingsSection('integrations', 'embed'), 'integration-embed')
   assert.equal(normalizeSettingsSection('integrations'), 'integration-im')
   assert.equal(normalizeSettingsSection('system-global'), 'system-global')
   // Removed integration tabs are no longer recognized as integration sections.
+  assert.equal(isIntegrationSection('integration-api'), false)
   assert.equal(isIntegrationSection('integration-cli'), false)
   assert.equal(isIntegrationSection('models'), false)
   assert.equal(isIntegrationSection('integration-unknown'), false)

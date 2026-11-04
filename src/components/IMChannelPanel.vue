@@ -670,15 +670,9 @@ const drawerConfirmText = computed(() =>
 
 const platformOptions = computed(() => ([
   { value: 'wecom' as IMPlatform, label: t('agentEditor.im.wecom'), logo: wecomLogo },
-  { value: 'feishu' as IMPlatform, label: t('agentEditor.im.feishu'), logo: feishuLogo },
-  { value: 'lark' as IMPlatform, label: t('agentEditor.im.lark'), logo: larkLogo },
-  { value: 'slack' as IMPlatform, label: t('agentEditor.im.slack'), logo: slackLogo },
-  { value: 'telegram' as IMPlatform, label: t('agentEditor.im.telegram'), logo: telegramLogo },
-  { value: 'dingtalk' as IMPlatform, label: t('agentEditor.im.dingtalk'), logo: dingtalkLogo },
-  { value: 'mattermost' as IMPlatform, label: t('agentEditor.im.mattermost'), logo: mattermostLogo },
   { value: 'wechat' as IMPlatform, label: t('agentEditor.im.wechat'), logo: wechatLogo },
-  { value: 'qqbot' as IMPlatform, label: t('agentEditor.im.qqbot'), logo: qqbotLogo },
-  { value: 'yunzhijia' as IMPlatform, label: t('agentEditor.im.yunzhijia'), logo: yunzhijiaLogo },
+  { value: 'dingtalk' as IMPlatform, label: t('agentEditor.im.dingtalk'), logo: dingtalkLogo },
+  { value: 'feishu' as IMPlatform, label: t('agentEditor.im.feishu'), logo: feishuLogo },
 ]));
 
 const localeOptions = computed(() => ([
@@ -686,9 +680,7 @@ const localeOptions = computed(() => ([
   { value: 'zh-CN' as IMLocale, label: '简体中文' },
   { value: 'zh-TW' as IMLocale, label: '繁體中文' },
   { value: 'en-US' as IMLocale, label: 'English' },
-  { value: 'ja-JP' as IMLocale, label: '日本語' },
-  { value: 'ko-KR' as IMLocale, label: '한국어' },
-  { value: 'ru-RU' as IMLocale, label: 'Русский' },
+  { value: 'ja-JP' as IMLocale, label: '日本語' }
 ]));
 
 // Feishu and Lark are the same product on separate clouds, so each has its own

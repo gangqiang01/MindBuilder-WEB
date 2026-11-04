@@ -51,7 +51,7 @@ function embedHtmlDevFallback(): Plugin {
 const DEV_PROXY_TARGET =
   process.env.VITE_DEV_PROXY_TARGET ||
   process.env.FRONTEND_BACKEND_URL ||
-  'http://172.21.73.80:8090'
+  'http://172.21.73.80:8080'
 
 function resolveVueOfficePptxEntry(): string {
   try {

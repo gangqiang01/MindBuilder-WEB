@@ -1946,16 +1946,7 @@ const drawerConfirmText = computed(() => {
           <button type="button" class="ds-empty-retry" @click="loadResources">
             {{ t('datasource.retryLoadResources') }}
           </button>
-          <a
-            v-if="currentDef?.permissionDocUrl"
-            :href="currentDef.permissionDocUrl"
-            target="_blank"
-            rel="noopener"
-            class="doc-link"
-          >
-            {{ t('datasource.permissionDocLink') }}
-            <t-icon name="link" class="link-icon" />
-          </a>
+         
         </div>
       </div>
       </template>

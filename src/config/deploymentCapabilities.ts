@@ -2,7 +2,6 @@ export const DEPLOYMENT_CAPABILITY_KEYS = [
   'agents',
   'integrations.im',
   'integrations.embed',
-  'integrations.api',
   'integrations.mcpserver',
   'settings.mcp',
   'settings.vectorstore',

@@ -199,12 +199,7 @@
                 </div>
               </t-option>
             </t-select>
-            <p v-if="vendorDocLink" class="form-desc provider-doc-link">
-              <a :href="vendorDocLink" target="_blank" rel="noopener noreferrer">
-                {{ $t('model.editor.providerDocs', { provider: selectedProviderDisplayLabel }) }}
-                <t-icon name="jump" size="12px" />
-              </a>
-            </p>
+           
           </div>
 
           <!--
@@ -550,10 +545,6 @@
               <p v-if="specCompatError" class="form-desc form-desc--error">{{ $t('model.editor.advanced.compat.invalid') }}: {{ specCompatError }}</p>
               <p v-else class="form-desc">
                 {{ $t('model.editor.advanced.compat.desc') }}
-                <a :href="COMPAT_DOC_URL" target="_blank" rel="noopener noreferrer" class="compat-doc-link">
-                  {{ $t('model.editor.advanced.compat.docLink') }}
-                  <t-icon name="jump" size="12px" />
-                </a>
               </p>
             </div>
           </template>

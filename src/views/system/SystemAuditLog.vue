@@ -306,8 +306,11 @@ function auditTargetKey(row: AuditLog): string {
     if (row.target_type === 'tenant_storage_quota') {
       return t('system.globalSettings.audit.target.bulkQuota')
     }
-    if (details && typeof details.key === 'string' && details.key) return details.key
-    return row.target_id || row.target_type || ''
+    const key = details && typeof details.key === 'string' && details.key
+      ? details.key
+      : row.target_id || row.target_type || ''
+    const path = `system.globalSettings.keyLabels.${key}`
+    return key && te(path) ? t(path) : key
   }
   if (
     row.action === 'system.admin_promoted'

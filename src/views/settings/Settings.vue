@@ -449,6 +449,20 @@ const redirectToModelsPage = (section: string, subSection?: string | null) => {
   return true
 }
 
+// /platform/settings 路由未声明 requiredCapability，路由守卫不会在这里 await
+// 能力探测；main.ts 的启动预热在首次登录前是无 token 的 401，留下 loaded=false
+// + 空 capabilities，沙箱这类 fail-closed 入口会被 navItems 过滤掉——表现为
+// 「首次登录看不到沙箱，从工具页（路由声明了 requiredCapability:
+// 'settings.sandbox'，守卫会 await ensureLoaded）跳过来后才能看到」。
+// 设置页一打开就补一次 ensureLoaded：store 内部去重 + 失败重试，loaded 翻 true
+// 后 navItems 及下面的 section 同步 watcher 会自动重算。
+watch(visible, (isVisible) => {
+  if (!isVisible) return
+  if (!deploymentCapabilities.loaded) {
+    void deploymentCapabilities.ensureLoaded()
+  }
+}, { immediate: true })
+
 // 监听初始导航设置
 watch(() => uiStore.settingsInitialSection, (section) => {
   if (section && visible.value) {

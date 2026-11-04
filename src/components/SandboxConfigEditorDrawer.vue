@@ -840,7 +840,7 @@ const isMaskedSecret = (value?: string) => value === secretPlaceholder
 // Mirrors DefaultDockerImage on the server, including why it tracks main
 // instead of latest: the latest tag still carries an image whose /workspace
 // the sandbox account cannot write.
-const defaultDockerImage = 'wechatopenai/weknora-sandbox:main'
+const defaultDockerImage = 'harbor.arfa.wise-paas.com/mindbuilder/sandbox:v0.9.0'
 
 const clusterGuideUrl = docsUrl('sandboxDeployment')
 const e2bApiKeysUrl = 'https://e2b.dev/dashboard?tab=keys'
@@ -1178,7 +1178,7 @@ const affectedSessionCount = computed(() => conflict.value?.inventory?.session_i
 function defaultBackendType(): string {
   const fromRecord = props.record?.config?.sandbox_type || props.presetType || ''
   if (isNamedSandboxBackend(fromRecord)) return fromRecord
-  return 'cube'
+  return 'docker'
 }
 
 function reset() {

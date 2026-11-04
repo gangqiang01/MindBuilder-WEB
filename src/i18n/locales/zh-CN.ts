@@ -488,7 +488,6 @@ export default {
     tabs: {
       im: 'IM 集成',
       embed: '网页嵌入',
-      api: 'API 集成',
       mcpserver: 'MCP Server'
     },
     mcpserver: {
@@ -1049,7 +1048,7 @@ export default {
     },
     im: {
       title: 'IM 集成',
-      description: '将智能体接入即时通讯平台，支持企业微信、飞书、Slack、Telegram、钉钉、Mattermost、微信、QQBot 和云之家',
+      description: '将智能体接入即时通讯平台，支持企业微信、飞书、钉钉、微信',
       feishu: '飞书',
       lark: 'Lark（飞书国际版）',
       slack: 'Slack',
@@ -2347,6 +2346,7 @@ export default {
     approval: '调用需审批',
     noTools: '没有匹配的工具',
     next: '下一页',
+    saveNext: '保存并下一步',
     policyLoadFailed: '工具策略读取失败，请重试后再修改。',
     policySaveFailed: '工具设置保存失败',
     tools: 'Tools 清单',

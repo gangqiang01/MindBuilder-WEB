@@ -14,10 +14,10 @@
                 <div class="hint-popover">
                   <p class="hint-popover__title">{{ $t('settings.sandbox.pageHintTitle') }}</p>
                   <p class="hint-popover__text">{{ $t('settings.sandbox.pageHint') }}</p>
-                  <a class="hint-popover__link" :href="sandboxGuideUrl" target="_blank" rel="noopener noreferrer">
+                  <!-- <a class="hint-popover__link" :href="sandboxGuideUrl" target="_blank" rel="noopener noreferrer">
                     {{ $t('settings.sandbox.viewClusterGuide') }}
                     <t-icon name="jump" size="14px" />
-                  </a>
+                  </a> -->
                 </div>
               </template>
             </t-popup>
@@ -305,7 +305,7 @@ const dockerTabDisabled = computed(() =>
   activeType.value === 'docker' && !dockerBackendEnabled.value,
 )
 
-const canCreateOnTab = computed(() => !dockerTabDisabled.value)
+const canCreateOnTab = computed(() => dockerBackendEnabled.value)
 
 const createPresetType = computed(() => {
   if (activeType.value === 'all') return ''

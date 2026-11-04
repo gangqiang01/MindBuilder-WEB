@@ -49,6 +49,10 @@ async function bootstrap() {
     } catch {
       // best-effort; capabilities stay at defaults until the next refresh
     }
+    // 已登录才预热部署能力（GET /system/capabilities 需鉴权）：未登录时发必
+    // 返回 401，留到登录后由路由守卫 / Settings 页带 token 拉取。
+    // fire-and-forget，不阻塞挂载；store 内部去重，守卫/视图复用同一请求。
+    void useDeploymentCapabilitiesStore().ensureLoaded();
   }
 
   app.use(router);
@@ -58,11 +62,6 @@ async function bootstrap() {
   await router.isReady();
   app.mount("#app");
   installAutofillGuard();
-
-  // 后台预热部署能力（GET /system/capabilities）：路由守卫只在声明了
-  // requiredCapability 的路由上 await 它，但那些路由首次进入时仍需要数据。
-  // 这里 fire-and-forget，不阻塞挂载；store 内部去重，守卫/视图复用同一请求。
-  void useDeploymentCapabilitiesStore().ensureLoaded();
 }
 
 bootstrap();

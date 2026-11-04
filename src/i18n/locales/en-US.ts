@@ -5662,6 +5662,7 @@ export default {
     approval: 'Require approval',
     noTools: 'No matching tools',
     next: 'Next',
+    saveNext: 'Save & Next',
     policyLoadFailed: 'Could not load tool policies. Retry before editing.',
     policySaveFailed: 'Could not save tool settings',
     tools: 'Tools',
@@ -6881,7 +6882,7 @@ export default {
     },
     im: {
       title: 'IM Integration',
-      description: 'Connect agent to instant messaging platforms like WeCom, Feishu, Lark, Slack, Telegram, DingTalk, Mattermost, WeChat, QQBot and Yunzhijia',
+      description: 'Connect agent to instant messaging platforms like WeCom, Feishu, DingTalk, WeChat',
       feishu: 'Feishu',
       lark: 'Lark',
       slack: 'Slack',
@@ -7540,7 +7541,6 @@ export default {
     tabs: {
       im: 'IM Integration',
       embed: 'Web Embed',
-      api: 'API Integration',
       mcpserver: 'MCP Server'
     },
     api: {

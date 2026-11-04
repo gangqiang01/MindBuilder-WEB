@@ -1,20 +1,18 @@
 import type { DeploymentCapabilityKey } from './deploymentCapabilities'
 
-export type IntegrationTab = 'im' | 'embed' | 'api' | 'mcpserver'
+export type IntegrationTab = 'im' | 'embed' | 'mcpserver'
 
-export const INTEGRATION_TABS: IntegrationTab[] = ['im', 'embed', 'api', 'mcpserver']
+export const INTEGRATION_TABS: IntegrationTab[] = ['im', 'embed', 'mcpserver']
 
-/** Aligns with Settings.vue SECTION_MIN_ROLE.api and router.go g.Owner() on /api-principal-config. */
 export type IntegrationTabRole = 'viewer' | 'contributor' | 'admin' | 'owner'
 
-export const INTEGRATION_TAB_MIN_ROLE: Partial<Record<IntegrationTab, IntegrationTabRole>> = {
-  api: 'owner',
-}
+// No integration tab currently requires a role above viewer; keep the hook so a
+// future tab can opt into owner/admin gating without touching Settings.vue.
+export const INTEGRATION_TAB_MIN_ROLE: Partial<Record<IntegrationTab, IntegrationTabRole>> = {}
 
 export const INTEGRATION_TAB_CAPABILITY: Partial<Record<IntegrationTab, DeploymentCapabilityKey>> = {
   im: 'integrations.im',
   embed: 'integrations.embed',
-  api: 'integrations.api',
   mcpserver: 'integrations.mcpserver',
 }
 
@@ -29,6 +27,5 @@ export const INTEGRATION_PREVIEW_ITEMS: Array<{
 }> = [
   { key: 'im', icon: { type: 'icon', name: 'chat-message' } },
   { key: 'embed', icon: { type: 'icon', name: 'code' } },
-  { key: 'api', icon: { type: 'icon', name: 'secured' } },
   { key: 'mcpserver', icon: { type: 'icon', name: 'tools' } },
 ]

@@ -488,7 +488,6 @@ export default {
     tabs: {
       im: 'IM 集成',
       embed: '網頁內嵌',
-      api: 'API 集成',
       mcpserver: 'MCP Server'
     },
     mcpserver: {
@@ -1049,7 +1048,7 @@ export default {
     },
     im: {
       title: 'IM 集成',
-      description: '將智慧代理接入即時通訊平台，支持企業微信、飛書、Slack、Telegram、釘釘、Mattermost、微信、QQBot 和雲之家',
+      description: '將智慧代理接入即時通訊平台，支持企業微信、飛書、釘釘、微信',
       feishu: '飛書',
       lark: 'Lark（飛書國際版）',
       slack: 'Slack',
@@ -2347,6 +2346,7 @@ export default {
     approval: '呼叫需審批',
     noTools: '沒有比對的工具',
     next: '下一頁',
+    saveNext: '儲存並下一步',
     policyLoadFailed: '工具策略讀取失敗，請重試後再修改。',
     policySaveFailed: '工具設定儲存失敗',
     tools: 'Tools 清單',

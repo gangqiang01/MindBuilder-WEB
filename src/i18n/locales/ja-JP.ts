@@ -488,7 +488,6 @@ export default {
     tabs: {
       im: 'IM連携',
       embed: 'Web埋め込み',
-      api: 'API連携',
       mcpserver: 'MCP サーバー'
     },
     mcpserver: {
@@ -1049,7 +1048,7 @@ export default {
     },
     im: {
       title: 'IM連携',
-      description: 'WeCom、Feishu、Lark、Slack、Telegram、DingTalk、Mattermost、WeChat、QQBot、Yunzhijiaなどのインスタントメッセージングプラットフォームにエージェントを接続します',
+      description: 'WeCom、Feishu、DingTalk、WeChat などのインスタントメッセージングプラットフォームにエージェントを接続します',
       feishu: 'Feishu',
       lark: 'Lark',
       slack: 'Slack',
@@ -2347,6 +2346,7 @@ export default {
     approval: '承認が必要',
     noTools: '該当するツールはありません',
     next: '次へ',
+    saveNext: '保存して次へ',
     policyLoadFailed: 'ツール設定を読み込めません。編集前に再試行してください。',
     policySaveFailed: 'ツール設定を保存できませんでした',
     tools: 'Tools 一覧',

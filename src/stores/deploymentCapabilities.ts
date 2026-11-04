@@ -19,17 +19,22 @@ export const useDeploymentCapabilitiesStore = defineStore('deploymentCapabilitie
     if (loadingPromise) return loadingPromise
 
     loadingPromise = (async () => {
+      let ok = false
       try {
         const response = await getDeploymentCapabilities()
         edition.value = response.data?.edition || ''
         capabilities.value = response.data?.capabilities || {}
         loadError.value = ''
+        ok = true
       } catch (error) {
-        // 能力探测失败时保持 fail-open；权限仍由后端路由最终校验。
+        // 能力探测失败（如启动预热时尚未登录 → 401）不缓存失败结果：
+        // fail-closed 能力位（settings.sandbox.remote/docker/host 等）在空 map 上
+        // 会被判为不支持，导致登录后沙箱设置页仍弹"当前部署不支持此功能"。
+        // 留 loaded=false，登录后路由守卫再次 ensureLoaded() 会带 token 重试。
         capabilities.value = {}
         loadError.value = error instanceof Error ? error.message : String(error)
       } finally {
-        loaded.value = true
+        if (ok) loaded.value = true
         loadingPromise = null
       }
     })()
