@@ -310,8 +310,13 @@ onBeforeUnmount(stopPolling)
               </template>
             </p>
             <div v-if="ds.error_message" class="ds-card__error">
-              <t-icon name="error-circle-filled" size="14px" />
-              <span>{{ ds.error_message }}</span>
+              <t-icon name="error-circle-filled" size="14px" class="ds-card__error-icon" />
+              <t-tooltip placement="top">
+                <template #content>
+                  <span style="display: inline-block; max-width: 420px; white-space: normal; word-break: break-word; line-height: 1.5">{{ ds.error_message }}</span>
+                </template>
+                <span class="ds-card__error-text">{{ ds.error_message }}</span>
+              </t-tooltip>
             </div>
           </div>
         </component>
@@ -577,7 +582,7 @@ onBeforeUnmount(stopPolling)
 
   &__error {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 6px;
     margin-top: 8px;
     padding: 8px 10px;
@@ -587,6 +592,18 @@ onBeforeUnmount(stopPolling)
     font-size: var(--app-text-sm);
     line-height: 1.45;
     text-align: left;
+    min-width: 0;
+  }
+
+  &__error-icon {
+    flex-shrink: 0;
+  }
+
+  &__error-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__actions {

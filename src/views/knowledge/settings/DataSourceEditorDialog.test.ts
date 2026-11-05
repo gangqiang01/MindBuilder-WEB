@@ -192,14 +192,19 @@ test('new GitLab data sources continue to test credentials without persistence',
   } finally { f.close() }
 })
 
-test('new data source choices omit Lark and Seafile while existing connectors remain editable', async () => {
+test('new data source choices omit retired connectors while existing ones remain editable', async () => {
   const f = await fixture({ create: true })
   try {
     const selectableTypes = f.vm.selectableConnectorDefs.map((def: any) => def.type)
-    assert.equal(selectableTypes.includes('lark'), false)
-    assert.equal(selectableTypes.includes('seafile'), false)
-    assert.equal(selectableTypes.includes('lark_drive'), true)
+    // Retired from the "add" picker (kept editable for existing sources).
+    for (const hidden of ['lark', 'seafile', 'feishu_drive', 'lark_drive', 'notion', 'confluence']) {
+      assert.equal(selectableTypes.includes(hidden), false, `${hidden} should be hidden`)
+    }
+    // Redmine is surfaced first.
+    assert.equal(selectableTypes[0], 'redmine')
+    // Existing sources of retired types remain editable (def still present).
     assert.ok(f.vm.connectorDefs.find((def: any) => def.type === 'seafile'))
+    assert.ok(f.vm.connectorDefs.find((def: any) => def.type === 'notion'))
   } finally { f.close() }
 })
 

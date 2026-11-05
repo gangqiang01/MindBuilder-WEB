@@ -658,6 +658,13 @@ export default {
     syncHistory: '同步歷史',
     refreshLogs: '重新整理日誌',
     noLogs: '暫無同步記錄',
+    clearHistory: '清空歷史',
+    deleteLog: '刪除記錄',
+    deleteLogConfirm: '確定刪除這條同步記錄？',
+    clearHistoryConfirm: '確定清空該資料來源的全部同步歷史？執行中的記錄會保留。',
+    logsCleared: '已清空同步歷史',
+    logDeleted: '已刪除該記錄',
+    logDeleteFailed: '刪除失敗，請稍後重試',
     comingSoon: '即將支持',
     docHint: '在以下地址獲取憑證：',
     openDoc: '打開文件',
@@ -819,7 +826,8 @@ export default {
       rss: '同步 RSS / Atom 訂閱源中的文章',
       ima: '同步騰訊 IMA 知識庫中的文件、筆記與檔案（暫不支持 AI 會話與影片解析）',
       gitlab: '同步 GitLab 專案中的檔案',
-      seafile: '同步 Seafile 資料庫中的目錄與檔案'
+      seafile: '同步 Seafile 資料庫中的目錄與檔案',
+      redmine: '同步自架 Redmine 中的工單（含評論）與 Wiki 頁面'
     },
     connector: {
       feishu: '飛書',
@@ -833,7 +841,8 @@ export default {
       rss: 'RSS / Atom 訂閱',
       ima: '騰訊 IMA',
       gitlab: 'GitLab',
-      seafile: 'Seafile'
+      seafile: 'Seafile',
+      redmine: 'Redmine'
     },
     logDetail: {
       startTime: '開始時間',
@@ -891,6 +900,23 @@ export default {
       pathsPlaceholder: '每行一個目錄；留空同步整個專案',
       addProject: '新增專案',
       projectRequired: '請至少新增一個 GitLab 專案'
+    },
+    redmine: {
+      baseUrl: 'Redmine 位址',
+      apiKey: 'API 金鑰',
+      apiKeyHint: '在 Redmine「我的帳號 → API 存取金鑰」中產生；建議使用唯讀角色的服務帳號，僅授權要同步的專案。',
+      projects: 'Redmine 專案',
+      projectsHint: '每行一個專案；可填識別碼（專案 URL 中的 slug，如 vision-studio）或顯示名稱，顯示名稱會自動匹配到識別碼。',
+      projectIds: '專案識別碼',
+      projectIdsPlaceholder: '每行一個，例如：\nshop\nshop-backend',
+      contentTypes: '同步內容',
+      contentIssues: '工單（含評論）',
+      contentWiki: 'Wiki 頁面',
+      includeJournals: '同步工單評論與變更紀錄',
+      includePrivate: '同步私有工單（is_private）',
+      createdAfter: '僅同步此日期之後建立的工單',
+      createdAfterPlaceholder: '例如：2024-01-01',
+      projectRequired: '請至少填寫一個 Redmine 專案識別碼'
     },
     status: {
       active: '已連結',
@@ -2352,6 +2378,7 @@ export default {
     tools: 'Tools 清單',
     cacheHint: '尚未同步時會自動連結並儲存完整描述；之後只在重新整理時存取 MCP 服務。',
     fetch: '重新拉取',
+    refresh: '重新整理',
     fetching: '正在連結並拉取 Tools…',
     toolCount: '{count} 個工具',
     stale: '連結或認證設定已改變。以下是舊目錄，重新同步後才能供模型使用。',

@@ -152,6 +152,18 @@ export function getSyncLogs(id: string, limit = 20, offset = 0) {
   return get(`/api/v1/datasource/${id}/logs?limit=${limit}&offset=${offset}`)
 }
 
+// deleteSyncLog removes a single sync log entry (history cleanup). A running
+// sync's log is preserved by the backend.
+export function deleteSyncLog(logId: string) {
+  return del(`/api/v1/datasource/logs/${logId}`)
+}
+
+// clearSyncLogs removes every terminal sync log for a data source (running
+// logs preserved), the "clear history" action.
+export function clearSyncLogs(dsId: string) {
+  return del(`/api/v1/datasource/${dsId}/logs`)
+}
+
 // ----------------------------------------------------------------------------
 // Data source credential subresource. Unlike the other three resources,
 // DataSource exposes a single logical field "credentials" because connector

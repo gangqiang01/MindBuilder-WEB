@@ -658,6 +658,13 @@ export default {
     syncHistory: '同期履歴',
     refreshLogs: 'ログを更新',
     noLogs: '同期記録はまだありません',
+    clearHistory: '履歴をクリア',
+    deleteLog: '記録を削除',
+    deleteLogConfirm: 'この同期記録を削除しますか？',
+    clearHistoryConfirm: 'このデータソースの同期履歴をすべてクリアしますか？実行中の記録は保持されます。',
+    logsCleared: '同期履歴をクリアしました',
+    logDeleted: '記録を削除しました',
+    logDeleteFailed: '削除に失敗しました。後で再試行してください',
     comingSoon: '近日対応予定',
     docHint: '認証情報の取得先:',
     openDoc: 'ドキュメントを開く',
@@ -819,7 +826,8 @@ export default {
       rss: 'RSS / Atomフィードから記事を同期します',
       ima: 'Tencent IMAのナレッジベースからドキュメント、ノート、ファイルを同期します（AIセッションと動画の解析は非対応）',
       gitlab: 'GitLabプロジェクトからファイルを同期します',
-      seafile: 'Seafileライブラリのフォルダとファイルを同期します'
+      seafile: 'Seafileライブラリのフォルダとファイルを同期します',
+      redmine: 'セルフホストRedmineからチケット（コメント付き）とWikiページを同期します'
     },
     connector: {
       feishu: 'Feishu',
@@ -833,7 +841,8 @@ export default {
       rss: 'RSS / Atomフィード',
       ima: 'Tencent IMA',
       gitlab: 'GitLab',
-      seafile: 'Seafile'
+      seafile: 'Seafile',
+      redmine: 'Redmine'
     },
     logDetail: {
       startTime: '開始',
@@ -891,6 +900,23 @@ export default {
       pathsPlaceholder: '1行に1つのディレクトリを入力します。空欄の場合はプロジェクト全体を同期します',
       addProject: 'プロジェクトを追加',
       projectRequired: 'GitLabプロジェクトを1つ以上追加してください'
+    },
+    redmine: {
+      baseUrl: 'Redmine URL',
+      apiKey: 'APIキー',
+      apiKeyHint: 'Redmineの「アカウント → APIアクセスキー」で生成します。読み取り専用ロールのサービスアカウントを使用し、同期するプロジェクトのみ権限を付与してください。',
+      projects: 'Redmineプロジェクト',
+      projectsHint: '1行に1つプロジェクトを入力。識別子（プロジェクトURLの slug、例: vision-studio）または表示名のどちらでも可（表示名は識別子に自動変換されます）。',
+      projectIds: 'プロジェクト識別子',
+      projectIdsPlaceholder: '1行に1つ、例:\nshop\nshop-backend',
+      contentTypes: '同期するコンテンツ',
+      contentIssues: 'チケット（コメント付き）',
+      contentWiki: 'Wikiページ',
+      includeJournals: 'チケットのコメントと変更履歴を同期',
+      includePrivate: 'プライベートチケット（is_private）を同期',
+      createdAfter: 'この日付以降に作成されたチケットのみ同期',
+      createdAfterPlaceholder: '例: 2024-01-01',
+      projectRequired: 'Redmineプロジェクト識別子を1つ以上入力してください'
     },
     status: {
       active: '接続済み',
@@ -2352,6 +2378,7 @@ export default {
     tools: 'Tools 一覧',
     cacheHint: '未同期の場合はこの手順で自動接続して保存します。以降は更新時のみ MCP サーバーに接続します。',
     fetch: '再取得',
+    refresh: '更新',
     fetching: '接続して Tools を取得しています…',
     toolCount: '{count} 件のツール',
     stale: '接続または認証設定が変更されました。モデルで使用する前に一覧を更新してください。',

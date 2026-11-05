@@ -50,7 +50,11 @@ function fallbackText(type: string) {
       class="ds-type-icon__img"
       :style="variant === 'inline' ? { width: `${size}px`, height: `${size}px` } : undefined"
     >
-    <span v-else class="ds-type-icon-fallback">{{ fallbackText(type) }}</span>
+    <span
+      v-else
+      class="ds-type-icon-fallback"
+      :class="{ 'ds-type-icon-fallback--redmine': type === 'redmine' }"
+    >{{ fallbackText(type) }}</span>
   </span>
 </template>
 
@@ -97,5 +101,13 @@ function fallbackText(type: string) {
   font-weight: 600;
   letter-spacing: 0.02em;
   color: inherit;
+}
+
+/* Redmine has no brand icon asset; its fallback letter uses the classic
+   ruby-red brand colour so the picker distinguishes it from other letter
+   icons. Same specificity as the rules above, declared after them to win. */
+.ds-type-icon--inline .ds-type-icon-fallback--redmine,
+.ds-type-icon--badge .ds-type-icon-fallback--redmine {
+  color: #d32f2f;
 }
 </style>

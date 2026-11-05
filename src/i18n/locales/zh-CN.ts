@@ -658,6 +658,13 @@ export default {
     syncHistory: '同步历史',
     refreshLogs: '刷新日志',
     noLogs: '暂无同步记录',
+    clearHistory: '清空历史',
+    deleteLog: '删除记录',
+    deleteLogConfirm: '确定删除这条同步记录？',
+    clearHistoryConfirm: '确定清空该数据源的全部同步历史？运行中的记录会保留。',
+    logsCleared: '已清空同步历史',
+    logDeleted: '已删除该记录',
+    logDeleteFailed: '删除失败，请稍后重试',
     comingSoon: '即将支持',
     docHint: '在以下地址获取凭证：',
     openDoc: '打开文档',
@@ -819,7 +826,8 @@ export default {
       rss: '同步 RSS / Atom 订阅源中的文章',
       ima: '同步腾讯 IMA 知识库中的文档、笔记与文件（暂不支持 AI 会话与视频解析）',
       gitlab: '同步 GitLab 项目中的文件',
-      seafile: '同步 Seafile 资料库中的目录与文件'
+      seafile: '同步 Seafile 资料库中的目录与文件',
+      redmine: '同步自托管 Redmine 中的工单（含评论）与 Wiki 页面'
     },
     connector: {
       feishu: '飞书',
@@ -833,7 +841,8 @@ export default {
       rss: 'RSS / Atom 订阅',
       ima: '腾讯 IMA',
       gitlab: 'GitLab',
-      seafile: 'Seafile'
+      seafile: 'Seafile',
+      redmine: 'Redmine'
     },
     logDetail: {
       startTime: '开始时间',
@@ -891,6 +900,23 @@ export default {
       pathsPlaceholder: '每行一个目录；留空同步整个项目',
       addProject: '添加项目',
       projectRequired: '请至少添加一个 GitLab 项目'
+    },
+    redmine: {
+      baseUrl: 'Redmine 地址',
+      apiKey: 'API 密钥',
+      apiKeyHint: '在 Redmine「我的账号 → API 访问密钥」中生成；建议使用只读角色的服务账号，仅授权要同步的项目。',
+      projects: 'Redmine 项目',
+      projectsHint: '每行一个项目；可填标识符（项目 URL 中的 slug，如 vision-studio）或显示名，显示名会自动匹配到标识符。',
+      projectIds: '项目标识符',
+      projectIdsPlaceholder: '每行一个，例如：\nshop\nshop-backend',
+      contentTypes: '同步内容',
+      contentIssues: '工单（含评论）',
+      contentWiki: 'Wiki 页面',
+      includeJournals: '同步工单评论与变更记录',
+      includePrivate: '同步私有工单（is_private）',
+      createdAfter: '仅同步此日期之后创建的工单',
+      createdAfterPlaceholder: '例如：2024-01-01',
+      projectRequired: '请至少填写一个 Redmine 项目标识符'
     },
     status: {
       active: '已连接',
@@ -2352,6 +2378,7 @@ export default {
     tools: 'Tools 清单',
     cacheHint: '尚未同步时会自动连接并保存完整描述；之后只在刷新时访问 MCP 服务。',
     fetch: '重新拉取',
+    refresh: '刷新',
     fetching: '正在连接并拉取 Tools…',
     toolCount: '{count} 个工具',
     stale: '连接或认证配置已改变。以下是旧目录，重新同步后才能供模型使用。',

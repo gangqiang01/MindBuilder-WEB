@@ -5668,6 +5668,7 @@ export default {
     tools: 'Tools',
     cacheHint: 'This step connects automatically if no directory is saved yet. Later visits only connect when you refresh.',
     fetch: 'Fetch again',
+    refresh: 'Refresh',
     fetching: 'Connecting and fetching tools…',
     toolCount: '{count} tools',
     stale: 'Connection or authentication settings changed. Refresh this old directory before models can use it.',
@@ -7183,6 +7184,23 @@ export default {
       addProject: 'Add project',
       projectRequired: 'Add at least one GitLab project'
     },
+    redmine: {
+      baseUrl: 'Redmine URL',
+      apiKey: 'API key',
+      apiKeyHint: 'Generate it under "My account → API access key" in Redmine; use a read-only service account scoped to the projects you sync.',
+      projects: 'Redmine projects',
+      projectsHint: 'One project per line; enter either the identifier (the URL slug, e.g. vision-studio) or the display name — display names are auto-matched to identifiers.',
+      projectIds: 'Project identifiers',
+      projectIdsPlaceholder: 'One per line, e.g.:\nshop\nshop-backend',
+      contentTypes: 'Content to sync',
+      contentIssues: 'Issues (with comments)',
+      contentWiki: 'Wiki pages',
+      includeJournals: 'Sync issue comments and change history',
+      includePrivate: 'Sync private issues (is_private)',
+      createdAfter: 'Only sync issues created after this date',
+      createdAfterPlaceholder: 'e.g. 2024-01-01',
+      projectRequired: 'Enter at least one Redmine project identifier'
+    },
     seafile: {
       baseUrl: 'Seafile URL',
       apiToken: 'API token',
@@ -7229,6 +7247,13 @@ export default {
     syncHistory: 'Sync History',
     refreshLogs: 'Refresh logs',
     noLogs: 'No sync records yet',
+    clearHistory: 'Clear history',
+    deleteLog: 'Delete log',
+    deleteLogConfirm: 'Delete this sync log?',
+    clearHistoryConfirm: 'Clear all sync history for this data source? Running logs are kept.',
+    logsCleared: 'Sync history cleared',
+    logDeleted: 'Sync log deleted',
+    logDeleteFailed: 'Failed to delete, please retry',
     logStatus: {
       running: 'Syncing',
       success: 'Success',
@@ -7266,7 +7291,8 @@ export default {
       rss: 'RSS / Atom Feed',
       ima: 'Tencent IMA',
       gitlab: 'GitLab',
-      seafile: 'Seafile'
+      seafile: 'Seafile',
+      redmine: 'Redmine'
     },
     connectorDesc: {
       feishu: 'Sync documents, spreadsheets and files from Feishu Wiki',
@@ -7280,7 +7306,8 @@ export default {
       rss: 'Sync articles from RSS / Atom feeds',
       ima: 'Sync documents, notes and files from Tencent IMA knowledge bases (AI sessions and video parses are not supported)',
       gitlab: 'Sync files from GitLab projects',
-      seafile: 'Sync folders and files from Seafile libraries'
+      seafile: 'Sync folders and files from Seafile libraries',
+      redmine: 'Sync issues (with comments) and wiki pages from a self-hosted Redmine'
     },
     drive: {
       folderTokenLabel: 'Drive folder token',

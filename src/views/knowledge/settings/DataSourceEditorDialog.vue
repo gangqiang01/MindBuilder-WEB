@@ -266,6 +266,11 @@ const driveFolderTokenError = ref('')
 const driveRootLoaded = ref(false)
 const isDriveConnector = (type: string) => type === 'feishu_drive' || type === 'lark_drive'
 const isGitLabConnector = (type: string) => type === 'gitlab'
+// Redmine stores its selection (projects, content types, journals/private
+// toggles, optional created_after) in settings — same split as GitLab
+// (credentials vs. settings) — so step 2 is a manual form rather than the
+// shared resource tree.
+const isRedmineConnector = (type: string) => type === 'redmine'
 // Feishu/Lark wiki + Drive connectors share the docx parse-mode setting.
 const isFeishuFamilyConnector = (type: string) =>
   type === 'feishu' || type === 'lark' || type === 'feishu_drive' || type === 'lark_drive'
@@ -306,6 +311,32 @@ function syncGitLabProjectsToSettings() {
 }
 function addGitLabProject() { gitlabProjects.value.push({ project_id: '', ref: '', pathsText: '' }) }
 function removeGitLabProject(index: number) { gitlabProjects.value.splice(index, 1); syncGitLabProjectsToSettings() }
+
+// --- Redmine selection state ---
+// projectsText is one identifier per line; contentTypes is the checkbox group
+// (issues / wiki). The backend defaults include_journals=true and
+// include_private=false; the form mirrors those so the saved settings match
+// what the user sees even before step 2 is touched.
+const redmineProjectsText = ref('')
+const redmineContentTypes = ref<string[]>(['issues', 'wiki'])
+const redmineIncludeJournals = ref(true)
+const redmineIncludePrivate = ref(false)
+const redmineCreatedAfter = ref('')
+function syncRedmineSettings() {
+  if (!isRedmineConnector(form.value.type)) return
+  const settings: Record<string, unknown> = { ...form.value.config.settings }
+  settings.projects = redmineProjectsText.value
+    .split(/[\n,]/).map(s => s.trim()).filter(Boolean)
+  // content_types must contain at least one entry; if the user clears both
+  // checkboxes, default to issues so a saved source always syncs something.
+  const types = redmineContentTypes.value.length ? redmineContentTypes.value : ['issues']
+  settings.content_types = types
+  settings.include_journals = redmineIncludeJournals.value
+  settings.include_private = redmineIncludePrivate.value
+  if (redmineCreatedAfter.value) settings.created_after = redmineCreatedAfter.value
+  else delete settings.created_after
+  form.value.config.settings = settings
+}
 
 // extractDriveFolderToken accepts either a bare folder_token or a Drive folder
 // URL (https://xxx.feishu.cn/drive/folder/<token> or the Lark equivalent
@@ -768,6 +799,15 @@ const connectorDefs = computed<ConnectorDef[]>(() => [
     ],
   },
   {
+    type: 'redmine', available: true, docUrl: 'https://www.redmine.org/projects/redmine/wiki/Rest_api',
+    permissionDocUrl: 'https://www.redmine.org/projects/redmine/wiki/Rest_api',
+    permissionPageUrl: '', requiredPermissions: [],
+    fields: [
+      { key: 'base_url', labelKey: 'datasource.redmine.baseUrl', placeholder: 'https://redmine.example.com' },
+      { key: 'api_key', labelKey: 'datasource.redmine.apiKey', placeholder: '', secret: true, hintKey: 'datasource.redmine.apiKeyHint' },
+    ],
+  },
+  {
     type: 'seafile', available: true, docUrl: 'https://help.seafile.com/',
     permissionDocUrl: '', permissionPageUrl: '', requiredPermissions: [],
     fields: [
@@ -777,8 +817,19 @@ const connectorDefs = computed<ConnectorDef[]>(() => [
   },
 ])
 
+// Connectors hidden from the "add data source" picker. They stay in
+// connectorDefs so existing sources of these types remain editable (currentDef
+// still resolves them); only creating new ones is blocked. Feishu/Lark Drive,
+// Notion and Confluence are retired from the add flow; Lark and Seafile were
+// already hidden. Redmine is surfaced first.
+const HIDDEN_ADD_CONNECTOR_TYPES = new Set([
+  'lark', 'seafile', 'feishu_drive', 'lark_drive', 'notion', 'confluence',
+])
+
 const selectableConnectorDefs = computed(() =>
-  connectorDefs.value.filter(def => def.type !== 'lark' && def.type !== 'seafile'),
+  connectorDefs.value
+    .filter(def => !HIDDEN_ADD_CONNECTOR_TYPES.has(def.type))
+    .sort((a, b) => (a.type === 'redmine' ? -1 : b.type === 'redmine' ? 1 : 0)),
 )
 
 const currentDef = computed(() => connectorDefs.value.find(d => d.type === form.value.type))
@@ -824,6 +875,11 @@ watch(visible, async (v) => {
   driveRootLoaded.value = false
   rssAuthHeaders.value = []
   gitlabProjects.value = []
+  redmineProjectsText.value = ''
+  redmineContentTypes.value = ['issues', 'wiki']
+  redmineIncludeJournals.value = true
+  redmineIncludePrivate.value = false
+  redmineCreatedAfter.value = ''
 
   if (isEdit.value && props.dataSource) {
     // Reset edit/replace toggle every open so an aborted replace doesn't
@@ -856,6 +912,22 @@ watch(visible, async (v) => {
         project_id: String(project.project_id || ''), ref: String(project.ref || ''),
         pathsText: Array.isArray(project.paths) ? project.paths.join('\n') : '',
       }))
+    }
+    if (isRedmineConnector(form.value.type)) {
+      // Hydrate the Redmine form fields from the saved settings. projects is
+      // stored as a string array (or {identifier} objects); the textarea shows
+      // one per line. Missing fields fall back to the same defaults a new
+      // source gets, so a legacy source without content_types still renders.
+      const s = form.value.config.settings || {}
+      const savedProjects: any[] = Array.isArray(s.projects) ? s.projects : []
+      redmineProjectsText.value = savedProjects
+        .map((p: any) => (typeof p === 'string' ? p : p?.identifier || ''))
+        .filter(Boolean).join('\n')
+      const savedTypes: any[] = Array.isArray(s.content_types) ? s.content_types : []
+      redmineContentTypes.value = savedTypes.length ? savedTypes.map(String) : ['issues', 'wiki']
+      redmineIncludeJournals.value = s.include_journals !== false
+      redmineIncludePrivate.value = s.include_private === true
+      redmineCreatedAfter.value = typeof s.created_after === 'string' ? s.created_after : ''
     }
     // Pre-fill the Drive root folder_token from the saved resource_ids so the
     // user sees what they previously entered. driveRootLoaded stays false: the
@@ -940,6 +1012,16 @@ function selectType(def: ConnectorDef) {
     form.value.config.settings = { ...form.value.config.settings, folder_mode: 'toc' }
   }
   if (isGitLabConnector(def.type)) addGitLabProject()
+  if (isRedmineConnector(def.type)) {
+    // Mirror the backend defaults so a freshly-selected Redmine source has
+    // sensible settings before the user reaches step 2.
+    redmineProjectsText.value = ''
+    redmineContentTypes.value = ['issues', 'wiki']
+    redmineIncludeJournals.value = true
+    redmineIncludePrivate.value = false
+    redmineCreatedAfter.value = ''
+    form.value.config.settings = {}
+  }
   rssAuthHeaders.value = []
   step.value = 1
 }
@@ -1197,6 +1279,14 @@ async function nextStep() {
       return
     }
   }
+  if (step.value === 2 && isRedmineConnector(form.value.type)) {
+    syncRedmineSettings()
+    const projects = (form.value.config.settings.projects as string[]) || []
+    if (!projects.length) {
+      MessagePlugin.warning(t('datasource.redmine.projectRequired'))
+      return
+    }
+  }
   // Seafile has no "whole account" scope: the backend rejects an empty selection.
   if (step.value === 2 && isSeafileConnector(form.value.type) && selectedResourceIds.value.length === 0) {
     MessagePlugin.warning(t('datasource.seafile.selectionRequired'))
@@ -1234,6 +1324,7 @@ function prevStep() {
 // validator happy.
 function buildConfigPayload(): Record<string, unknown> {
   syncGitLabProjectsToSettings()
+  syncRedmineSettings()
   syncConfluencePublicFieldsToSettings()
   return {
     credentials: isEdit.value ? {} : { ...form.value.config.credentials },
@@ -1423,7 +1514,7 @@ const drawerConfirmText = computed(() => {
     v-model:visible="visible"
     :title="drawerTitle"
     :description="drawerDescription"
-    :class="[form.type ? `datasource-editor-drawer datasource-editor-drawer--${form.type}` : 'datasource-editor-drawer', { 'ds-fixed-step': step === 2 && !isGitLabConnector(form.type) }]"
+    :class="[form.type ? `datasource-editor-drawer datasource-editor-drawer--${form.type}` : 'datasource-editor-drawer', { 'ds-fixed-step': step === 2 && !isGitLabConnector(form.type) && !isRedmineConnector(form.type) }]"
     :hide-footer="step === 0"
     :confirm-text="drawerConfirmText"
     :confirm-loading="submitting || (step === 1 && testing)"
@@ -1784,6 +1875,32 @@ const drawerConfirmText = computed(() => {
           </div>
           <t-button variant="outline" @click="addGitLabProject"><template #icon><t-icon name="add" /></template>{{ t('datasource.gitlab.addProject') }}</t-button>
         </div>
+      </template>
+      <template v-else-if="isRedmineConnector(form.type)">
+        <h4 class="setting-drawer__section-title">{{ t('datasource.redmine.projects') }}</h4>
+        <p class="ds-resource-hint">{{ t('datasource.redmine.projectsHint') }}</p>
+        <label class="form-label required">{{ t('datasource.redmine.projectIds') }}</label>
+        <t-textarea v-model="redmineProjectsText" :placeholder="t('datasource.redmine.projectIdsPlaceholder')" :autosize="{ minRows: 2, maxRows: 5 }" />
+
+        <label class="form-label">{{ t('datasource.redmine.contentTypes') }}</label>
+        <t-checkbox-group v-model="redmineContentTypes" class="redmine-content-types">
+          <t-checkbox value="issues">{{ t('datasource.redmine.contentIssues') }}</t-checkbox>
+          <t-checkbox value="wiki">{{ t('datasource.redmine.contentWiki') }}</t-checkbox>
+        </t-checkbox-group>
+
+        <div class="redmine-options">
+          <t-checkbox v-model="redmineIncludeJournals">{{ t('datasource.redmine.includeJournals') }}</t-checkbox>
+          <t-checkbox v-model="redmineIncludePrivate">{{ t('datasource.redmine.includePrivate') }}</t-checkbox>
+        </div>
+
+        <label class="form-label">{{ t('datasource.redmine.createdAfter') }}</label>
+        <t-date-picker
+          v-model="redmineCreatedAfter"
+          format="YYYY-MM-DD"
+          valueType="YYYY-MM-DD"
+          clearable
+          :placeholder="t('datasource.redmine.createdAfterPlaceholder')"
+        />
       </template>
       <template v-else>
       <h4 class="setting-drawer__section-title">{{ t('datasource.step.resources') }}</h4>
@@ -2983,6 +3100,19 @@ const drawerConfirmText = computed(() => {
   display: grid;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.redmine-content-types {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.redmine-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .gitlab-project-row {

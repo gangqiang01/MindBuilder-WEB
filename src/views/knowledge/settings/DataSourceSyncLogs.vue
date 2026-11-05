@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getSyncLogs, type SyncLog, type SyncItemError } from '@/api/datasource'
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next'
+import { getSyncLogs, deleteSyncLog, clearSyncLogs, type SyncLog, type SyncItemError } from '@/api/datasource'
 
 const props = defineProps<{
   dataSourceId: string
@@ -169,6 +170,57 @@ const groupedLogs = computed(() => {
   }
   return groups
 })
+
+// --- Deletion ---
+// Running sync logs are never deletable (the backend preserves them too), so an
+// in-flight sync is not orphaned. clearHistory removes every terminal log;
+// deleteLog removes one. Both confirm first since they are irreversible.
+
+function canDeleteLog(log: SyncLog): boolean {
+  return log.status !== 'running'
+}
+
+function confirmDeleteLog(log: SyncLog) {
+  const dialog = DialogPlugin.confirm({
+    header: t('datasource.deleteLog'),
+    body: t('datasource.deleteLogConfirm'),
+    confirmBtn: t('common.confirm'),
+    cancelBtn: t('common.cancel'),
+    theme: 'danger',
+    onConfirm: async () => {
+      dialog.destroy()
+      try {
+        await deleteSyncLog(log.id)
+        logs.value = logs.value.filter(l => l.id !== log.id)
+        MessagePlugin.success(t('datasource.logDeleted'))
+      } catch {
+        MessagePlugin.error(t('datasource.logDeleteFailed'))
+      }
+    },
+    onCancel: () => { dialog.destroy() },
+  })
+}
+
+function confirmClearLogs() {
+  const dialog = DialogPlugin.confirm({
+    header: t('datasource.clearHistory'),
+    body: t('datasource.clearHistoryConfirm'),
+    confirmBtn: t('common.confirm'),
+    cancelBtn: t('common.cancel'),
+    theme: 'danger',
+    onConfirm: async () => {
+      dialog.destroy()
+      try {
+        await clearSyncLogs(props.dataSourceId)
+        await fetchLogs(true)
+        MessagePlugin.success(t('datasource.logsCleared'))
+      } catch {
+        MessagePlugin.error(t('datasource.logDeleteFailed'))
+      }
+    },
+    onCancel: () => { dialog.destroy() },
+  })
+}
 </script>
 
 <template>
@@ -192,6 +244,17 @@ const groupedLogs = computed(() => {
             @click="fetchLogs"
           >
             <template #icon><t-icon name="refresh" /></template>
+          </t-button>
+        </t-tooltip>
+        <t-tooltip v-if="logs.length" :content="t('datasource.clearHistory')">
+          <t-button
+            size="small"
+            variant="text"
+            shape="square"
+            theme="danger"
+            @click="confirmClearLogs"
+          >
+            <template #icon><t-icon name="delete" /></template>
           </t-button>
         </t-tooltip>
       </div>
@@ -252,6 +315,21 @@ const groupedLogs = computed(() => {
                 </span>
                 <span class="tl-time">{{ formatHourMin(log.started_at) }}</span>
                 <span v-if="log.finished_at" class="tl-duration">{{ duration(log) }}</span>
+                <t-tooltip
+                  v-if="canDeleteLog(log)"
+                  :content="t('datasource.deleteLog')"
+                >
+                  <t-button
+                    class="tl-delete"
+                    size="small"
+                    variant="text"
+                    shape="square"
+                    theme="danger"
+                    @click.stop="confirmDeleteLog(log)"
+                  >
+                    <template #icon><t-icon name="delete" size="14px" /></template>
+                  </t-button>
+                </t-tooltip>
               </div>
 
               <!-- Pills -->
@@ -499,6 +577,19 @@ const groupedLogs = computed(() => {
   background: var(--td-bg-color-component);
   padding: 2px 6px;
   border-radius: var(--app-radius-xs);
+}
+
+/* Per-log delete: revealed on row hover (mirrors the card action buttons) so
+   the timeline stays uncluttered; running logs never show it. */
+.tl-delete {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--app-motion-fast) ease;
+}
+
+.timeline-item:hover .tl-delete,
+.tl-delete:focus-visible {
+  opacity: 1;
 }
 
 /* --- Pills --- */
