@@ -44,6 +44,17 @@ test('agent editor omits publishing and sharing navigation', () => {
   assert.match(source, /share: 'basic'/)
 })
 
+test('selected MCP mode shows service selection or an empty state', () => {
+  const row = source.match(
+    /<div v-if="mcpSelectionMode === 'selected'" class="setting-row">[\s\S]*?agentEditor\.mcp\.selectLabel[\s\S]*?<\/div>\s*<\/div>/
+  )?.[0]
+
+  assert.ok(row, 'expected the selected MCP mode row')
+  assert.match(row, /<t-empty v-if="mcpOptions\.length === 0"/)
+  assert.match(row, /<t-select v-else/)
+  assert.doesNotMatch(source, /showMcpServiceSelect/)
+})
+
 // Locate a settings row by the i18n key of its label and return the attributes
 // that sit before class="setting-row" — i.e. whatever v-if guards that row.
 // Anchoring on the label keeps these assertions stable across reformatting.

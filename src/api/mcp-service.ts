@@ -46,6 +46,16 @@ export interface MCPService {
     args: string[] // Command arguments array
   }
   env_vars?: Record<string, string> // Environment variables for stdio transport
+  // Template services the backend provisions and manages (e.g. a containerized
+  // mcp-redmine reached over the Docker network). The backend reads these to
+  // configure the managed upstream: redmine_base_url becomes the container's
+  // REDMINE_URL env (required at container start), read_only sets
+  // REDMINE_READ_ONLY=1. Ordinary (user-wired) MCP services leave this absent.
+  template_config?: {
+    kind?: string // 'redmine' for the Redmine MCP template
+    redmine_base_url?: string // → container REDMINE_URL env
+    read_only?: boolean // → container REDMINE_READ_ONLY=1
+  }
   is_builtin?: boolean // Whether this is a builtin MCP service
   // Per-field "configured?" map embedded on the main response (server-side
   // dto.MCPServiceResponse.Credentials). Drives the CredentialResource card

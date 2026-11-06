@@ -1,10 +1,22 @@
 <template>
   <div class="mcp-settings">
-    <div class="section-header">
-      <h2>{{ $t('mcpSettings.title') }}</h2>
-      <p class="section-description">
-        {{ $t('mcpSettings.description') }}
-      </p>
+    <div class="section-header mcp-settings__header">
+      <div class="mcp-settings__heading">
+        <h2>{{ $t('mcpSettings.title') }}</h2>
+        <p class="section-description">
+          {{ $t('mcpSettings.description') }}
+        </p>
+      </div>
+      <t-button
+        v-if="authStore.hasRole('admin')"
+        variant="outline"
+        theme="primary"
+        class="mcp-settings__redmine-btn"
+        @click="handleAddRedmine"
+      >
+        <template #icon><t-icon name="add" /></template>
+        {{ $t('mcpSettings.redmine.addButton') }}
+      </t-button>
     </div>
 
     <div v-if="loading" class="loading-container">
@@ -118,6 +130,12 @@
       @success="handleDialogSuccess"
       @created="handleDialogCreated"
     />
+
+    <!-- Redmine MCP template shortcut: base URL + API key only. -->
+    <RedmineMcpTemplateDialog
+      v-model:visible="redmineDialogVisible"
+      @created="handleRedmineCreated"
+    />
   </div>
 </template>
 
@@ -134,6 +152,7 @@ import {
   type MCPService
 } from '@/api/mcp-service'
 import McpServiceDialog from './components/McpServiceDialog.vue'
+import RedmineMcpTemplateDialog from './components/RedmineMcpTemplateDialog.vue'
 import { useConfirmDelete } from '@/components/settings/useConfirmDelete'
 import { useAuthStore } from '@/stores/auth'
 import { matchesResourceQuery } from '@/utils/resourceListSearch'
@@ -190,6 +209,17 @@ const handleAdd = () => {
   dialogMode.value = 'add'
   dialogInitialStep.value = 0
   dialogVisible.value = true
+}
+
+// Redmine MCP template shortcut.
+const redmineDialogVisible = ref(false)
+const handleAddRedmine = () => {
+  if (!authStore.hasRole('admin')) return
+  redmineDialogVisible.value = true
+}
+const handleRedmineCreated = async () => {
+  redmineDialogVisible.value = false
+  await loadServices()
 }
 
 // Explicit buttons keep selecting card text separate from editing a service.
@@ -313,7 +343,7 @@ onMounted(async () => {
 })
 useAssistantDataChange(() => { void loadServices() }, { areas: ['mcp_service'] })
 
-defineExpose({ openAdd: handleAdd })
+defineExpose({ openAdd: handleAdd, openAddRedmine: handleAddRedmine })
 </script>
 
 <style scoped lang="less">
@@ -327,6 +357,25 @@ defineExpose({ openAdd: handleAdd })
 
 .section-header {
   .settings-section-header();
+}
+
+.mcp-settings__header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.mcp-settings__heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mcp-settings__redmine-btn {
+  flex: 0 0 auto;
+  margin-top: 4px;
 }
 
 .loading-container {

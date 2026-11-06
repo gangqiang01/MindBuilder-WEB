@@ -1256,13 +1256,14 @@
           </div>
 
           <!-- 选择指定 MCP 服务 -->
-          <div v-if="mcpSelectionMode === 'selected' && showMcpServiceSelect" class="setting-row">
+          <div v-if="mcpSelectionMode === 'selected'" class="setting-row">
             <div class="setting-info">
               <label>{{ $t('agentEditor.mcp.selectLabel') }}</label>
               <p class="desc">{{ $t('agentEditor.mcp.selectDesc') }}</p>
             </div>
             <div class="setting-control">
-              <t-select v-model="formData.config.mcp_services" multiple
+              <t-empty v-if="mcpOptions.length === 0" :description="$t('mcpSettings.empty')" size="small" />
+              <t-select v-else v-model="formData.config.mcp_services" multiple
                 :placeholder="$t('agentEditor.mcp.selectPlaceholder')" filterable>
                 <t-option v-for="mcp in mcpOptions" :key="mcp.value" :value="mcp.value" :label="mcp.label"
                   :disabled="mcp.disabled" />
@@ -2066,9 +2067,6 @@ const mcpOptions = computed<McpSelectOption[]>(() => {
   return options;
 });
 
-const showMcpServiceSelect = computed(() =>
-  mcpOptions.value.length > 0 || (formData.value.config.mcp_services?.length ?? 0) > 0,
-);
 const webSearchProviderList = ref<WebSearchProviderEntity[]>([]);
 const skillCatalog = ref<SkillCatalogItem[]>([]);
 const catalogReady = ref(false);

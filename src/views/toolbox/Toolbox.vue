@@ -6,11 +6,19 @@
           <ResourceIcon type="toolbox" :size="24" />
           {{ t('toolbox.title') }}
         </h2>
-        <t-button v-if="selectedItem && 'action' in selectedItem" variant="text" theme="default" size="small"
-          class="toolbox-action" style="--wails-draggable: no-drag" @click="panel?.openAdd?.()">
-          <template #icon><t-icon :name="selectedItem.icon" size="16px" /></template>
-          {{ t(selectedItem.action) }}
-        </t-button>
+        <div v-if="selectedItem && 'action' in selectedItem" class="toolbox-actions">
+          <t-button v-if="selectedItem.key === 'mcp' && authStore.hasRole('admin')" variant="outline" theme="primary"
+            size="small" class="toolbox-action--redmine" style="--wails-draggable: no-drag"
+            @click="panel?.openAddRedmine?.()">
+            <template #icon><t-icon name="add" size="16px" /></template>
+            {{ t('mcpSettings.redmine.addButton') }}
+          </t-button>
+          <t-button variant="text" theme="default" size="small" class="toolbox-action"
+            style="--wails-draggable: no-drag" @click="panel?.openAdd?.()">
+            <template #icon><t-icon :name="selectedItem.icon" size="16px" /></template>
+            {{ t(selectedItem.action) }}
+          </t-button>
+        </div>
       </div>
       <p class="toolbox-subtitle" style="--wails-draggable: drag">
         {{ t(selectedItem?.description ?? 'toolbox.description') }}
@@ -46,7 +54,6 @@
           <SkillSettings v-if="selectedItem.key === 'skills'" ref="panel" :key="sandboxId"
             :initial-sandbox-id="sandboxId" @count="counts.skills = $event" />
           <McpSettings v-else-if="selectedItem.key === 'mcp'" ref="panel" @count="counts.mcp = $event" />
-          <BrowserConnectionSettings v-else-if="selectedItem.key === 'browserconnection'" />
         </div>
       </section>
     </template>
@@ -75,7 +82,6 @@ import BrowserIcon from '@/components/icons/BrowserIcon.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import SkillSettings from '@/views/settings/SkillSettings.vue'
 import McpSettings from '@/views/settings/McpSettings.vue'
-import BrowserConnectionSettings from '@/views/settings/BrowserConnectionSettings.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -83,7 +89,7 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const browserConnection = useBrowserConnectionStore()
 const capabilities = useDeploymentCapabilitiesStore()
-const panel = ref<{ openAdd?: () => void } | null>(null)
+const panel = ref<{ openAdd?: () => void; openAddRedmine?: () => void } | null>(null)
 const counts = reactive<Partial<Record<ToolboxSection, number>>>({})
 const requestedSection = computed(() => typeof route.params.section === 'string' ? route.params.section : '')
 const sandboxId = computed(() => typeof route.query.sandboxId === 'string' ? route.query.sandboxId : '')
@@ -160,6 +166,12 @@ watch(() => visibleItems.value.map((item) => item.key), (keys, previous = []) =>
   gap: var(--app-space-4);
 }
 
+.toolbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .toolbox-action.t-button {
   flex-shrink: 0;
   min-height: 32px;
@@ -185,6 +197,18 @@ watch(() => visibleItems.value.map((item) => item.key), (keys, previous = []) =>
   :deep(.t-icon) {
     color: var(--td-brand-color);
   }
+}
+
+// Redmine MCP template shortcut: brand-colored outline to distinguish it from
+// the neutral "Add Service" action. Sizing mirrors .toolbox-action; colors come
+// from TDesign's outline+primary variant.
+.toolbox-action--redmine.t-button {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 12px;
+  gap: 6px;
+  border-radius: var(--app-radius-sm);
+  font-size: var(--app-text-md);
 }
 
 .toolbox-subtitle {
