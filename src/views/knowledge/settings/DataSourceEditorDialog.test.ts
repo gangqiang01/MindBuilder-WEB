@@ -30,6 +30,7 @@ async function fixture({
   type = 'gitlab',
   settings = { projects: [{ project_id: '123', paths: [] }] },
   resources = [],
+  redmineProjectError = '',
   dataSource = null,
 }: {
   configured?: boolean
@@ -37,6 +38,7 @@ async function fixture({
   type?: string
   settings?: Record<string, unknown>
   resources?: any[]
+  redmineProjectError?: string
   dataSource?: any
 } = {}) {
   const calls: Array<{ method: string; args: any[] }> = []
@@ -45,11 +47,20 @@ async function fixture({
   const api = {
     async validateCredentials(type: string, credentials: Record<string, string>) {
       calls.push({ method: 'validateCredentials', args: [type, { ...credentials }] })
+      if (type === 'redmine') return
       if (credentials.access_token !== 'rotated-token') throw new Error('gitlab API /user: status 401')
     },
     async validateConnection(id: string) {
       calls.push({ method: 'validateConnection', args: [id] })
       if (storedToken !== 'rotated-token') throw new Error('gitlab API /user: status 401')
+    },
+    async listRedmineProjects(request: Record<string, unknown>) {
+      calls.push({ method: 'listRedmineProjects', args: [request] })
+      if (redmineProjectError) throw new Error(redmineProjectError)
+      return { data: [
+        { identifier: 'shop', name: 'Shop' },
+        { identifier: 'shop-api', name: 'Shop API', parent_id: 'shop' },
+      ] }
     },
     async updateDataSource(id: string, data: any) {
       calls.push({ method: 'updateDataSource', args: [id, JSON.parse(JSON.stringify(data))] })
@@ -205,6 +216,57 @@ test('new data source choices omit retired connectors while existing ones remain
     // Existing sources of retired types remain editable (def still present).
     assert.ok(f.vm.connectorDefs.find((def: any) => def.type === 'seafile'))
     assert.ok(f.vm.connectorDefs.find((def: any) => def.type === 'notion'))
+  } finally { f.close() }
+})
+
+test('Redmine projects are loaded from supplied credentials and saved as identifiers', async () => {
+  const f = await fixture({ create: true })
+  try {
+    f.vm.selectType(f.vm.connectorDefs.find((def: any) => def.type === 'redmine'))
+    f.vm.form.config.credentials = {
+      base_url: 'https://redmine.example.com',
+      api_key: 'redmine-key',
+    }
+
+    await f.vm.nextStep()
+    await flush()
+    assert.equal(f.vm.step, 2)
+    assert.deepEqual(JSON.parse(JSON.stringify(f.calls.find(call => call.method === 'listRedmineProjects')?.args[0])), {
+      credentials: { base_url: 'https://redmine.example.com', api_key: 'redmine-key' },
+    })
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(f.vm.redmineProjectOptions.map((project: any) => project.identifier))),
+      ['shop', 'shop-api'],
+    )
+
+    f.vm.redmineSelectedProjects = ['shop-api']
+    await f.vm.nextStep()
+    assert.equal(f.vm.step, 3)
+    assert.deepEqual(f.vm.form.config.settings.projects, ['shop-api'])
+  } finally { f.close() }
+})
+
+test('Redmine edit mode uses saved credentials and preserves selections on load failure', async () => {
+  const f = await fixture({
+    type: 'redmine',
+    settings: { projects: ['shop'], content_types: ['issues'] },
+    redmineProjectError: 'Redmine API status 403',
+    dataSource: {
+      id: 'redmine-source', name: 'Redmine', type: 'redmine',
+      credentials: { credentials: { configured: true } },
+      config: { resource_ids: [], settings: { projects: ['shop'], content_types: ['issues'] } },
+      sync_schedule: '0 0 */6 * * *', sync_mode: 'incremental',
+      conflict_strategy: 'overwrite', sync_deletions: true,
+    },
+  })
+  try {
+    await f.vm.nextStep()
+    await flush()
+    assert.deepEqual(JSON.parse(JSON.stringify(f.calls.find(call => call.method === 'listRedmineProjects')?.args[0])), {
+      data_source_id: 'redmine-source',
+    })
+    assert.deepEqual(f.vm.redmineSelectedProjects, ['shop'])
+    assert.equal(f.vm.redmineProjectsError, 'Redmine API status 403')
   } finally { f.close() }
 })
 

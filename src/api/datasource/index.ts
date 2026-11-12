@@ -121,6 +121,13 @@ export function validateCredentials(type: string, credentials: Record<string, an
   return post('/api/v1/datasource/validate-credentials', { type, credentials })
 }
 
+export function listRedmineProjects(request: {
+  data_source_id?: string
+  credentials?: Record<string, any>
+}) {
+  return post('/api/v1/datasource/redmine/projects', request, { timeout: 120000 })
+}
+
 // listResources lists selectable resources for a data source. Pass parentId to
 // lazily load the direct children of a resource (e.g. expanding a Feishu wiki
 // space/node), which avoids traversing the whole tree up front.

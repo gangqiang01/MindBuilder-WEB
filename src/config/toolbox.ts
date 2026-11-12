@@ -18,6 +18,9 @@ export const TOOLBOX_ITEMS = [
     description: 'mcpSettings.description',
     action: 'mcpSettings.addService',
   },
+] as const
+
+export const TOOLBOX_DIRECT_ITEMS = [
   {
     key: 'browserconnection',
     title: 'localBrowser.settingsTitle',
@@ -25,10 +28,12 @@ export const TOOLBOX_ITEMS = [
   },
 ] as const
 
-export type ToolboxSection = typeof TOOLBOX_ITEMS[number]['key']
+const TOOLBOX_SECTIONS = [...TOOLBOX_ITEMS, ...TOOLBOX_DIRECT_ITEMS] as const
+
+export type ToolboxSection = typeof TOOLBOX_SECTIONS[number]['key']
 
 export function isToolboxSection(section: unknown): section is ToolboxSection {
-  return TOOLBOX_ITEMS.some((item) => item.key === section)
+  return TOOLBOX_SECTIONS.some((item) => item.key === section)
 }
 
 export function toolboxLocation(section?: ToolboxSection, sandboxId?: string) {

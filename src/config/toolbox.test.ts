@@ -4,7 +4,13 @@ import { readFileSync } from 'node:fs'
 import { computed, ref } from 'vue'
 import { runInNewContext } from 'node:vm'
 import ts from 'typescript'
-import { TOOLBOX_ITEMS, canAccessToolboxSection, isToolboxSection, toolboxLocation } from './toolbox'
+import {
+  TOOLBOX_DIRECT_ITEMS,
+  TOOLBOX_ITEMS,
+  canAccessToolboxSection,
+  isToolboxSection,
+  toolboxLocation,
+} from './toolbox'
 import zhCN from '../i18n/locales/zh-CN'
 
 const roles = ['viewer', 'contributor', 'admin', 'owner']
@@ -16,7 +22,8 @@ const access = (role: string | null, unsupported: string[] = [], superuser = fal
 })
 
 test('toolbox contains only the agreed tools; infrastructure and secrets stay in settings', () => {
-  assert.deepEqual(TOOLBOX_ITEMS.map((item) => item.key), ['skills', 'mcp', 'browserconnection'])
+  assert.deepEqual(TOOLBOX_ITEMS.map((item) => item.key), ['skills', 'mcp'])
+  assert.deepEqual(TOOLBOX_DIRECT_ITEMS.map((item) => item.key), ['browserconnection'])
   const lookup = (key: string) => key.split('.').reduce<any>((node, part) => node?.[part], zhCN)
   for (const item of TOOLBOX_ITEMS) {
     for (const key of [item.title, item.description, 'help' in item ? item.help : undefined,
@@ -27,6 +34,7 @@ test('toolbox contains only the agreed tools; infrastructure and secrets stay in
   for (const key of ['sandbox', 'websearch', 'envvars', 'integration-api', undefined, 'unknown']) {
     assert.equal(isToolboxSection(key), false)
   }
+  assert.equal(isToolboxSection('browserconnection'), true)
 })
 
 test('toolbox preserves role and deployment gates, including workspace switches', () => {
@@ -36,6 +44,7 @@ test('toolbox preserves role and deployment gates, including workspace switches'
     assert.equal(canAccessToolboxSection('browserconnection', access(role)), true)
   }
   assert.equal(canAccessToolboxSection('skills', access('admin')), true)
+  assert.equal(canAccessToolboxSection('browserconnection', access('viewer')), true)
   assert.equal(canAccessToolboxSection('skills', access('owner', ['settings.sandbox'])), false)
   assert.equal(canAccessToolboxSection('mcp', access('owner', ['settings.mcp'])), false)
   assert.equal(canAccessToolboxSection('mcp', access(null)), false)
@@ -95,6 +104,9 @@ test('settings no longer render moved panels, and old bookmarks reach toolbox', 
   assert.match(router, /to\.path === '\/platform\/settings' && isToolboxSection\(to\.query\.section\)/)
   assert.match(router, /toolboxLocation\(to\.query\.section/)
   const page = readFileSync(new URL('../views/toolbox/Toolbox.vue', import.meta.url), 'utf8')
+  assert.match(page, /TOOLBOX_ITEMS\.filter/)
+  assert.match(page, /BrowserConnectionSettings v-else-if="selectedItem\.key === 'browserconnection'"/)
+  assert.doesNotMatch(page, /BrowserIcon|toolbox-tab-status/)
   assert.match(page, /if \(!selectedItem\.value && fallback\) void router\.replace\(toolboxLocation\(fallback\.key\)\)/)
   assert.match(page, /:key="sandboxId"\s+:initial-sandbox-id="sandboxId"/)
 })

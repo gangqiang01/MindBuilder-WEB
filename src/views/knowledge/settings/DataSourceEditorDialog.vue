@@ -8,6 +8,7 @@ import {
   triggerSync,
   validateConnection,
   validateCredentials,
+  listRedmineProjects,
   listResources,
   resolveResourceAncestors,
   deleteDataSource,
@@ -268,8 +269,7 @@ const isDriveConnector = (type: string) => type === 'feishu_drive' || type === '
 const isGitLabConnector = (type: string) => type === 'gitlab'
 // Redmine stores its selection (projects, content types, journals/private
 // toggles, optional created_after) in settings — same split as GitLab
-// (credentials vs. settings) — so step 2 is a manual form rather than the
-// shared resource tree.
+// (credentials vs. settings).
 const isRedmineConnector = (type: string) => type === 'redmine'
 // Feishu/Lark wiki + Drive connectors share the docx parse-mode setting.
 const isFeishuFamilyConnector = (type: string) =>
@@ -313,11 +313,18 @@ function addGitLabProject() { gitlabProjects.value.push({ project_id: '', ref: '
 function removeGitLabProject(index: number) { gitlabProjects.value.splice(index, 1); syncGitLabProjectsToSettings() }
 
 // --- Redmine selection state ---
-// projectsText is one identifier per line; contentTypes is the checkbox group
-// (issues / wiki). The backend defaults include_journals=true and
-// include_private=false; the form mirrors those so the saved settings match
-// what the user sees even before step 2 is touched.
-const redmineProjectsText = ref('')
+// The backend stores identifiers, while the picker displays project names too.
+// The backend defaults include_journals=true and include_private=false; the
+// form mirrors those so saved settings match what the user sees.
+interface RedmineProjectOption {
+  identifier: string
+  name: string
+  parent_id?: string
+}
+const redmineProjectOptions = ref<RedmineProjectOption[]>([])
+const redmineSelectedProjects = ref<string[]>([])
+const redmineProjectsLoading = ref(false)
+const redmineProjectsError = ref('')
 const redmineContentTypes = ref<string[]>(['issues', 'wiki'])
 const redmineIncludeJournals = ref(true)
 const redmineIncludePrivate = ref(false)
@@ -325,8 +332,8 @@ const redmineCreatedAfter = ref('')
 function syncRedmineSettings() {
   if (!isRedmineConnector(form.value.type)) return
   const settings: Record<string, unknown> = { ...form.value.config.settings }
-  settings.projects = redmineProjectsText.value
-    .split(/[\n,]/).map(s => s.trim()).filter(Boolean)
+  settings.projects = redmineSelectedProjects.value
+    .map(project => project.trim()).filter(Boolean)
   // content_types must contain at least one entry; if the user clears both
   // checkboxes, default to issues so a saved source always syncs something.
   const types = redmineContentTypes.value.length ? redmineContentTypes.value : ['issues']
@@ -336,6 +343,44 @@ function syncRedmineSettings() {
   if (redmineCreatedAfter.value) settings.created_after = redmineCreatedAfter.value
   else delete settings.created_after
   form.value.config.settings = settings
+}
+
+async function loadRedmineProjects() {
+  if (redmineProjectsLoading.value) return
+  redmineProjectsLoading.value = true
+  redmineProjectsError.value = ''
+  try {
+    const request = isEdit.value && credentialsConfigured.value && !replaceCredentialsMode.value
+      ? { data_source_id: props.dataSource!.id }
+      : { credentials: { ...form.value.config.credentials } }
+    const response = await listRedmineProjects(request)
+    const projects = response?.data ?? response
+    if (!Array.isArray(projects)) throw new Error(t('datasource.redmine.projectLoadFailed'))
+
+    redmineProjectOptions.value = projects
+    const identifiersByName = new Map<string, string[]>()
+    for (const project of projects as RedmineProjectOption[]) {
+      if (!project.name || !project.identifier) continue
+      const key = project.name.toLocaleLowerCase()
+      identifiersByName.set(key, [...(identifiersByName.get(key) || []), project.identifier])
+    }
+    redmineSelectedProjects.value = redmineSelectedProjects.value.map(project => {
+      const matches = identifiersByName.get(project.toLocaleLowerCase())
+      return matches?.length === 1 ? matches[0] : project
+    })
+    const knownIdentifiers = new Set(
+      (projects as RedmineProjectOption[]).map(project => project.identifier),
+    )
+    const unavailable = redmineSelectedProjects.value
+      .filter(project => !knownIdentifiers.has(project))
+      .map(identifier => ({ identifier, name: identifier }))
+    redmineProjectOptions.value = [...projects, ...unavailable]
+  } catch (e: any) {
+    redmineProjectsError.value = e?.message || t('datasource.redmine.projectLoadFailed')
+    MessagePlugin.error(redmineProjectsError.value)
+  } finally {
+    redmineProjectsLoading.value = false
+  }
 }
 
 // extractDriveFolderToken accepts either a bare folder_token or a Drive folder
@@ -875,7 +920,10 @@ watch(visible, async (v) => {
   driveRootLoaded.value = false
   rssAuthHeaders.value = []
   gitlabProjects.value = []
-  redmineProjectsText.value = ''
+  redmineProjectOptions.value = []
+  redmineSelectedProjects.value = []
+  redmineProjectsLoading.value = false
+  redmineProjectsError.value = ''
   redmineContentTypes.value = ['issues', 'wiki']
   redmineIncludeJournals.value = true
   redmineIncludePrivate.value = false
@@ -914,15 +962,13 @@ watch(visible, async (v) => {
       }))
     }
     if (isRedmineConnector(form.value.type)) {
-      // Hydrate the Redmine form fields from the saved settings. projects is
-      // stored as a string array (or {identifier} objects); the textarea shows
-      // one per line. Missing fields fall back to the same defaults a new
-      // source gets, so a legacy source without content_types still renders.
+      // Hydrate the Redmine form fields from saved settings. Missing fields
+      // fall back to the same defaults a new source gets.
       const s = form.value.config.settings || {}
       const savedProjects: any[] = Array.isArray(s.projects) ? s.projects : []
-      redmineProjectsText.value = savedProjects
+      redmineSelectedProjects.value = savedProjects
         .map((p: any) => (typeof p === 'string' ? p : p?.identifier || ''))
-        .filter(Boolean).join('\n')
+        .filter(Boolean)
       const savedTypes: any[] = Array.isArray(s.content_types) ? s.content_types : []
       redmineContentTypes.value = savedTypes.length ? savedTypes.map(String) : ['issues', 'wiki']
       redmineIncludeJournals.value = s.include_journals !== false
@@ -1015,7 +1061,9 @@ function selectType(def: ConnectorDef) {
   if (isRedmineConnector(def.type)) {
     // Mirror the backend defaults so a freshly-selected Redmine source has
     // sensible settings before the user reaches step 2.
-    redmineProjectsText.value = ''
+    redmineProjectOptions.value = []
+    redmineSelectedProjects.value = []
+    redmineProjectsError.value = ''
     redmineContentTypes.value = ['issues', 'wiki']
     redmineIncludeJournals.value = true
     redmineIncludePrivate.value = false
@@ -1305,6 +1353,10 @@ async function nextStep() {
       return
     }
     if (isGitLabConnector(form.value.type)) return
+    if (isRedmineConnector(form.value.type)) {
+      void loadRedmineProjects()
+      return
+    }
     loadResources()
   }
 }
@@ -1880,7 +1932,27 @@ const drawerConfirmText = computed(() => {
         <h4 class="setting-drawer__section-title">{{ t('datasource.redmine.projects') }}</h4>
         <p class="ds-resource-hint">{{ t('datasource.redmine.projectsHint') }}</p>
         <label class="form-label required">{{ t('datasource.redmine.projectIds') }}</label>
-        <t-textarea v-model="redmineProjectsText" :placeholder="t('datasource.redmine.projectIdsPlaceholder')" :autosize="{ minRows: 2, maxRows: 5 }" />
+        <t-select
+          v-model="redmineSelectedProjects"
+          multiple
+          filterable
+          :loading="redmineProjectsLoading"
+          :placeholder="t('datasource.redmine.projectIdsPlaceholder')"
+        >
+          <t-option
+            v-for="project in redmineProjectOptions"
+            :key="project.identifier"
+            :value="project.identifier"
+            :label="`${project.name} (${project.identifier})`"
+          />
+        </t-select>
+        <div class="redmine-project-loader">
+          <span v-if="redmineProjectsLoading" class="ds-resource-hint">{{ t('datasource.redmine.loadingProjects') }}</span>
+          <span v-else-if="redmineProjectsError" class="field-error">{{ redmineProjectsError }}</span>
+          <t-button variant="text" size="small" :loading="redmineProjectsLoading" @click="loadRedmineProjects">
+            {{ t('datasource.redmine.loadProjects') }}
+          </t-button>
+        </div>
 
         <label class="form-label">{{ t('datasource.redmine.contentTypes') }}</label>
         <t-checkbox-group v-model="redmineContentTypes" class="redmine-content-types">
@@ -3106,6 +3178,18 @@ const drawerConfirmText = computed(() => {
   display: flex;
   gap: 16px;
   margin-bottom: 12px;
+}
+
+.redmine-project-loader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 32px;
+}
+
+.redmine-project-loader .field-error {
+  color: var(--td-error-color);
 }
 
 .redmine-options {

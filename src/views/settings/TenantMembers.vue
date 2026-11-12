@@ -90,6 +90,9 @@
                 </t-form>
                 <div v-else class="invite-confirm-body">
                   <p class="create-member-reveal-desc">{{ $t('tenantMember.add.revealBody') }}</p>
+                  <p v-if="revealCredentials?.emailStatus" class="create-member-reveal-desc">
+                    {{ $t(`tenantMember.add.emailStatus.${revealCredentials.emailStatus}`, { error: revealCredentials.emailError || '' }) }}
+                  </p>
                   <div class="create-member-reveal">
                     <div class="create-member-reveal-item">
                       <span class="create-member-reveal-label">{{ $t('tenantMember.add.usernameLabel') }}</span>
@@ -408,7 +411,13 @@ const addPopupVisible = ref(false)
 // 'reveal' keeps the popup open to show a server-minted one-time password
 // that must be acknowledged before it can be closed.
 const addStep = ref<'form' | 'reveal'>('form')
-const revealCredentials = ref<{ username: string; email: string; password: string } | null>(null)
+const revealCredentials = ref<{
+  username: string
+  email: string
+  password: string
+  emailStatus?: string
+  emailError?: string
+} | null>(null)
 /** 服务端密码复杂度策略（auth.complex_password_enabled），用于本地校验提示。 */
 const complexPasswordEnabled = ref(false)
 const addFormRef = ref<any>(null)
@@ -1028,12 +1037,19 @@ async function submitAdd() {
         username: resp.data.member.username || payload.username,
         email: resp.data.member.email || payload.email,
         password: resp.data.generated_password,
+        emailStatus: resp.data.email_status,
+        emailError: resp.data.email_error,
       }
       addStep.value = 'reveal'
       return
     }
     addPopupVisible.value = false
-    MessagePlugin.success(t('tenantMember.add.success'))
+    const emailStatus = resp.data.email_status
+    const message = emailStatus
+      ? t(`tenantMember.add.${resp.data.user_readded ? 'readdedEmailStatus' : 'emailStatus'}.${emailStatus}`, { error: resp.data.email_error || '' })
+      : t('tenantMember.add.success')
+    if (!emailStatus || emailStatus === 'sent') MessagePlugin.success(message)
+    else MessagePlugin.warning(message)
   } catch (err: any) {
     const status = err?.status
     if (status === 409) {

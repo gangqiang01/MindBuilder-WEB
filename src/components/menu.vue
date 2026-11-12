@@ -267,9 +267,6 @@ import { logout as logoutApi } from '@/api/auth';
 import { useMenuStore } from '@/stores/menu';
 import { useSessionActivityStore } from '@/stores/sessionActivity';
 import { useAuthStore } from '@/stores/auth';
-import { useDeploymentCapabilitiesStore } from '@/stores/deploymentCapabilities';
-import { TOOLBOX_ITEMS, canAccessToolboxSection } from '@/config/toolbox';
-import BrowserIcon from '@/components/icons/BrowserIcon.vue';
 import { useBrowserConnectionStore } from '@/stores/browserConnection';
 import { useUIStore } from '@/stores/ui';
 import { useCommandPaletteStore } from '@/stores/commandPalette';
@@ -314,21 +311,9 @@ const sessionActivity = useSessionActivityStore();
 const { entries: sessionActivityEntries, unread: sessionUnread } = storeToRefs(sessionActivity);
 let sessionActivityTimer: ReturnType<typeof setInterval> | undefined;
 const authStore = useAuthStore();
-const deploymentCapabilities = useDeploymentCapabilitiesStore();
-const toolboxPreview = computed(() => TOOLBOX_ITEMS.filter((item) => canAccessToolboxSection(item.key, {
-    currentTenantRole: authStore.currentTenantRole,
-    canAccessAllTenants: authStore.canAccessAllTenants,
-    hasRole: (role) => authStore.hasRole(role),
-    isSupported: (capability) => deploymentCapabilities.isSupported(capability),
-})));
 const uiStore = useUIStore();
 const browserConnection = useBrowserConnectionStore();
-const browserStackStatus = computed(() => {
-    if (!uiStore.sidebarBrowserStatus) return '';
-    if (!browserConnection.loaded || !browserConnection.enabled || !browserConnection.device) return '';
-    return browserConnection.connected ? 'connected' : 'offline';
-});
-watch(() => uiStore.sidebarBrowserStatus && toolboxPreview.value.some((tool) => tool.key === 'browserconnection'), (visible) => {
+watch(() => uiStore.sidebarBrowserStatus, (visible) => {
     if (visible && !browserConnection.loaded) browserConnection.refresh().catch(() => {});
 }, { immediate: true });
 const commandPaletteStore = useCommandPaletteStore();

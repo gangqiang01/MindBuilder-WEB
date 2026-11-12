@@ -165,8 +165,11 @@ async function changeStatus(row: SystemAdminUser) {
   try {
     const response = await setUserStatus({ user_id: row.id, is_active: !row.is_active })
     row.is_active = response.is_active
-    const message = t(row.is_active ? 'system.globalSettings.userList.enabledMsg' : 'system.globalSettings.userList.disabledMsg', { name: row.username })
-    MessagePlugin.success(message)
+    const message = response.email_status
+      ? t(`system.globalSettings.userList.enabledEmailStatus.${response.email_status}`, { name: row.username, error: response.email_error || '' })
+      : t(row.is_active ? 'system.globalSettings.userList.enabledMsg' : 'system.globalSettings.userList.disabledMsg', { name: row.username })
+    if (!response.email_status || response.email_status === 'sent') MessagePlugin.success(message)
+    else MessagePlugin.warning(message)
     announce(message)
   } catch (error) { MessagePlugin.error(errorMessage(error, 'system.globalSettings.userList.actionFailed')) }
   finally { busyId.value = null; statusVisibleId.value = null }

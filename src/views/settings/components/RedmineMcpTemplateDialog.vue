@@ -72,7 +72,29 @@ const innerVisible = computed({
 // Reactive to locale changes.
 const rules = computed(() => ({
   name: [{ required: true, message: t('mcpSettings.redmine.serviceNameRequired'), type: 'error' as const }],
-  redmine_base_url: [{ required: true, message: t('mcpSettings.redmine.baseUrlRequired'), type: 'error' as const }],
+  redmine_base_url: [
+    { required: true, message: t('mcpSettings.redmine.baseUrlRequired'), type: 'error' as const },
+    {
+      // The backend forwards this verbatim to the managed container's REDMINE_URL
+      // env. A value without a protocol (e.g. "172.21.73.80:8080") makes
+      // mcp-redmine fail every request with "Request URL is missing an 'http://'
+      // or 'https://' protocol", so reject it here before the service is created.
+      validator: (val: string) => {
+        const v = (val ?? '').trim()
+        if (!v) return true
+        if (!/^https?:\/\//i.test(v)) return false
+        try {
+          // eslint-disable-next-line no-new
+          new URL(v)
+          return true
+        } catch {
+          return false
+        }
+      },
+      message: t('mcpSettings.redmine.baseUrlInvalid'),
+      type: 'error' as const,
+    },
+  ],
   api_key: [{ required: true, message: t('mcpSettings.redmine.apiKeyRequired'), type: 'error' as const }],
 }))
 

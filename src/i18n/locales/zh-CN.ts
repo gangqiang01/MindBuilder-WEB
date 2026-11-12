@@ -245,6 +245,18 @@ export default {
       passwordMismatch: '两次输入的密码不一致',
       submit: '创建并添加',
       success: '成员已添加',
+      emailStatus: {
+        sent: '成员已添加，并已邮件通知用户',
+        failed: '成员已添加，但通知邮件发送失败：{error}',
+        disabled: '成员已添加；邮件通知未启用',
+        not_configured: '成员已添加；未配置邮件服务器或用户邮箱'
+      },
+      readdedEmailStatus: {
+        sent: '成员已添加，并已邮件通知用户；用户继续使用原密码登录',
+        failed: '成员已添加，但通知邮件发送失败：{error}；用户继续使用原密码登录',
+        disabled: '成员已添加；邮件通知未启用，用户继续使用原密码登录',
+        not_configured: '成员已添加；未配置邮件服务器或用户邮箱，用户继续使用原密码登录'
+      },
       revealTitle: '账号已创建',
       revealBody: '已为该账号生成初始密码，它只会显示一次，请妥善保存并告知对方。',
       revealCopy: '复制账号信息',
@@ -906,9 +918,12 @@ export default {
       apiKey: 'API 密钥',
       apiKeyHint: '在 Redmine「我的账号 → API 访问密钥」中生成；建议使用只读角色的服务账号，仅授权要同步的项目。',
       projects: 'Redmine 项目',
-      projectsHint: '每行一个项目；可填标识符（项目 URL 中的 slug，如 vision-studio）或显示名，显示名会自动匹配到标识符。',
-      projectIds: '项目标识符',
-      projectIdsPlaceholder: '每行一个，例如：\nshop\nshop-backend',
+      projectsHint: '通过 Redmine API 获取项目列表，可按名称或标识符搜索并多选。',
+      projectIds: '选择项目',
+      projectIdsPlaceholder: '搜索并选择 Redmine 项目',
+      loadingProjects: '正在获取 Redmine 项目...',
+      loadProjects: '重新获取项目',
+      projectLoadFailed: '获取 Redmine 项目失败，请检查连接后重试。',
       contentTypes: '同步内容',
       contentIssues: '工单（含评论）',
       contentWiki: 'Wiki 页面',
@@ -916,7 +931,7 @@ export default {
       includePrivate: '同步私有工单（is_private）',
       createdAfter: '仅同步此日期之后创建的工单',
       createdAfterPlaceholder: '例如：2024-01-01',
-      projectRequired: '请至少填写一个 Redmine 项目标识符'
+      projectRequired: '请至少选择一个 Redmine 项目'
     },
     status: {
       active: '已连接',
@@ -2604,6 +2619,7 @@ export default {
       baseUrl: 'Redmine 地址',
       baseUrlPlaceholder: 'https://redmine.example.com',
       baseUrlRequired: '请输入 Redmine 地址',
+      baseUrlInvalid: '地址必须以 http:// 或 https:// 开头，例如 https://redmine.example.com',
       apiKey: 'Redmine API Key',
       apiKeyPlaceholder: '你的 Redmine API 访问密钥',
       apiKeyRequired: '请输入 API Key',
@@ -3240,6 +3256,12 @@ export default {
         confirmPasswordPlaceholder: '再次输入新密码',
         confirmBtn: '重置',
         success: '密码已重置，该用户的现有会话已失效',
+        emailStatus: {
+          sent: '密码已重置，会话已失效，新密码已邮件通知用户',
+          failed: '密码已重置，会话已失效，但新密码通知邮件发送失败：{error}',
+          disabled: '密码已重置，会话已失效；邮件通知未启用，新密码未发送',
+          not_configured: '密码已重置，会话已失效；未配置邮件服务器或用户邮箱，新密码未发送'
+        },
         failed: '重置密码失败'
       },
       userList: {
@@ -3264,6 +3286,12 @@ export default {
         confirmDisable: '确定停用账号 {name} 吗？将立即吊销其登录状态。',
         confirmEnable: '确定启用账号 {name} 吗？',
         enabledMsg: '已启用 {name}',
+        enabledEmailStatus: {
+          sent: '已启用 {name}，并已邮件通知用户',
+          failed: '已启用 {name}，但通知邮件发送失败：{error}',
+          disabled: '已启用 {name}，但邮件通知未启用',
+          not_configured: '已启用 {name}，但未配置邮件服务器或用户邮箱'
+        },
         disabledMsg: '已停用 {name}',
         actionFailed: '操作失败',
         loadFailed: '加载用户列表失败',

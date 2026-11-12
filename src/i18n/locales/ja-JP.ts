@@ -245,6 +245,18 @@ export default {
       passwordMismatch: 'パスワードが一致しません',
       submit: '作成して追加',
       success: 'メンバーを追加しました',
+      emailStatus: {
+        sent: 'メンバーを追加し、通知メールを送信しました',
+        failed: 'メンバーを追加しましたが、通知メールの送信に失敗しました: {error}',
+        disabled: 'メンバーを追加しました。メール通知は無効です',
+        not_configured: 'メンバーを追加しました。メールサーバーまたはユーザのメールアドレスが未設定です'
+      },
+      readdedEmailStatus: {
+        sent: 'メンバーを追加し、メールで通知しました。ユーザーは以前のパスワードを引き続き使用できます',
+        failed: 'メンバーを追加しましたが、通知メールの送信に失敗しました: {error}。以前のパスワードは引き続き使用できます',
+        disabled: 'メンバーを追加しました。メール通知は無効です。以前のパスワードは引き続き使用できます',
+        not_configured: 'メンバーを追加しました。メールサーバーまたはメールアドレスが未設定です。以前のパスワードは引き続き使用できます'
+      },
       revealTitle: 'アカウントを作成しました',
       revealBody: 'このアカウント用の初期パスワードを生成しました。表示されるのは1回限りなので、確実に保存してユーザーにお知らせください。',
       revealCopy: 'アカウント情報を書き取り',
@@ -906,9 +918,12 @@ export default {
       apiKey: 'APIキー',
       apiKeyHint: 'Redmineの「アカウント → APIアクセスキー」で生成します。読み取り専用ロールのサービスアカウントを使用し、同期するプロジェクトのみ権限を付与してください。',
       projects: 'Redmineプロジェクト',
-      projectsHint: '1行に1つプロジェクトを入力。識別子（プロジェクトURLの slug、例: vision-studio）または表示名のどちらでも可（表示名は識別子に自動変換されます）。',
-      projectIds: 'プロジェクト識別子',
-      projectIdsPlaceholder: '1行に1つ、例:\nshop\nshop-backend',
+      projectsHint: 'Redmine APIからプロジェクトを取得します。名前または識別子で検索し、複数選択できます。',
+      projectIds: 'プロジェクトを選択',
+      projectIdsPlaceholder: 'Redmineプロジェクトを検索して選択',
+      loadingProjects: 'Redmineプロジェクトを取得中...',
+      loadProjects: 'プロジェクトを再取得',
+      projectLoadFailed: 'Redmineプロジェクトを取得できませんでした。接続を確認して再試行してください。',
       contentTypes: '同期するコンテンツ',
       contentIssues: 'チケット（コメント付き）',
       contentWiki: 'Wikiページ',
@@ -916,7 +931,7 @@ export default {
       includePrivate: 'プライベートチケット（is_private）を同期',
       createdAfter: 'この日付以降に作成されたチケットのみ同期',
       createdAfterPlaceholder: '例: 2024-01-01',
-      projectRequired: 'Redmineプロジェクト識別子を1つ以上入力してください'
+      projectRequired: 'Redmineプロジェクトを1つ以上選択してください'
     },
     status: {
       active: '接続済み',
@@ -2604,6 +2619,7 @@ export default {
       baseUrl: 'Redmine ベース URL',
       baseUrlPlaceholder: 'https://redmine.example.com',
       baseUrlRequired: 'Redmine ベース URL を入力してください',
+      baseUrlInvalid: 'URL は http:// または https:// で始めてください（例: https://redmine.example.com）',
       apiKey: 'Redmine API キー',
       apiKeyPlaceholder: 'Redmine の API アクセスキー',
       apiKeyRequired: 'API キーを入力してください',
@@ -3240,6 +3256,12 @@ export default {
         confirmPasswordPlaceholder: '新しいパスワードをもう一度入力してください',
         confirmBtn: 'リセットを確認',
         success: 'パスワードをリセットし、そのユーザの既存セッションを無効にしました',
+        emailStatus: {
+          sent: 'パスワードをリセットして既存のセッションを無効化し、新しいパスワードをメールで通知しました',
+          failed: 'パスワードをリセットしてセッションを無効化しましたが、新しいパスワードのメール送信に失敗しました: {error}',
+          disabled: 'パスワードをリセットしてセッションを無効化しました。メール通知は無効のため、新しいパスワードは送信されていません',
+          not_configured: 'パスワードをリセットしてセッションを無効化しました。メールサーバーまたはユーザーのメールアドレスが未設定のため、新しいパスワードは送信されていません'
+        },
         failed: 'パスワードのリセットに失敗しました'
       },
       userList: {
@@ -3264,6 +3286,12 @@ export default {
         confirmDisable: 'アカウント {name} を無効化しますか？有効なセッションは即時に失効します。',
         confirmEnable: 'アカウント {name} を有効化しますか？',
         enabledMsg: '{name} を有効化しました',
+        enabledEmailStatus: {
+          sent: '{name} を有効化し、メールで通知しました',
+          failed: '{name} を有効化しましたが、通知メールの送信に失敗しました：{error}',
+          disabled: '{name} を有効化しましたが、メール通知は無効です',
+          not_configured: '{name} を有効化しましたが、メールサーバーまたはユーザーのメールアドレスが未設定です'
+        },
         disabledMsg: '{name} を無効化しました',
         actionFailed: '操作に失敗しました',
         loadFailed: 'ユーザー一覧の読み込みに失敗しました',

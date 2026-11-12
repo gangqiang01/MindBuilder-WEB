@@ -344,9 +344,9 @@ export interface SetUserStatusRequest {
  */
 export async function setUserStatus(
   req: SetUserStatusRequest,
-): Promise<{ message: string; is_active: boolean }> {
+): Promise<{ message: string; is_active: boolean; email_status?: string; email_error?: string }> {
   const response = await post('/api/v1/system/admin/users/status', req)
-  return response as unknown as { message: string; is_active: boolean }
+  return response as unknown as { message: string; is_active: boolean; email_status?: string; email_error?: string }
 }
 
 export interface ListAllUsersResponse {
@@ -381,9 +381,17 @@ export interface ResetUserPasswordRequest {
  * The backend route is restricted to SystemAdmin callers and rejects attempts
  * to reset the caller's own password.
  */
-export async function resetUserPassword(req: ResetUserPasswordRequest): Promise<{ message: string }> {
+export async function resetUserPassword(req: ResetUserPasswordRequest): Promise<{
+  message: string
+  email_status?: 'sent' | 'failed' | 'disabled' | 'not_configured'
+  email_error?: string
+}> {
   const response = await post('/api/v1/system/admin/users/reset-password', req)
-  return response as unknown as { message: string }
+  return response as unknown as {
+    message: string
+    email_status?: 'sent' | 'failed' | 'disabled' | 'not_configured'
+    email_error?: string
+  }
 }
 
 export interface CreateSystemUserRequest {

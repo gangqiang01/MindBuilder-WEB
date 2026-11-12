@@ -56,6 +56,8 @@ export interface AddMemberRequest {
 export interface AddMemberResponse {
   success: boolean
   data?: TenantMember
+  email_status?: 'sent' | 'failed' | 'disabled' | 'not_configured'
+  email_error?: string
   message?: string
 }
 
@@ -71,10 +73,14 @@ export interface CreateMemberResponse {
   success: boolean
   data?: {
     member: TenantMember
-    /** true = 本次新建了账号；false = 绑定已有账号（密码不受影响） */
+    /** true = 新建账号；false = 绑定已有账号 */
     user_created: boolean
-    /** 仅当新建账号且密码由服务端生成时返回一次 */
+    /** true = 该用户此前已从所有空间移除 */
+    user_readded?: boolean
+    /** 仅新建账号且密码由服务端生成时返回一次 */
     generated_password?: string
+    email_status?: 'sent' | 'failed' | 'disabled' | 'not_configured'
+    email_error?: string
   }
   message?: string
 }
@@ -139,8 +145,8 @@ export async function addMember(
  * 直接创建用户账号（邮箱未注册时）并立即绑定为空间成员，替代邮箱邀请流程。
  * Backend: POST /api/v1/tenants/:id/members/create (Owner+, JWT-only).
  *
- * 邮箱已存在时不改写其密码，直接绑定角色（user_created=false）；
- * 密码缺省时服务端生成随机初始密码，通过 generated_password 返回一次。
+ * 邮箱已存在时直接绑定角色，不改写密码；已从所有空间移除的账号会收到重新加入通知。
+ * 新账号密码缺省时服务端生成随机初始密码，通过 generated_password 返回一次。
  * 409 三种情形（error.details 标签区分前两种）：
  * - "username_taken"：邮箱未注册，但用户名已被其他账号占用；
  * - "identity_conflict"：邮箱已注册，但所指账号与用户名对不上；

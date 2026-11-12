@@ -245,6 +245,18 @@ export default {
       passwordMismatch: '兩次輸入的密碼不一致',
       submit: '建立並新增',
       success: '已新增成員',
+      emailStatus: {
+        sent: '已新增成員並寄送郵件通知使用者',
+        failed: '已新增成員，但通知郵件寄送失敗：{error}',
+        disabled: '已新增成員；郵件通知未啟用',
+        not_configured: '已新增成員；未設定郵件伺服器或使用者信箱'
+      },
+      readdedEmailStatus: {
+        sent: '已新增成員並寄送郵件通知；使用者可繼續使用原密碼登入',
+        failed: '已新增成員，但通知郵件寄送失敗：{error}；使用者可繼續使用原密碼登入',
+        disabled: '已新增成員；郵件通知未啟用，使用者可繼續使用原密碼登入',
+        not_configured: '已新增成員；未設定郵件伺服器或使用者信箱，使用者可繼續使用原密碼登入'
+      },
       revealTitle: '帳號已建立',
       revealBody: '已為此帳號產生初始密碼，它只會顯示一次，請妥善保存並告知對方。',
       revealCopy: '複製帳號資訊',
@@ -906,9 +918,12 @@ export default {
       apiKey: 'API 金鑰',
       apiKeyHint: '在 Redmine「我的帳號 → API 存取金鑰」中產生；建議使用唯讀角色的服務帳號，僅授權要同步的專案。',
       projects: 'Redmine 專案',
-      projectsHint: '每行一個專案；可填識別碼（專案 URL 中的 slug，如 vision-studio）或顯示名稱，顯示名稱會自動匹配到識別碼。',
-      projectIds: '專案識別碼',
-      projectIdsPlaceholder: '每行一個，例如：\nshop\nshop-backend',
+      projectsHint: '透過 Redmine API 取得專案清單，可依名稱或識別碼搜尋並多選。',
+      projectIds: '選擇專案',
+      projectIdsPlaceholder: '搜尋並選擇 Redmine 專案',
+      loadingProjects: '正在取得 Redmine 專案...',
+      loadProjects: '重新取得專案',
+      projectLoadFailed: '取得 Redmine 專案失敗，請檢查連線後重試。',
       contentTypes: '同步內容',
       contentIssues: '工單（含評論）',
       contentWiki: 'Wiki 頁面',
@@ -916,7 +931,7 @@ export default {
       includePrivate: '同步私有工單（is_private）',
       createdAfter: '僅同步此日期之後建立的工單',
       createdAfterPlaceholder: '例如：2024-01-01',
-      projectRequired: '請至少填寫一個 Redmine 專案識別碼'
+      projectRequired: '請至少選擇一個 Redmine 專案'
     },
     status: {
       active: '已連結',
@@ -2604,6 +2619,7 @@ export default {
       baseUrl: 'Redmine 網址',
       baseUrlPlaceholder: 'https://redmine.example.com',
       baseUrlRequired: '請輸入 Redmine 網址',
+      baseUrlInvalid: '網址必須以 http:// 或 https:// 開頭，例如 https://redmine.example.com',
       apiKey: 'Redmine API Key',
       apiKeyPlaceholder: '你的 Redmine API 存取金鑰',
       apiKeyRequired: '請輸入 API Key',
@@ -3240,6 +3256,12 @@ export default {
         confirmPasswordPlaceholder: '再次輸入新密碼',
         confirmBtn: '重設',
         success: '密碼已重設，該使用者的現有會話已失效',
+        emailStatus: {
+          sent: '密碼已重設，會話已失效，新密碼已寄送郵件通知使用者',
+          failed: '密碼已重設，會話已失效，但新密碼通知郵件寄送失敗：{error}',
+          disabled: '密碼已重設，會話已失效；郵件通知未啟用，新密碼未寄送',
+          not_configured: '密碼已重設，會話已失效；未設定郵件伺服器或使用者信箱，新密碼未寄送'
+        },
         failed: '重設密碼失敗'
       },
       userList: {
@@ -3264,6 +3286,12 @@ export default {
         confirmDisable: '確定停用帳號 {name} 嗎？將立即撤銷其登入狀態。',
         confirmEnable: '確定啟用帳號 {name} 嗎？',
         enabledMsg: '已啟用 {name}',
+        enabledEmailStatus: {
+          sent: '已啟用 {name}，並已寄送郵件通知使用者',
+          failed: '已啟用 {name}，但通知郵件寄送失敗：{error}',
+          disabled: '已啟用 {name}，但郵件通知未啟用',
+          not_configured: '已啟用 {name}，但未設定郵件伺服器或使用者信箱'
+        },
         disabledMsg: '已停用 {name}',
         actionFailed: '操作失敗',
         loadFailed: '載入使用者列表失敗',

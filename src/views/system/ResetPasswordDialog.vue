@@ -140,13 +140,17 @@ async function submit() {
   try {
     const valid = await formRef.value?.validate?.()
     if (valid !== true) return
-    await resetUserPassword({
+    const response = await resetUserPassword({
       email: form.email.trim(),
       new_password: form.newPassword,
     })
-    const success = t('system.globalSettings.passwordReset.success')
-    emit('announced', success)
-    MessagePlugin.success(success)
+    const status = response.email_status
+    const message = status
+      ? t(`system.globalSettings.passwordReset.emailStatus.${status}`, { error: response.email_error || '' })
+      : t('system.globalSettings.passwordReset.success')
+    emit('announced', message)
+    if (!status || status === 'sent') MessagePlugin.success(message)
+    else MessagePlugin.warning(message)
     emit('update:visible', false)
   } catch (err: any) {
     const msg = err?.message || t('system.globalSettings.passwordReset.failed')

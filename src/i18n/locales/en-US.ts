@@ -4869,6 +4869,12 @@ export default {
         confirmDisable: 'Disable account {name}? Their active sessions will be revoked immediately.',
         confirmEnable: 'Enable account {name}?',
         enabledMsg: 'Enabled {name}',
+        enabledEmailStatus: {
+          sent: 'Enabled {name} and notified the user by email',
+          failed: 'Enabled {name}, but the notification email failed: {error}',
+          disabled: 'Enabled {name}, but email notifications are disabled',
+          not_configured: 'Enabled {name}, but the mail server or user email is not configured'
+        },
         disabledMsg: 'Disabled {name}',
         actionFailed: 'Action failed',
         loadFailed: 'Failed to load users',
@@ -4892,6 +4898,12 @@ export default {
         confirmPasswordPlaceholder: 'Enter the new password again',
         confirmBtn: 'Confirm reset',
         success: 'Password reset; the user\'s existing sessions were revoked',
+        emailStatus: {
+          sent: 'Password reset, existing sessions revoked, and the new password was emailed to the user',
+          failed: 'Password reset and sessions revoked, but the new-password email failed: {error}',
+          disabled: 'Password reset and sessions revoked; email notifications are disabled, so the new password was not emailed',
+          not_configured: 'Password reset and sessions revoked; email server or user email is not configured, so the new password was not emailed'
+        },
         failed: 'Failed to reset password'
       },
       createUser: {
@@ -5461,6 +5473,7 @@ export default {
       baseUrl: 'Redmine base URL',
       baseUrlPlaceholder: 'https://redmine.example.com',
       baseUrlRequired: 'Redmine base URL is required',
+      baseUrlInvalid: "URL must start with http:// or https://, e.g. https://redmine.example.com",
       apiKey: 'Redmine API key',
       apiKeyPlaceholder: 'Your Redmine API access key',
       apiKeyRequired: 'API key is required',
@@ -7210,9 +7223,12 @@ export default {
       apiKey: 'API key',
       apiKeyHint: 'Generate it under "My account → API access key" in Redmine; use a read-only service account scoped to the projects you sync.',
       projects: 'Redmine projects',
-      projectsHint: 'One project per line; enter either the identifier (the URL slug, e.g. vision-studio) or the display name — display names are auto-matched to identifiers.',
-      projectIds: 'Project identifiers',
-      projectIdsPlaceholder: 'One per line, e.g.:\nshop\nshop-backend',
+      projectsHint: 'Projects are fetched from the Redmine API. Search by name or identifier and select multiple projects.',
+      projectIds: 'Select projects',
+      projectIdsPlaceholder: 'Search and select Redmine projects',
+      loadingProjects: 'Loading Redmine projects...',
+      loadProjects: 'Reload projects',
+      projectLoadFailed: 'Could not load Redmine projects. Check the connection and try again.',
       contentTypes: 'Content to sync',
       contentIssues: 'Issues (with comments)',
       contentWiki: 'Wiki pages',
@@ -7220,7 +7236,7 @@ export default {
       includePrivate: 'Sync private issues (is_private)',
       createdAfter: 'Only sync issues created after this date',
       createdAfterPlaceholder: 'e.g. 2024-01-01',
-      projectRequired: 'Enter at least one Redmine project identifier'
+      projectRequired: 'Select at least one Redmine project'
     },
     seafile: {
       baseUrl: 'Seafile URL',
@@ -7849,6 +7865,18 @@ export default {
       passwordMismatch: 'Passwords do not match',
       submit: 'Create and add',
       success: 'Member added',
+      emailStatus: {
+        sent: 'Member added and notification email sent',
+        failed: 'Member added, but the notification email failed: {error}',
+        disabled: 'Member added; email notifications are disabled',
+        not_configured: 'Member added; email server or user email is not configured'
+      },
+      readdedEmailStatus: {
+        sent: 'Member added and the user notified by email; they can keep using their existing password',
+        failed: 'Member added, but the notification email failed: {error}; they can keep using their existing password',
+        disabled: 'Member added; email notifications are disabled, and they can keep using their existing password',
+        not_configured: 'Member added; email server or user email is not configured, and they can keep using their existing password'
+      },
       revealTitle: 'Account created',
       revealBody: 'An initial password was generated for this account. It is shown only once — save it and share it with the user.',
       revealCopy: 'Copy account details',

@@ -29,20 +29,14 @@
       </p>
     </header>
 
-    <template v-if="visibleItems.length">
-      <div class="toolbox-tabbar">
+    <template v-if="visibleItems.length || selectedDirectItem">
+      <div v-if="visibleItems.length && !selectedDirectItem" class="toolbox-tabbar">
         <div class="toolbox-tabs" role="tablist" :aria-label="t('toolbox.title')">
           <button v-for="item in visibleItems" :key="item.key" type="button" role="tab" class="toolbox-tab"
             :aria-selected="selectedItem?.key === item.key" @click="select(item.key)">
-            <BrowserIcon v-if="item.key === 'browserconnection'" width="16" height="16" />
-            <t-icon v-else :name="item.icon" size="16px" />
+            <t-icon :name="item.icon" size="16px" />
             <span>{{ t(item.title) }}</span>
-            <span v-if="item.key === 'browserconnection' && browserStatus" class="toolbox-tab-status"
-              :class="`is-${browserStatus}`">
-              <i aria-hidden="true" />{{ t(`localBrowser.${browserStatus}`) }}
-            </span>
-            <span v-else-if="item.key !== 'browserconnection' && counts[item.key] !== undefined"
-              class="toolbox-tab-count">{{ counts[item.key] }}</span>
+            <span v-if="counts[item.key] !== undefined" class="toolbox-tab-count">{{ counts[item.key] }}</span>
           </button>
         </div>
         <!-- 面板通过 Teleport 把搜索框放到标签栏右侧 -->
@@ -54,6 +48,7 @@
           <SkillSettings v-if="selectedItem.key === 'skills'" ref="panel" :key="sandboxId"
             :initial-sandbox-id="sandboxId" @count="counts.skills = $event" />
           <McpSettings v-else-if="selectedItem.key === 'mcp'" ref="panel" @count="counts.mcp = $event" />
+          <BrowserConnectionSettings v-else-if="selectedItem.key === 'browserconnection'" />
         </div>
       </section>
     </template>
@@ -67,27 +62,26 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import { useBrowserConnectionStore } from '@/stores/browserConnection'
 import { useDeploymentCapabilitiesStore } from '@/stores/deploymentCapabilities'
 import { listSkillCatalog } from '@/api/skill'
 import { listMCPServices } from '@/api/mcp-service'
 import {
+  TOOLBOX_DIRECT_ITEMS,
   TOOLBOX_ITEMS,
   canAccessToolboxSection,
   toolboxLocation,
   type ToolboxSection,
 } from '@/config/toolbox'
 import ResourceIcon from '@/components/icons/ResourceIcon.vue'
-import BrowserIcon from '@/components/icons/BrowserIcon.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import SkillSettings from '@/views/settings/SkillSettings.vue'
 import McpSettings from '@/views/settings/McpSettings.vue'
+import BrowserConnectionSettings from '@/views/settings/BrowserConnectionSettings.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const authStore = useAuthStore()
-const browserConnection = useBrowserConnectionStore()
 const capabilities = useDeploymentCapabilitiesStore()
 const panel = ref<{ openAdd?: () => void; openAddRedmine?: () => void } | null>(null)
 const counts = reactive<Partial<Record<ToolboxSection, number>>>({})
@@ -99,13 +93,16 @@ const visibleItems = computed(() => TOOLBOX_ITEMS.filter((item) => canAccessTool
   hasRole: (role) => authStore.hasRole(role),
   isSupported: (capability) => capabilities.isSupported(capability),
 })))
-const selectedItem = computed(() => visibleItems.value.find((item) => item.key === requestedSection.value))
-
-const browserStatus = computed(() => {
-  if (!browserConnection.loaded || !browserConnection.enabled) return ''
-  if (browserConnection.connected) return 'connected'
-  return browserConnection.device ? 'offline' : 'notPaired'
-})
+const selectedDirectItem = computed(() => TOOLBOX_DIRECT_ITEMS.find((item) =>
+  item.key === requestedSection.value
+  && canAccessToolboxSection(item.key, {
+    currentTenantRole: authStore.currentTenantRole,
+    canAccessAllTenants: authStore.canAccessAllTenants,
+    hasRole: (role) => authStore.hasRole(role),
+    isSupported: (capability) => capabilities.isSupported(capability),
+  })))
+const selectedItem = computed(() =>
+  visibleItems.value.find((item) => item.key === requestedSection.value) ?? selectedDirectItem.value)
 
 const select = (section: ToolboxSection) => {
   if (section === requestedSection.value) return
@@ -120,14 +117,13 @@ watch([selectedItem, visibleItems], () => {
 }, { immediate: true })
 
 // Tab badges for tools that are not open; the open panel keeps its own badge current.
-const summaries: Record<ToolboxSection, () => Promise<void>> = {
+const summaries: Partial<Record<ToolboxSection, () => Promise<void>>> = {
   skills: async () => { counts.skills = (await listSkillCatalog())?.data?.length ?? 0 },
   mcp: async () => { counts.mcp = (await listMCPServices()).length },
-  browserconnection: async () => { if (!browserConnection.loaded) await browserConnection.refresh() },
 }
 watch(() => visibleItems.value.map((item) => item.key), (keys, previous = []) => {
   for (const key of keys) {
-    if (!previous.includes(key)) summaries[key]().catch(() => {})
+    if (!previous.includes(key)) summaries[key]?.().catch(() => {})
   }
 }, { immediate: true })
 </script>
@@ -333,30 +329,6 @@ watch(() => visibleItems.value.map((item) => item.key), (keys, previous = []) =>
   line-height: 20px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-
-.toolbox-tab-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--td-text-color-placeholder);
-  font-size: var(--app-text-xs);
-  font-weight: 400;
-
-  i {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  &.is-connected {
-    color: var(--td-success-color);
-  }
-
-  &.is-offline {
-    color: var(--td-warning-color);
-  }
 }
 
 .toolbox-main {
