@@ -2630,6 +2630,12 @@ export default {
       usagePrefill: 'Redmine 通过 MCP 工具实时连接。用 redmine_get_issue 读取含评论与附件的 issue；redmine_request 调用任意 Redmine REST 接口（列表/搜索/创建/更新 issue、wiki、工时、项目）；redmine_paths_list / redmine_paths_info 查询可用接口路径；redmine_upload / redmine_download / redmine_attachment_image 处理文件。优先用具体过滤条件（project、assigned_to_id、status_id=open、created_on）而非拉取大列表。创建或更新 issue 等写操作前先与用户确认。',
       created: 'Redmine MCP 服务已创建',
       createFailed: '创建 Redmine MCP 服务失败',
+      editDialogTitle: '编辑 Redmine MCP',
+      saveButton: '保存',
+      apiKeyEditPlaceholder: '留空则不修改',
+      apiKeyEditHint: '留空则保持原 API Key 不变；填写新值将覆盖现有密钥。',
+      updated: 'Redmine MCP 服务已更新',
+      updateFailed: '更新 Redmine MCP 服务失败',
     },
     empty: '暂无 MCP 服务',
     deleteConfirmBody: '确定要删除 MCP 服务"{name}"吗？此操作无法撤销。',
@@ -7779,6 +7785,7 @@ export default {
   },
   toolbox: {
     title: '工具箱',
+    description: '管理智能体可用的技能、MCP 服务和浏览器连接。',
     unavailable: '当前组织暂无可用的工具。'
   },
   notifications: {

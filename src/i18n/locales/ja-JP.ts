@@ -2630,6 +2630,12 @@ export default {
       usagePrefill: 'Redmine は MCP ツールでリアルタイム接続されます。redmine_get_issue でコメント・添付付きの issue を取得、redmine_request で任意の Redmine REST エンドポイント（issue/wiki/作業時間/プロジェクトのリスト・検索・作成・更新）を呼び出し、redmine_paths_list / redmine_paths_info で利用可能なパスを確認、redmine_upload / redmine_download / redmine_attachment_image でファイル操作。大きなリストを取得せず、具体的なフィルタ（project、assigned_to_id、status_id=open、created_on）を優先。issue の作成・更新などの書き込みは実行前にユーザーに確認してください。',
       created: 'Redmine MCP サービスを作成しました',
       createFailed: 'Redmine MCP サービスの作成に失敗しました',
+      editDialogTitle: 'Redmine MCP を編集',
+      saveButton: '保存',
+      apiKeyEditPlaceholder: '空欄なら変更しない',
+      apiKeyEditHint: '空欄のままなら API キーは変更されません。新しい値を入力すると既存のキーを上書きします。',
+      updated: 'Redmine MCP サービスを更新しました',
+      updateFailed: 'Redmine MCP サービスの更新に失敗しました',
     },
     empty: 'MCPサービスがありません',
     deleteConfirmBody: 'MCPサービス「{name}」を削除しますか？この操作は取り消せません。',
@@ -7779,6 +7785,7 @@ export default {
   },
   toolbox: {
     title: 'ツールボックス',
+    description: 'エージェントが利用できるスキル、MCP サービス、ブラウザー接続を管理します。',
     unavailable: '現在の組織で利用できるツールはありません。'
   },
   notifications: {

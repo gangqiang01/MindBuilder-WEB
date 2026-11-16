@@ -2630,6 +2630,12 @@ export default {
       usagePrefill: 'Redmine 透過 MCP 工具即時連線。用 redmine_get_issue 讀取含評論與附件的 issue；redmine_request 呼叫任意 Redmine REST 端點（列表/搜尋/建立/更新 issue、wiki、工時、專案）；redmine_paths_list / redmine_paths_info 查詢可用端點路徑；redmine_upload / redmine_download / redmine_attachment_image 處理檔案。優先用具體過濾條件（project、assigned_to_id、status_id=open、created_on）而非拉取大列表。建立或更新 issue 等寫入操作前先與使用者確認。',
       created: 'Redmine MCP 服務已建立',
       createFailed: '建立 Redmine MCP 服務失敗',
+      editDialogTitle: '編輯 Redmine MCP',
+      saveButton: '儲存',
+      apiKeyEditPlaceholder: '留空則不修改',
+      apiKeyEditHint: '留空則維持原 API Key 不變；填寫新值將覆蓋現有金鑰。',
+      updated: 'Redmine MCP 服務已更新',
+      updateFailed: '更新 Redmine MCP 服務失敗',
     },
     empty: '暫無 MCP 服務',
     deleteConfirmBody: '確定要刪除 MCP 服務"{name}"嗎？此操作無法復原。',
@@ -7779,6 +7785,7 @@ export default {
   },
   toolbox: {
     title: '工具箱',
+    description: '管理智慧代理可用的技能、MCP 服務與瀏覽器連線。',
     unavailable: '當前組織暫無可用的工具。'
   },
   notifications: {

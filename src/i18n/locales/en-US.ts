@@ -324,6 +324,7 @@ export default {
   },
   toolbox: {
     title: 'Toolbox',
+    description: 'Manage the skills, MCP services, and browser connections available to your agents.',
     unavailable: 'No tools are available in the current organization.'
   },
   localBrowser: {
@@ -5484,6 +5485,12 @@ export default {
       usagePrefill: 'Redmine is live-connected via MCP tools. Use redmine_get_issue to read an issue with its comments and attachments; redmine_request for any other Redmine REST endpoint (list/search/create/update issues, wiki, time entries, projects); redmine_paths_list / redmine_paths_info to discover available API paths; redmine_upload / redmine_download / redmine_attachment_image for file operations. Prefer specific filters (project, assigned_to_id, status_id=open, created_on) over fetching large lists. Confirm destructive writes with the user before creating or updating issues.',
       created: 'Redmine MCP service created',
       createFailed: 'Failed to create Redmine MCP service',
+      editDialogTitle: 'Edit Redmine MCP',
+      saveButton: 'Save',
+      apiKeyEditPlaceholder: 'Leave blank to keep unchanged',
+      apiKeyEditHint: 'Leave blank to keep the current API key; enter a new value to overwrite it.',
+      updated: 'Redmine MCP service updated',
+      updateFailed: 'Failed to update Redmine MCP service',
     },
     empty: 'No MCP services',
     toasts: {

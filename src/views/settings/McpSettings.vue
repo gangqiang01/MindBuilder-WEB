@@ -131,10 +131,14 @@
       @created="handleDialogCreated"
     />
 
-    <!-- Redmine MCP template shortcut: base URL + API key only. -->
+    <!-- Redmine MCP template shortcut: base URL + API key only. In edit mode
+         it shows the same four fields as the add dialog for a Redmine-template
+         service instead of the generic MCP drawer. -->
     <RedmineMcpTemplateDialog
       v-model:visible="redmineDialogVisible"
-      @created="handleRedmineCreated"
+      :service="redmineEditService"
+      @created="handleRedmineDialogDone"
+      @updated="handleRedmineDialogDone"
     />
   </div>
 </template>
@@ -211,20 +215,35 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-// Redmine MCP template shortcut.
+// Redmine MCP template shortcut. redmineEditService !== null opens the same
+// focused dialog in edit mode for a service created via "添加 Redmine MCP".
 const redmineDialogVisible = ref(false)
+const redmineEditService = ref<MCPService | null>(null)
+
 const handleAddRedmine = () => {
   if (!authStore.hasRole('admin')) return
+  redmineEditService.value = null
   redmineDialogVisible.value = true
 }
-const handleRedmineCreated = async () => {
+
+const handleRedmineDialogDone = async () => {
   redmineDialogVisible.value = false
+  redmineEditService.value = null
   await loadServices()
 }
 
 // Explicit buttons keep selecting card text separate from editing a service.
 const handleEdit = (service: MCPService, initialStep: 0 | 1 = 0) => {
   if (!authStore.hasRole('admin')) return
+  // Redmine-template services keep the same focused dialog as on creation:
+  // name, Redmine URL, API key and read-only mode — never the generic drawer
+  // with internal container URLs. The step=1 entries (usage instructions, tool
+  // metadata) intentionally keep the generic MCP drawer.
+  if (initialStep === 0 && service.template_config?.kind === 'redmine') {
+    redmineEditService.value = { ...service }
+    redmineDialogVisible.value = true
+    return
+  }
   currentService.value = { ...service }
   dialogMode.value = 'edit'
   dialogInitialStep.value = initialStep
