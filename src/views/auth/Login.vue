@@ -8,16 +8,17 @@
           <div class="form-header">
             <h2 class="form-title">MindBuilder</h2>
           </div>
+          <div class="login-message">{{ $t('auth.login') }}MindBuilder</div>
 
           <div class="form-content">
             <t-form ref="formRef" :data="formData" :rules="formRules" @submit="handleLogin" layout="vertical"
               label-align="top">
-              <t-form-item :label="$t('auth.email')" name="email">
+              <t-form-item name="email" class="email-item" :required-mark="false">
                 <t-input v-model="formData.email" :placeholder="$t('auth.emailPlaceholder')" type="text"
                   autocomplete="email" size="large" :disabled="loading" />
               </t-form-item>
 
-              <t-form-item :label="$t('auth.password')" name="password">
+              <t-form-item name="password" class="password-item" :required-mark="false">
                 <t-input v-model="formData.password" :placeholder="$t('auth.passwordPlaceholder')" type="password"
                   autocomplete="current-password" size="large" :disabled="loading" @enter="handleLogin" />
               </t-form-item>
@@ -26,7 +27,7 @@
                 <t-checkbox v-model="remember">{{ $t('auth.rememberMe') }}</t-checkbox>
               </div>
 
-              <t-button type="submit" theme="primary" size="large" block :loading="loading" class="submit-button">
+              <t-button type="submit" theme="primary" size="large" :loading="loading" class="submit-button">
                 {{ loading ? $t('auth.loggingIn') : $t('auth.login') }}
               </t-button>
 
@@ -819,14 +820,16 @@ onMounted(async () => {
   }
 }
 
+/* ============ 登录框（wisepaas 模板：白底直角 + box-shadow #BDBDBD，对齐 LoginPage.vue） ============ */
 .form-card {
-  background: rgba(255, 255, 255, 0.97);
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  border-radius: 0;
+  padding: 108px 26px 44px;
+  box-shadow: 1px 1px 6px #bdbdbd;
   box-sizing: border-box;
   border: none;
-  width: 100%;
+  width: 372px;
+  min-height: 538px;
 }
 
 /* Share-link invitation banner. Sits above the login form when the
@@ -882,21 +885,25 @@ onMounted(async () => {
 
 .form-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 0;
 }
 
 .form-title {
-  font-size: 34px;
-  line-height: 1.15;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  margin: 0 0 8px 0;
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: normal;
+  margin: 0;
   font-family: 'Roboto', 'NotoSans', sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #40506f;
+}
+
+/* 输入框上方小字（对齐 LoginPage 的 #login-message） */
+.login-message {
+  margin: 66px 0 0;
+  font-family: 'NotoSans', sans-serif;
+  font-size: 15px;
+  color: #342e2d;
 }
 
 .form-welcome {
@@ -924,44 +931,44 @@ onMounted(async () => {
   font-family: var(--app-font-family);
 }
 
+/* ---- wisepaas 输入框覆盖：#C2C2C2 边框，无圆角，聚焦 #99CAFF（与 LoginPage 一致） ---- */
 .form-content {
-  :deep(.t-form-item__label) {
-    font-size: var(--app-text-base);
-    color: var(--td-text-color-primary);
-    font-weight: 500;
-    margin-bottom: 8px;
-    font-family: var(--app-font-family);
-    display: block;
-    text-align: left;
+  margin-top: 22px;
+
+  /* 去掉必填星号与空标签占位（TDesign 类名为 t-form__label） */
+  :deep(.t-form__label) {
+    display: none;
+  }
+
+  /* 两个输入框上下贴合：清除 TDesign 默认 24px 间距（类名为 t-form__item） */
+  :deep(.t-form__item) {
+    margin-bottom: 0;
+  }
+
+  :deep(.t-form__controls),
+  :deep(.t-form__controls-content) {
+    width: 100%;
   }
 
   :deep(.t-input) {
-    border: 1px solid var(--td-component-stroke);
-    border-radius: var(--app-radius-md);
-    background: var(--td-bg-color-container);
-    transition: all var(--app-motion-base);
-
-    &:focus-within {
-      border-color: var(--td-brand-color);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--td-brand-color) 10%, transparent);
-    }
-
-    &:hover {
-      border-color: var(--td-brand-color);
-    }
+    border: solid #c2c2c2;
+    border-radius: 0;
+    background: #ffffff;
+    height: 40px;
+    box-shadow: none;
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
 
     .t-input__inner {
       border: none !important;
       box-shadow: none !important;
       outline: none !important;
       background: transparent;
-      font-size: var(--app-text-lg);
-      font-family: var(--app-font-family);
+      font-size: 15px;
+      font-family: 'NotoSans', sans-serif;
+      color: #555;
 
-      &:focus {
-        border: none !important;
-        box-shadow: none !important;
-        outline: none !important;
+      &::placeholder {
+        color: #c0c5d7;
       }
     }
 
@@ -971,35 +978,55 @@ onMounted(async () => {
     }
   }
 
-  :deep(.t-form-item) {
-    margin-bottom: 18px;
+  .email-item :deep(.t-input) {
+    border-width: 2px 2px 1px 2px;
 
-    &:last-child {
-      margin-bottom: 0;
+    &:focus-within {
+      border-color: #99caff;
     }
   }
 
-  :deep(.t-form-item__control) {
-    width: 100%;
+  .password-item :deep(.t-input) {
+    border-width: 1px 2px 2px 2px;
+
+    &:focus-within {
+      border-color: #99caff;
+    }
   }
 }
 
 .remember-row {
-  margin: 10px 0 8px;
+  margin: 22px 0 0;
+  font-family: 'NotoSans', sans-serif;
+  font-size: 15px;
+
+  :deep(.t-checkbox__label) {
+    color: #342e2d;
+  }
 }
 
+/* ---- 登录按钮：#40506f（wisepaas 配色，右对齐定宽） ---- */
 .submit-button {
-  height: 46px;
-  border-radius: var(--app-radius-md);
-  font-size: var(--app-text-xl);
-  font-weight: 500;
-  font-family: var(--app-font-family);
-  margin: 20px 0 16px 0;
+  display: block;
+  width: 120px;
+  height: 40px;
+  border-radius: 0;
+  border: none;
+  background-color: #40506f;
+  color: #fefefe;
+  font-family: 'NotoSans', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  margin: 22px 0 0 auto;
+
+  &:hover {
+    background-color: #4d5f82;
+  }
 }
 
 .oidc-divider {
   position: relative;
-  margin: 4px 0 6px;
+  margin: 22px 0 10px;
   text-align: center;
   color: var(--td-text-color-placeholder);
   font-size: var(--app-text-sm);
@@ -1008,7 +1035,7 @@ onMounted(async () => {
     position: relative;
     z-index: 1;
     padding: 0 12px;
-    background: rgba(255, 255, 255, 0.95);
+    background: #ffffff;
   }
 
   &::before {
@@ -1022,10 +1049,108 @@ onMounted(async () => {
 }
 
 .oidc-button {
-  height: 46px;
-  border-radius: var(--app-radius-md);
-  font-size: var(--app-text-lg);
-  font-weight: 500;
+  height: 40px;
+  border-radius: 0;
+  font-size: 15px;
+  font-weight: 400;
+  font-family: 'NotoSans', sans-serif;
+}
+
+/* ============ 响应式断点（复刻 LoginPage.vue 的 wisepaas 尺寸） ============ */
+
+/* ---- 1024px ~ 1439px ---- */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .form-card {
+    width: 310px;
+    min-height: 448px;
+    padding: 96px 27px 40px;
+  }
+
+  .form-title {
+    font-size: 24px;
+  }
+
+  .login-message {
+    margin: 50px 0 0;
+    font-size: 12px;
+  }
+
+  .form-content {
+    margin-top: 19px;
+
+    :deep(.t-input) {
+      height: 32px;
+
+      .t-input__inner {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .remember-row {
+    margin: 18px 0 0;
+    font-size: 12px;
+  }
+
+  .submit-button {
+    width: 96px;
+    height: 32px;
+    font-size: 14px;
+    margin-top: 18px;
+  }
+
+  .oidc-button {
+    height: 32px;
+    font-size: 12px;
+  }
+}
+
+/* ---- 2560px+ ---- */
+@media (min-width: 2560px) {
+  .form-card {
+    width: 620px;
+    min-height: 896px;
+    padding: 192px 54px 80px;
+  }
+
+  .form-title {
+    font-size: 48px;
+    line-height: 56px;
+  }
+
+  .login-message {
+    margin: 132px 0 0;
+    font-size: 23px;
+  }
+
+  .form-content {
+    margin-top: 44px;
+
+    :deep(.t-input) {
+      height: 64px;
+
+      .t-input__inner {
+        font-size: 23px;
+      }
+    }
+  }
+
+  .remember-row {
+    margin: 44px 0 0;
+    font-size: 23px;
+  }
+
+  .submit-button {
+    width: 192px;
+    height: 64px;
+    font-size: 28px;
+    margin-top: 44px;
+  }
+
+  .oidc-button {
+    height: 64px;
+    font-size: 23px;
+  }
 }
 
 .form-footer {
@@ -1193,11 +1318,47 @@ onMounted(async () => {
   }
 
   .form-card {
-    padding: 32px 24px;
+    width: 310px;
+    min-height: 448px;
+    padding: 96px 27px 40px;
   }
 
   .form-title {
-    font-size: 22px;
+    font-size: 24px;
+  }
+
+  .login-message {
+    margin: 50px 0 0;
+    font-size: 12px;
+  }
+
+  .form-content {
+    margin-top: 19px;
+
+    :deep(.t-input) {
+      height: 32px;
+
+      .t-input__inner {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .remember-row {
+    margin: 18px 0 0;
+    font-size: 12px;
+  }
+
+  .submit-button {
+    width: 96px;
+    height: 32px;
+    font-size: 14px;
+    margin-top: 18px;
+  }
+
+  .oidc-button {
+    height: 32px;
+    font-size: 12px;
   }
 }
 
@@ -1242,11 +1403,13 @@ onMounted(async () => {
   }
 
   .form-card {
-    padding: 28px 20px;
+    width: 100%;
+    min-height: 0;
+    padding: 96px 20px 36px;
   }
 
   .form-header {
-    margin-bottom: 24px;
+    margin-bottom: 0;
   }
 }
 
@@ -1309,28 +1472,6 @@ html[theme-mode="dark"] {
 
   .tag {
     background: rgba(255, 255, 255, 0.12);
-  }
-
-  .form-card {
-    background: rgba(36, 36, 36, 0.97) !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
-  }
-
-  .form-content .t-input {
-    background: var(--td-bg-color-page) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-
-    &:hover {
-      border-color: var(--td-brand-color) !important;
-    }
-
-    &:focus-within {
-      border-color: var(--td-brand-color) !important;
-    }
-  }
-
-  .login-features .feature-icon {
-    background: rgba(6, 176, 77, 0.15);
   }
 }
 </style>

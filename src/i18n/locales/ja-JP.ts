@@ -5341,7 +5341,7 @@ export default {
     password: 'パスワード',
     loginSuccessTitle: 'ログインしました',
     loginSuccessContent: 'おかえりなさい。{name}にログインしました',
-    loggingIn: 'ログイン中...',
+    loggingIn: 'ログイン中',
     rememberMe: 'パスワードを覚える',
     emailPlaceholder: 'メールアドレスを入力',
     passwordPlaceholder: 'パスワードを入力',

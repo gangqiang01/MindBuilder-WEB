@@ -5341,7 +5341,7 @@ export default {
     password: '密碼',
     loginSuccessTitle: '登入成功',
     loginSuccessContent: '歡迎，你已進入 {name}',
-    loggingIn: '登入中...',
+    loggingIn: '登入中',
     rememberMe: '記住密碼',
     emailPlaceholder: '輸入電子信箱地址',
     passwordPlaceholder: '輸入密碼',

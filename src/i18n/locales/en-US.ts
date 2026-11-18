@@ -2748,7 +2748,7 @@ export default {
     password: 'Password',
     loginSuccessTitle: 'Login successful',
     loginSuccessContent: 'Welcome back. You are now in {name}',
-    loggingIn: 'Logging in...',
+    loggingIn: 'Logging in',
     rememberMe: 'Remember password',
     emailPlaceholder: 'Enter email address',
     passwordPlaceholder: 'Enter password',
